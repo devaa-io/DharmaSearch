@@ -180,6 +180,31 @@ async def refresh_token(request: Request):
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
 # --- Scripture Routes ---
+@api_router.get("/public/sample-verses")
+async def get_sample_verses():
+    """Public endpoint - returns curated sample verses for landing page preview"""
+    sample_ids = [
+        "bg-2-47", "bg-2-20", "bg-4-7", "bg-18-66",
+        "brihad-1", "katha-1", "ys-1-2", "dm-4-2",
+        "nar-1-1", "sb-4-1", "sl-1-1", "vc-2-1",
+        "ram-6-2", "mb-1-1", "rv-1-2", "ls-2-1"
+    ]
+    verses = await db.verses.find({"verse_id": {"$in": sample_ids}}, {"_id": 0}).to_list(20)
+    # Sort by the order defined above
+    order = {vid: i for i, vid in enumerate(sample_ids)}
+    verses.sort(key=lambda v: order.get(v["verse_id"], 999))
+    return verses
+
+@api_router.get("/public/search")
+async def public_search(q: str):
+    """Public keyword search - limited to 5 results for preview"""
+    query = {"$or": [
+        {"translation": {"$regex": q, "$options": "i"}},
+        {"keywords": {"$regex": q, "$options": "i"}}
+    ]}
+    verses = await db.verses.find(query, {"_id": 0}).limit(5).to_list(5)
+    return verses
+
 @api_router.get("/scriptures")
 async def get_scriptures():
     texts = await db.scriptures.find({}, {"_id": 0}).to_list(100)
@@ -527,9 +552,6 @@ async def seed_scriptures():
     await seed_reading_plans()
 
 async def seed_reading_plans():
-    count = await db.reading_plans.count_documents({"is_prebuilt": True})
-    if count > 0:
-        return
     plans = [
         {
             "plan_id": "gita-7-days",
@@ -598,6 +620,45 @@ async def seed_reading_plans():
                 {"day": 4, "title": "Thousand Names", "verse_ids": ["ls-1-1", "ls-1-2", "ls-2-1"]},
                 {"day": 5, "title": "Waves of Beauty", "verse_ids": ["sl-1-1", "sl-1-2", "dm-11-2"]}
             ]
+        },
+        {
+            "plan_id": "karkkidakam-30",
+            "title": "Karkkidakam - 30 Days of Ramayana",
+            "description": "The traditional Kerala practice of reading the Adhyatma Ramayanam during Karkkidakam (July-August). Every Kerala household reads the Ramayana during this monsoon month for spiritual purification.",
+            "is_prebuilt": True, "created_by": "system", "total_days": 30,
+            "tags": ["karkkidakam", "kerala", "seasonal"],
+            "days": [
+                {"day": 1, "title": "Invocation", "verse_ids": ["ar-1-1"]},
+                {"day": 2, "title": "Hari Nama Keerthanam", "verse_ids": ["ar-1-2"]},
+                {"day": 3, "title": "The Essence of Ramayana", "verse_ids": ["ar-2-1"]},
+                {"day": 4, "title": "Rama's Qualities", "verse_ids": ["ram-1-3", "ram-1-4"]},
+                {"day": 5, "title": "The First Verse of Poetry", "verse_ids": ["ram-1-5"]},
+                {"day": 6, "title": "The Ideal Man", "verse_ids": ["ram-1-2"]},
+                {"day": 7, "title": "Exile & Duty", "verse_ids": ["ram-2-1", "ram-2-2"]},
+                {"day": 8, "title": "Serving Rama", "verse_ids": ["ram-2-3"]},
+                {"day": 9, "title": "Selflessness", "verse_ids": ["ram-2-4"]},
+                {"day": 10, "title": "Dharma Protects", "verse_ids": ["ram-3-1"]},
+                {"day": 11, "title": "Protection from Sin", "verse_ids": ["ram-3-2"]},
+                {"day": 12, "title": "Sita's Abduction", "verse_ids": ["ram-3-3"]},
+                {"day": 13, "title": "Alliance with Sugriva", "verse_ids": ["ram-4-1"]},
+                {"day": 14, "title": "Rama's Grief", "verse_ids": ["ram-4-2"]},
+                {"day": 15, "title": "Hanuman's Quest", "verse_ids": ["ram-5-1"]},
+                {"day": 16, "title": "Five Virtues", "verse_ids": ["ram-5-2"]},
+                {"day": 17, "title": "Sita's Endurance", "verse_ids": ["ram-5-3"]},
+                {"day": 18, "title": "Sita's Sorrow", "verse_ids": ["ram-5-4"]},
+                {"day": 19, "title": "Righteousness Prevails", "verse_ids": ["ram-6-1"]},
+                {"day": 20, "title": "Motherland Over Heaven", "verse_ids": ["ram-6-2", "ar-3-1"]},
+                {"day": 21, "title": "Conquering Evil", "verse_ids": ["ram-6-3"]},
+                {"day": 22, "title": "Aditya Hridayam", "verse_ids": ["ram-6-4"]},
+                {"day": 23, "title": "Victory of Rama", "verse_ids": ["ram-7-1"]},
+                {"day": 24, "title": "Salutations to Rama", "verse_ids": ["ram-7-2"]},
+                {"day": 25, "title": "Merit of Reading", "verse_ids": ["ram-7-3"]},
+                {"day": 26, "title": "Bhakti - Nine Forms", "verse_ids": ["sb-4-1"]},
+                {"day": 27, "title": "Chanting Krishna's Name", "verse_ids": ["sb-3-1"]},
+                {"day": 28, "title": "Guruvayurappan", "verse_ids": ["nar-1-1", "nar-3-1"]},
+                {"day": 29, "title": "Shankaracharya's Teaching", "verse_ids": ["vc-2-1"]},
+                {"day": 30, "title": "Final Blessings", "verse_ids": ["ar-1-1", "vs-1-2", "ls-2-1"]}
+            ]
         }
     ]
     for p in plans:
@@ -610,6 +671,7 @@ async def seed_reading_plans():
 async def startup():
     await seed_admin()
     await seed_scriptures()
+    await seed_reading_plans()
     # Write test credentials
     os.makedirs("/app/memory", exist_ok=True)
     with open("/app/memory/test_credentials.md", "w") as f:

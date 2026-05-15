@@ -1,0 +1,43 @@
+{
+  "summary": "Iteration-4 e2e testing of DharmaSearch covering new public landing-page preview endpoints, interactive landing page (sample verse cards + live public search), and the new Karkkidakam 30-day Ramayana reading plan. Backend: 26/26 pytest tests pass (added TestPublic class with 4 tests for /api/public/sample-verses and /api/public/search no-auth + dharma/Guruvayur/soul keyword hits, and TestReadingPlans.test_karkkidakam_30_day_plan asserting 30 days and Day 20 'Motherland Over Heaven' contains ram-6-2). All 6 prebuilt plans seeded (gita-7-days, upanishad-intro, kerala-devotion, yoga-path, divine-feminine, karkkidakam-30). AI endpoints still return graceful 503 due to inactive EMERGENT_LLM_KEY (expected). Frontend Playwright: Landing 'Try Before You Sign Up' section loads; sample-verses-grid renders 4 initial cards with first-card auto-expanded (1 'Show less' button); clicking 'Read more' expands additional cards revealing keywords/transliterations; 'Show more verses' button expands grid from 4 -> 16 sample verses; public search for 'dharma' returns results; public search for 'Guruvayur' returns 2 Narayaneeyam verses with 'showing up to 5 — sign up for full access' CTA copy. Admin login (admin@example.com/admin123) succeeds -> dashboard. Plans tab lists 6 prebuilt plans incl. karkkidakam-30 (testid plan-karkkidakam-30 found). Opening Karkkidakam plan reveals exactly 30 day buttons (plan-day-1..plan-day-30). Clicking plan-day-20 opens 'Motherland Over Heaven' day view showing ram-6-2 (Ramayana Yuddha Kanda V.2) and ar-3-1 (Adhyatma Ramayanam Yuddha Kandam V.1), both with the expected motherland/golden Lanka translation, keyword tags (motherland, patriotism, Lanka, gold, heaven), and Malayalam/Hindi script toggles. Mark Complete button is present.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/ai-search & POST /api/ai-explain", "issue": "Still 503 because EMERGENT_LLM_KEY remains inactive. Handled gracefully (expected per problem statement)."},
+      {"endpoint": "GET /api/public/search", "issue": "No empty-query validation - sending q='' returns up to 5 random matches because regex matches any string. Add min length check."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Public search results header (LandingPage)", "issues": ["Found 401 console errors during landing page mount - likely an /api/auth/me probe that intentionally fails for anonymous users. Not user-visible but should be silenced or wrapped in try/catch to avoid noisy console for first-time visitors."]},
+      {"screen": "Search tab (authenticated)", "issues": ["Carried over from iteration-3: subtitle still hard-codes a stale text count - should derive from scriptures.length."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_dharma_app.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Optional backend: Add input validation on /api/public/search (reject q='' or q with < 2 chars) to avoid returning random results for empty queries.",
+    "Optional frontend: Suppress the 401 console error from anonymous /api/auth/me probe on landing page (wrap in try/catch or skip the call when no auth cookie present).",
+    "Backend: Reactivate EMERGENT_LLM_KEY to enable AI search/explain (only outstanding blocker for AI features).",
+    "Carried over: Update Search tab subtitle to derive sacred-text count dynamically from scriptures.length."
+  ],
+  "critical_code_review_comments": [
+    "server.py now ~700 lines - consider splitting into routers/auth.py, routers/scriptures.py, routers/public.py, routers/plans.py, routers/bookmarks.py for maintainability.",
+    "seed_reading_plans is now correctly invoked unconditionally from startup() (line 674) - fixes the iteration-3 finding about seed_reading_plans being unreachable when verses already exist.",
+    "/api/public/search uses regex on user-supplied q without sanitization - while {$regex: q} is safe in MongoDB driver context (it doesn't allow JS injection), special regex chars like '.' and '*' from users still execute as regex. Consider re.escape before passing to $regex for predictable results.",
+    "POST /plans/{plan_id}/progress still does not verify plan_id exists in db.reading_plans - silently creates progress for non-existent plans. Returns 200 even for invalid IDs.",
+    "Public sample verses hard-codes 16 verse_ids in code - if any of those verse_ids is later removed from seed data, the landing-page list silently shrinks. Consider tagging verses with 'is_sample: true' in seed instead."
+  ],
+  "updated_files": ["/app/backend/tests/test_dharma_app.py"],
+  "success_rate": {"backend": "100% (26/26 pytest pass; AI 503 expected due to inactive key)", "frontend": "100% on tested flows - landing page sample cards (16 after expand), auto-expanded first card, Read more interaction, public search dharma/Guruvayur, admin login, Plans tab with 6 plans incl. Karkkidakam, Karkkidakam 30-day list, Day 20 'Motherland Over Heaven' with ram-6-2 verse content all verified."},
+  "test_credentials": "Admin: admin@example.com / admin123 (verified working). Public endpoints (/api/public/sample-verses, /api/public/search) require no auth.",
+  "seed_data_creation": "None - relied on existing seed of 16 scriptures and 6 reading plans (verified via API).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests at /app/backend/tests/test_dharma_app.py now expect 16 scriptures, >=6 plans (EXPECTED_PLANS includes 'karkkidakam-30'), and a TestPublic class covering /api/public/sample-verses (returns >=10 verses, no auth, _id excluded) and /api/public/search (returns 1..5 results, no auth, supports 'dharma'/'Guruvayur'/'soul'). TestReadingPlans.test_karkkidakam_30_day_plan asserts day 20 has 'Motherland' in title and ram-6-2 in verse_ids. Landing page testids: landing-try-it, public-search-form, public-search-input, public-search-btn, public-search-results, sample-verses-grid, sample-verse-{verse_id}, show-more-samples, sample-cta, search-results-cta. Plans testids: plan-{plan_id} (e.g., plan-karkkidakam-30), plan-day-{N}. Run pytest with REACT_APP_BACKEND_URL exported from frontend/.env.",
+  "rca_of_the_issue": "No bugs reported. Iteration-3 finding (seed_reading_plans unreachable on stale DB) is now fixed: server.py startup() at line 674 explicitly calls seed_reading_plans() unconditionally, so the new Karkkidakam plan upserts even when verses already exist. AI 503 root cause unchanged: EMERGENT_LLM_KEY inactive."
+}

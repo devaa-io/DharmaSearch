@@ -27,7 +27,7 @@ EXPECTED_SCRIPTURES = {
 }
 EXPECTED_PLANS = {
     "gita-7-days", "upanishad-intro", "kerala-devotion",
-    "yoga-path", "divine-feminine",
+    "yoga-path", "divine-feminine", "karkkidakam-30",
 }
 
 
@@ -49,6 +49,39 @@ def new_user_session():
     })
     assert r.status_code == 200, f"Register failed: {r.status_code} {r.text}"
     return s
+
+
+# ---- Public (no-auth) endpoints ----
+class TestPublic:
+    def test_sample_verses_no_auth(self):
+        r = requests.get(f"{BASE_URL}/api/public/sample-verses")
+        assert r.status_code == 200
+        data = r.json()
+        assert isinstance(data, list)
+        # 16 IDs requested; allow some to be missing in DB but expect bulk
+        assert len(data) >= 10, f"Expected >=10 sample verses, got {len(data)}"
+        v = data[0]
+        assert "verse_id" in v and "translation" in v
+        assert "_id" not in v
+
+    def test_public_search_no_auth(self):
+        r = requests.get(f"{BASE_URL}/api/public/search", params={"q": "dharma"})
+        assert r.status_code == 200
+        data = r.json()
+        assert isinstance(data, list)
+        assert 0 < len(data) <= 5, f"Expected 1..5 results, got {len(data)}"
+
+    def test_public_search_guruvayur(self):
+        r = requests.get(f"{BASE_URL}/api/public/search", params={"q": "Guruvayur"})
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) > 0
+        assert any(v.get("text_id") == "narayaneeyam" for v in data)
+
+    def test_public_search_soul(self):
+        r = requests.get(f"{BASE_URL}/api/public/search", params={"q": "soul"})
+        assert r.status_code == 200
+        assert len(r.json()) > 0
 
 
 # ---- Auth ----
@@ -171,10 +204,23 @@ class TestReadingPlans:
         r = admin_session.get(f"{BASE_URL}/api/plans")
         assert r.status_code == 200
         plans = r.json()
-        assert len(plans) >= 5, f"Expected >=5 plans, got {len(plans)}"
+        assert len(plans) >= 6, f"Expected >=6 plans, got {len(plans)}"
         plan_ids = {p["plan_id"] for p in plans}
         missing = EXPECTED_PLANS - plan_ids
         assert not missing, f"Missing plans: {missing}"
+
+    def test_karkkidakam_30_day_plan(self, admin_session):
+        r = admin_session.get(f"{BASE_URL}/api/plans/karkkidakam-30")
+        assert r.status_code == 200
+        plan = r.json()
+        assert plan["total_days"] == 30
+        assert len(plan["days"]) == 30
+        # Day 20 -> Motherland Over Heaven
+        day20 = next(d for d in plan["days"] if d["day"] == 20)
+        assert "Motherland" in day20["title"]
+        assert "ram-6-2" in day20["verse_ids"]
+        # verse_details map should contain Ramayana verse
+        assert "ram-6-2" in plan.get("verse_details", {})
 
     def test_kerala_plan_detail(self, admin_session):
         r = admin_session.get(f"{BASE_URL}/api/plans/kerala-devotion")
