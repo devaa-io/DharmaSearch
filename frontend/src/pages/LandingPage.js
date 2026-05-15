@@ -19,6 +19,13 @@ export default function LandingPage() {
     { name: "Vedas", chapters: "4 Vedas", era: "~1500 BCE" },
     { name: "Hanuman Chalisa", chapters: "40 Verses", era: "~1575 CE" },
     { name: "Puranas", chapters: "4 Texts", era: "~300 CE" },
+    { name: "Srimad Bhagavatam", chapters: "4 Sections", era: "~500 CE" },
+    { name: "Narayaneeyam", chapters: "3 Dashakams", era: "1586 CE" },
+    { name: "Adhyatma Ramayanam", chapters: "3 Kandas", era: "~1575 CE" },
+    { name: "Lalita Sahasranama", chapters: "1000 Names", era: "~500 CE" },
+    { name: "Vishnu Sahasranama", chapters: "1000 Names", era: "~400 BCE" },
+    { name: "Soundarya Lahari", chapters: "100 Verses", era: "~800 CE" },
+    { name: "Vivekachudamani", chapters: "580 Verses", era: "~800 CE" },
   ];
 
   return (
@@ -51,7 +58,7 @@ export default function LandingPage() {
             <div className="lg:col-span-7 lg:pr-8">
               <div className="inline-flex items-center gap-2 text-[#D97757] text-xs font-semibold tracking-widest uppercase mb-8">
                 <div className="w-8 h-px bg-[#D97757]" />
-                9 Sacred Texts &middot; 180+ Verses
+                16 Sacred Texts &middot; 200+ Verses
               </div>
 
               <h1 className="font-heading text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-6xl leading-[1.05] tracking-tight text-[#2C2A29] mb-6">
@@ -169,7 +176,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center gap-3 mb-12">
             <div className="w-8 h-px bg-[#D97757]" />
-            <h2 className="font-heading text-2xl sm:text-3xl text-white tracking-tight">Nine sacred texts, one search.</h2>
+            <h2 className="font-heading text-2xl sm:text-3xl text-white tracking-tight">Sixteen sacred texts, one search.</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {texts.map((t, i) => (
@@ -208,7 +215,7 @@ export default function LandingPage() {
             <Flame className="w-4 h-4 text-[#D97757]" strokeWidth={1.5} />
             <span className="font-heading text-sm font-bold text-[#2C2A29]">DharmaSearch</span>
           </div>
-          <p className="text-xs text-[#A39E93]">9 texts &middot; 180+ verses &middot; AI-powered</p>
+          <p className="text-xs text-[#A39E93]">16 texts &middot; 200+ verses &middot; AI-powered</p>
         </div>
       </footer>
     </div>

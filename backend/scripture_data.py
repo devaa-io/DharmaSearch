@@ -7,6 +7,7 @@ Comprehensive scripture data for Hindu texts:
 
 def get_scripture_metadata():
     from scripture_data_extended import get_extended_metadata
+    from scripture_data_kerala import get_kerala_metadata
     base = [
         {
             "text_id": "bhagavad-gita",
@@ -33,16 +34,18 @@ def get_scripture_metadata():
             "image": "https://images.unsplash.com/photo-1488875482628-eee706cbfad5?w=400"
         }
     ]
-    return base + get_extended_metadata()
+    return base + get_extended_metadata() + get_kerala_metadata()
 
 
 def get_all_verses():
     from scripture_data_extended import get_extended_verses
+    from scripture_data_kerala import get_kerala_verses
     verses = []
     verses.extend(_gita_verses())
     verses.extend(_ramayana_verses())
     verses.extend(_devi_mahatmyam_verses())
     verses.extend(get_extended_verses())
+    verses.extend(get_kerala_verses())
     return verses
 
 

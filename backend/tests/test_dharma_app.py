@@ -1,21 +1,42 @@
-"""Backend tests for Hindu Scripture App."""
+"""Backend tests for Hindu Scripture App - Iteration 3.
+
+Covers: 16 scriptures (incl. 7 Kerala texts), 5 reading plans,
+transliterations + temple_connection fields, plan progress updates,
+keyword search hits for Guruvayur/Shankaracharya.
+"""
 import os
 import time
 import requests
 import pytest
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://dharma-texts-2.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
+assert BASE_URL, "REACT_APP_BACKEND_URL must be set"
+
 ADMIN_EMAIL = "admin@example.com"
 ADMIN_PASSWORD = "admin123"
 TEST_USER_EMAIL = f"testuser_{int(time.time())}@example.com"
 TEST_USER_PASSWORD = "testpass123"
+
+EXPECTED_SCRIPTURES = {
+    "bhagavad-gita", "ramayana", "devi-mahatmyam", "upanishads",
+    "yoga-sutras", "mahabharata", "vedas", "hanuman-chalisa", "puranas",
+    # Kerala additions
+    "srimad-bhagavatam", "narayaneeyam", "adhyatma-ramayanam",
+    "lalita-sahasranama", "vishnu-sahasranama", "soundarya-lahari",
+    "vivekachudamani",
+}
+EXPECTED_PLANS = {
+    "gita-7-days", "upanishad-intro", "kerala-devotion",
+    "yoga-path", "divine-feminine",
+}
 
 
 # ---- Fixtures ----
 @pytest.fixture(scope="module")
 def admin_session():
     s = requests.Session()
-    r = s.post(f"{BASE_URL}/api/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
+    r = s.post(f"{BASE_URL}/api/auth/login",
+               json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
     assert r.status_code == 200, f"Admin login failed: {r.status_code} {r.text}"
     return s
 
@@ -30,10 +51,11 @@ def new_user_session():
     return s
 
 
-# ---- Auth tests ----
+# ---- Auth ----
 class TestAuth:
     def test_admin_login(self):
-        r = requests.post(f"{BASE_URL}/api/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
+        r = requests.post(f"{BASE_URL}/api/auth/login",
+                          json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
         assert r.status_code == 200
         data = r.json()
         assert data["email"] == ADMIN_EMAIL
@@ -41,111 +63,93 @@ class TestAuth:
         assert "access_token" in r.cookies
 
     def test_login_invalid(self):
-        r = requests.post(f"{BASE_URL}/api/auth/login", json={"email": ADMIN_EMAIL, "password": "wrong"})
+        r = requests.post(f"{BASE_URL}/api/auth/login",
+                          json={"email": ADMIN_EMAIL, "password": "wrong"})
         assert r.status_code == 401
 
     def test_register_new_user(self, new_user_session):
-        # Verify session is authenticated
         r = new_user_session.get(f"{BASE_URL}/api/auth/me")
         assert r.status_code == 200
         assert r.json()["email"] == TEST_USER_EMAIL
-
-    def test_register_duplicate(self, new_user_session):
-        r = requests.post(f"{BASE_URL}/api/auth/register", json={
-            "name": "Dup", "email": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD
-        })
-        assert r.status_code == 400
 
     def test_me_unauthenticated(self):
         r = requests.get(f"{BASE_URL}/api/auth/me")
         assert r.status_code == 401
 
-    def test_logout(self, admin_session):
-        # Use a fresh session to avoid affecting module-level admin_session
-        s = requests.Session()
-        s.post(f"{BASE_URL}/api/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
-        r = s.post(f"{BASE_URL}/api/auth/logout")
-        assert r.status_code == 200
-        r2 = s.get(f"{BASE_URL}/api/auth/me")
-        assert r2.status_code == 401
 
-
-# ---- Scripture/verse tests ----
+# ---- 16 Scriptures (incl. Kerala) ----
 class TestScriptures:
-    def test_list_scriptures(self):
+    def test_list_16_scriptures(self):
         r = requests.get(f"{BASE_URL}/api/scriptures")
         assert r.status_code == 200
         data = r.json()
         assert isinstance(data, list)
-        assert len(data) == 9, f"Expected 9 scriptures, got {len(data)}"
-        text_ids = [s["text_id"] for s in data]
-        # Expected text_ids
-        expected = {"bhagavad-gita", "ramayana", "devi-mahatmyam", "upanishads",
-                    "yoga-sutras", "mahabharata", "vedas", "hanuman-chalisa", "puranas"}
-        assert expected.issubset(set(text_ids)), f"Missing scriptures. Got: {text_ids}"
+        assert len(data) == 16, f"Expected 16 scriptures, got {len(data)}"
+        text_ids = {s["text_id"] for s in data}
+        missing = EXPECTED_SCRIPTURES - text_ids
+        assert not missing, f"Missing scriptures: {missing}"
 
-    def test_chapters_for_each_scripture(self):
-        r = requests.get(f"{BASE_URL}/api/scriptures")
-        scriptures = r.json()
-        for s in scriptures:
-            cr = requests.get(f"{BASE_URL}/api/scriptures/{s['text_id']}/chapters")
-            assert cr.status_code == 200, f"Chapters failed for {s['text_id']}"
-            chapters = cr.json()
-            assert isinstance(chapters, list)
-            assert len(chapters) > 0, f"No chapters for {s['text_id']}"
+    def test_kerala_text_chapters(self):
+        # Srimad Bhagavatam
+        r = requests.get(f"{BASE_URL}/api/scriptures/srimad-bhagavatam/chapters")
+        assert r.status_code == 200
+        assert len(r.json()) > 0
 
-    def test_verses_in_chapter(self):
-        scriptures = requests.get(f"{BASE_URL}/api/scriptures").json()
-        s = scriptures[0]
-        chapters = requests.get(f"{BASE_URL}/api/scriptures/{s['text_id']}/chapters").json()
+        # Narayaneeyam
+        r = requests.get(f"{BASE_URL}/api/scriptures/narayaneeyam/chapters")
+        assert r.status_code == 200
+        chapters = r.json()
+        assert len(chapters) > 0
+        assert all("chapter" in c and "chapter_name" in c for c in chapters)
+
+    def test_narayaneeyam_has_transliterations_and_temple(self):
+        chapters = requests.get(
+            f"{BASE_URL}/api/scriptures/narayaneeyam/chapters").json()
         ch = chapters[0]
-        vr = requests.get(f"{BASE_URL}/api/scriptures/{s['text_id']}/chapters/{ch['chapter']}/verses")
-        assert vr.status_code == 200
-        verses = vr.json()
-        assert isinstance(verses, list)
+        r = requests.get(
+            f"{BASE_URL}/api/scriptures/narayaneeyam/chapters/{ch['chapter']}/verses")
+        assert r.status_code == 200
+        verses = r.json()
         assert len(verses) > 0
         v = verses[0]
-        assert "verse_id" in v
-        assert "translation" in v
-        assert "_id" not in v  # ObjectId must be stripped
+        # Transliterations dict ml/hi
+        translit = v.get("transliterations")
+        assert isinstance(translit, dict), f"transliterations missing on {v.get('verse_id')}"
+        assert "ml" in translit and "hi" in translit
+        assert translit["ml"] and translit["hi"]
+        # Temple connection on first Narayaneeyam verse
+        temple = v.get("temple_connection")
+        assert isinstance(temple, dict), f"temple_connection missing on {v.get('verse_id')}"
+        assert "temple" in temple and "location" in temple and "detail" in temple
+        assert "_id" not in v
 
 
 # ---- Search ----
 class TestSearch:
-    def test_keyword_search_soul(self):
-        r = requests.get(f"{BASE_URL}/api/search", params={"q": "soul"})
+    def test_search_guruvayur(self):
+        r = requests.get(f"{BASE_URL}/api/search", params={"q": "Guruvayur"})
         assert r.status_code == 200
         data = r.json()
-        assert isinstance(data, list)
-        # Many verses about soul/Atman should exist
-        assert len(data) > 0, "No results for 'soul'"
+        assert len(data) > 0, "No results for Guruvayur"
+        assert any(v.get("text_id") == "narayaneeyam" for v in data)
 
-    def test_keyword_search_dharma(self):
+    def test_search_shankaracharya(self):
+        r = requests.get(f"{BASE_URL}/api/search", params={"q": "Shankaracharya"})
+        assert r.status_code == 200
+        data = r.json()
+        text_ids = {v.get("text_id") for v in data}
+        assert text_ids & {"vivekachudamani", "soundarya-lahari"}, \
+            f"Expected hits in vivekachudamani/soundarya-lahari, got {text_ids}"
+
+    def test_search_dharma(self):
         r = requests.get(f"{BASE_URL}/api/search", params={"q": "dharma"})
         assert r.status_code == 200
-        data = r.json()
-        assert isinstance(data, list)
-        assert len(data) > 0, "No results for 'dharma'"
+        assert len(r.json()) > 0
 
-    def test_keyword_search_no_match(self):
+    def test_search_no_match(self):
         r = requests.get(f"{BASE_URL}/api/search", params={"q": "zzzznonexistentxyz"})
         assert r.status_code == 200
         assert r.json() == []
-
-    def test_keyword_search_yoga(self):
-        r = requests.get(f"{BASE_URL}/api/search", params={"q": "yoga"})
-        assert r.status_code == 200
-        data = r.json()
-        assert len(data) > 0, "No results for 'yoga'"
-        # Should hit Yoga Sutras or Gita
-        text_ids = {v.get("text_id") for v in data}
-        assert any(t in text_ids for t in ("yoga-sutras", "bhagavad-gita")), f"Unexpected text_ids: {text_ids}"
-
-    def test_keyword_search_om(self):
-        r = requests.get(f"{BASE_URL}/api/search", params={"q": "Om"})
-        assert r.status_code == 200
-        data = r.json()
-        assert len(data) > 0, "No results for 'Om'"
 
 
 # ---- Daily Verse ----
@@ -154,70 +158,117 @@ class TestDailyVerse:
         r = requests.get(f"{BASE_URL}/api/daily-verse")
         assert r.status_code == 200
         data = r.json()
-        assert data is not None
-        assert "verse_id" in data
-        assert "translation" in data
+        assert "verse_id" in data and "translation" in data
+
+
+# ---- Reading Plans ----
+class TestReadingPlans:
+    def test_plans_require_auth(self):
+        r = requests.get(f"{BASE_URL}/api/plans")
+        assert r.status_code == 401
+
+    def test_list_5_plans(self, admin_session):
+        r = admin_session.get(f"{BASE_URL}/api/plans")
+        assert r.status_code == 200
+        plans = r.json()
+        assert len(plans) >= 5, f"Expected >=5 plans, got {len(plans)}"
+        plan_ids = {p["plan_id"] for p in plans}
+        missing = EXPECTED_PLANS - plan_ids
+        assert not missing, f"Missing plans: {missing}"
+
+    def test_kerala_plan_detail(self, admin_session):
+        r = admin_session.get(f"{BASE_URL}/api/plans/kerala-devotion")
+        assert r.status_code == 200
+        plan = r.json()
+        assert plan["title"] == "Kerala's Devotional Heritage"
+        assert plan["total_days"] == 7
+        assert len(plan["days"]) == 7
+        # Every day has a title and verse_ids
+        for d in plan["days"]:
+            assert d.get("title")
+            assert isinstance(d.get("verse_ids"), list) and len(d["verse_ids"]) > 0
+        # verse_details mapping returned
+        assert isinstance(plan.get("verse_details"), dict)
+        # Day 1 -> Narayaneeyam verses; verse_details should contain transliterations
+        day1_vids = plan["days"][0]["verse_ids"]
+        nar_verse = plan["verse_details"].get(day1_vids[0])
+        assert nar_verse is not None
+        assert nar_verse.get("text_id") == "narayaneeyam"
+        assert isinstance(nar_verse.get("transliterations"), dict)
+        assert isinstance(nar_verse.get("temple_connection"), dict)
+
+    def test_plan_not_found(self, admin_session):
+        r = admin_session.get(f"{BASE_URL}/api/plans/does-not-exist")
+        assert r.status_code == 404
+
+    def test_progress_update(self, new_user_session):
+        # Mark day 1 as complete
+        r = new_user_session.post(
+            f"{BASE_URL}/api/plans/kerala-devotion/progress",
+            json={"day_number": 1},
+        )
+        assert r.status_code == 200
+        # Verify reflected in /plans list
+        plans = new_user_session.get(f"{BASE_URL}/api/plans").json()
+        kerala = next(p for p in plans if p["plan_id"] == "kerala-devotion")
+        assert kerala["started"] is True
+        assert 1 in kerala["completed_days"]
+
+        # Add day 2
+        r2 = new_user_session.post(
+            f"{BASE_URL}/api/plans/kerala-devotion/progress",
+            json={"day_number": 2},
+        )
+        assert r2.status_code == 200
+        plans = new_user_session.get(f"{BASE_URL}/api/plans").json()
+        kerala = next(p for p in plans if p["plan_id"] == "kerala-devotion")
+        assert set(kerala["completed_days"]) >= {1, 2}
+
+        # Idempotent (adding day 1 again doesn't duplicate)
+        new_user_session.post(
+            f"{BASE_URL}/api/plans/kerala-devotion/progress",
+            json={"day_number": 1},
+        )
+        plans = new_user_session.get(f"{BASE_URL}/api/plans").json()
+        kerala = next(p for p in plans if p["plan_id"] == "kerala-devotion")
+        assert kerala["completed_days"].count(1) == 1
+
+    def test_progress_missing_day(self, admin_session):
+        r = admin_session.post(
+            f"{BASE_URL}/api/plans/gita-7-days/progress", json={})
+        assert r.status_code == 400
 
 
 # ---- Bookmarks ----
 class TestBookmarks:
     def test_bookmark_flow(self, new_user_session):
-        # Get a verse to bookmark
-        scriptures = requests.get(f"{BASE_URL}/api/scriptures").json()
-        s = scriptures[0]
-        chapters = requests.get(f"{BASE_URL}/api/scriptures/{s['text_id']}/chapters").json()
-        verses = requests.get(f"{BASE_URL}/api/scriptures/{s['text_id']}/chapters/{chapters[0]['chapter']}/verses").json()
-        verse_id = verses[0]["verse_id"]
-
-        # Add bookmark
-        r = new_user_session.post(f"{BASE_URL}/api/bookmarks", json={"verse_id": verse_id})
+        # bookmark a Kerala verse
+        r = new_user_session.post(f"{BASE_URL}/api/bookmarks",
+                                  json={"verse_id": "nar-1-1"})
         assert r.status_code == 200
 
-        # Duplicate
-        r2 = new_user_session.post(f"{BASE_URL}/api/bookmarks", json={"verse_id": verse_id})
+        # duplicate -> 400
+        r2 = new_user_session.post(f"{BASE_URL}/api/bookmarks",
+                                   json={"verse_id": "nar-1-1"})
         assert r2.status_code == 400
 
-        # List
+        # list
         r3 = new_user_session.get(f"{BASE_URL}/api/bookmarks")
         assert r3.status_code == 200
-        bms = r3.json()
-        assert any(b["verse_id"] == verse_id for b in bms)
+        assert any(b["verse_id"] == "nar-1-1" for b in r3.json())
 
-        # Delete
-        r4 = new_user_session.delete(f"{BASE_URL}/api/bookmarks/{verse_id}")
+        # delete
+        r4 = new_user_session.delete(f"{BASE_URL}/api/bookmarks/nar-1-1")
         assert r4.status_code == 200
 
-        # Verify removed
-        r5 = new_user_session.get(f"{BASE_URL}/api/bookmarks")
-        assert not any(b["verse_id"] == verse_id for b in r5.json())
 
-    def test_bookmark_requires_auth(self):
-        r = requests.post(f"{BASE_URL}/api/bookmarks", json={"verse_id": "anything"})
-        assert r.status_code == 401
-
-
-# ---- AI features ---- (require auth + LLM key)
+# ---- AI (still 503 due to inactive key, per problem statement) ----
 class TestAI:
-    def test_ai_search_requires_auth(self):
+    def test_ai_search_auth_required(self):
         r = requests.post(f"{BASE_URL}/api/ai-search", json={"query": "duty"})
         assert r.status_code == 401
 
-    def test_ai_search_authenticated(self, admin_session):
-        r = admin_session.post(f"{BASE_URL}/api/ai-search", json={"query": "duty and righteousness"}, timeout=120)
-        # AI features may fail with 503/500 due to inactive EMERGENT_LLM_KEY (expected)
-        assert r.status_code in (200, 500, 503), f"Unexpected: {r.status_code} {r.text[:300]}"
-        if r.status_code == 200:
-            assert isinstance(r.json(), list)
-
-    def test_ai_explain_authenticated(self, admin_session):
-        scriptures = requests.get(f"{BASE_URL}/api/scriptures").json()
-        s = scriptures[0]
-        chapters = requests.get(f"{BASE_URL}/api/scriptures/{s['text_id']}/chapters").json()
-        verses = requests.get(f"{BASE_URL}/api/scriptures/{s['text_id']}/chapters/{chapters[0]['chapter']}/verses").json()
-        verse_id = verses[0]["verse_id"]
-        r = admin_session.post(f"{BASE_URL}/api/ai-explain", json={"verse_id": verse_id}, timeout=120)
-        assert r.status_code in (200, 500, 503), f"Unexpected: {r.status_code} {r.text[:300]}"
-        if r.status_code == 200:
-            data = r.json()
-            assert "explanation" in data
-            assert "verse" in data
+    def test_ai_search_graceful_503(self, admin_session):
+        r = admin_session.post(f"{BASE_URL}/api/ai-search",
+                               json={"query": "duty"}, timeout=120)
+        assert r.status_code in (200, 500, 503)

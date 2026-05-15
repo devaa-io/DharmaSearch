@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { BookOpen, Search, Compass, Bookmark, LogOut, Sparkles, Sun, Flame, Menu, X, Image } from 'lucide-react';
+import { BookOpen, Search, Compass, Bookmark, LogOut, Sparkles, Sun, Flame, Menu, X, Image, Calendar } from 'lucide-react';
 import DailyVerse from '../components/DailyVerse';
 import SearchTab from '../components/SearchTab';
 import BrowseTexts from '../components/BrowseTexts';
 import BookmarksTab from '../components/BookmarksTab';
+import ReadingPlans from '../components/ReadingPlans';
 
 const tabs = [
   { id: 'home', label: 'Daily Verse', icon: Sun },
   { id: 'search', label: 'Search', icon: Sparkles },
   { id: 'browse', label: 'Browse', icon: Compass },
+  { id: 'plans', label: 'Plans', icon: Calendar },
   { id: 'bookmarks', label: 'Saved', icon: Bookmark },
 ];
 
@@ -136,6 +138,7 @@ export default function Dashboard() {
           {activeTab === 'home' && <DailyVerse />}
           {activeTab === 'search' && <SearchTab />}
           {activeTab === 'browse' && <BrowseTexts />}
+          {activeTab === 'plans' && <ReadingPlans />}
           {activeTab === 'bookmarks' && <BookmarksTab />}
         </main>
       </div>

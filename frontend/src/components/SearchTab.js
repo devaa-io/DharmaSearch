@@ -17,6 +17,13 @@ const textOptions = [
   { value: 'vedas', label: 'Vedas' },
   { value: 'hanuman-chalisa', label: 'Hanuman Chalisa' },
   { value: 'puranas', label: 'Puranas' },
+  { value: 'srimad-bhagavatam', label: 'Srimad Bhagavatam' },
+  { value: 'narayaneeyam', label: 'Narayaneeyam' },
+  { value: 'adhyatma-ramayanam', label: 'Adhyatma Ramayanam' },
+  { value: 'lalita-sahasranama', label: 'Lalita Sahasranama' },
+  { value: 'vishnu-sahasranama', label: 'Vishnu Sahasranama' },
+  { value: 'soundarya-lahari', label: 'Soundarya Lahari' },
+  { value: 'vivekachudamani', label: 'Vivekachudamani' },
 ];
 
 export default function SearchTab() {

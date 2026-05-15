@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { Bookmark, BookmarkCheck, Share2, Copy, Check, Sparkles, RefreshCw, ChevronDown, ChevronUp, Image, Download, X } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Share2, Copy, Check, Sparkles, RefreshCw, ChevronDown, ChevronUp, Image, Download, X, Globe, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -22,7 +22,11 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
   const [copied, setCopied] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(0);
+  const [transLang, setTransLang] = useState(null);
   const canvasRef = useRef(null);
+
+  const LANG_LABELS = { ml: 'Malayalam', hi: 'Hindi', ta: 'Tamil', te: 'Telugu', kn: 'Kannada' };
+  const availableTranslits = verse.transliterations ? Object.keys(verse.transliterations) : [];
 
   const handleExplain = async () => {
     if (explanation) { setShowExplanation(!showExplanation); return; }
@@ -244,6 +248,52 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
                   {k.trim()}
                 </span>
               ))}
+            </div>
+          )}
+
+          {/* Transliteration toggle */}
+          {availableTranslits.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center gap-1 mb-2">
+                <Globe className="w-3 h-3 text-[#A39E93]" />
+                <span className="text-[10px] text-[#A39E93] uppercase tracking-wider">Script</span>
+                {availableTranslits.map(lang => (
+                  <button
+                    key={lang}
+                    onClick={() => setTransLang(transLang === lang ? null : lang)}
+                    className={`text-[10px] px-2 py-0.5 rounded transition-all ${
+                      transLang === lang ? 'bg-[#D97757] text-white' : 'bg-[#F5F2EA] text-[#75716B] hover:bg-[#E8E3D9]'
+                    }`}
+                    data-testid={`translit-${lang}-${verse.verse_id}`}
+                  >
+                    {LANG_LABELS[lang] || lang}
+                  </button>
+                ))}
+                {transLang && (
+                  <button onClick={() => setTransLang(null)} className="text-[10px] text-[#A39E93] hover:text-[#D97757] ml-1">
+                    Reset
+                  </button>
+                )}
+              </div>
+              {transLang && verse.transliterations[transLang] && (
+                <p className="text-sm leading-relaxed text-[#2C2A29]/70 bg-[#FDFBF7] border border-[#E8E3D9] rounded-lg p-3 animate-slide-down" data-testid={`translit-text-${verse.verse_id}`}>
+                  {verse.transliterations[transLang]}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Temple connection */}
+          {verse.temple_connection && (
+            <div className="mb-3 bg-amber-50/50 border border-amber-200/30 rounded-lg p-3" data-testid={`temple-${verse.verse_id}`}>
+              <div className="flex items-start gap-2">
+                <MapPin className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-amber-800">{verse.temple_connection.temple}</p>
+                  <p className="text-[10px] text-amber-600">{verse.temple_connection.location}</p>
+                  <p className="text-xs text-amber-700/80 mt-1 leading-relaxed">{verse.temple_connection.detail}</p>
+                </div>
+              </div>
             </div>
           )}
 
