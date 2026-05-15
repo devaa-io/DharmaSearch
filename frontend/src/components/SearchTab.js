@@ -24,7 +24,7 @@ export default function SearchTab() {
   const [textFilter, setTextFilter] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searchMode, setSearchMode] = useState('ai');
+  const [searchMode, setSearchMode] = useState('keyword');
   const [searched, setSearched] = useState(false);
 
   const handleSearch = async (e) => {
@@ -51,6 +51,7 @@ export default function SearchTab() {
       if (typeof detail === 'string') toast.error(detail);
       else toast.error(searchMode === 'ai' ? 'AI search unavailable. Try keyword search.' : 'Search failed.');
       setResults([]);
+      setSearched('error');
     } finally {
       setLoading(false);
     }
@@ -139,7 +140,11 @@ export default function SearchTab() {
 
       {!loading && searched && results.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-sm text-[#75716B]">No verses found. Try different words or switch search mode.</p>
+          <p className="text-sm text-[#75716B]">
+            {searched === 'error'
+              ? 'Search service is unavailable. Please try keyword search mode.'
+              : 'No verses found. Try different words or another text filter.'}
+          </p>
         </div>
       )}
 

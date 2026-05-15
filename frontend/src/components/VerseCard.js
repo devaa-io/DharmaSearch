@@ -55,8 +55,13 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
       }
     } catch (err) {
       const msg = err.response?.data?.detail;
-      if (typeof msg === 'string' && msg.includes('Already')) setBookmarked(true);
-      else toast.error('Failed to update bookmark');
+      if (typeof msg === 'string' && msg.includes('Already')) {
+        setBookmarked(true);
+      } else if (err.response?.status === 400) {
+        setBookmarked(true);
+      } else {
+        toast.error('Failed to update bookmark');
+      }
     } finally { setBookmarkLoading(false); }
   };
 
