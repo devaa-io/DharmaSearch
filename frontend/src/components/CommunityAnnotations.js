@@ -15,7 +15,7 @@ const TRADITIONS = [
   { value: 'bhakti', label: 'Bhakti Movement' },
 ];
 
-export default function CommunityAnnotations({ verseId, verseName }) {
+export default function CommunityAnnotations({ verseId, verseName, currentUserId }) {
   const [annotations, setAnnotations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -57,11 +57,10 @@ export default function CommunityAnnotations({ verseId, verseName }) {
 
   const handleVote = async (annotationId, vote) => {
     try {
-      await axios.post(`${API}/api/annotations/${annotationId}/vote`, { vote }, { withCredentials: true });
-      setAnnotations(prev => prev.map(a => {
-        if (a.annotation_id !== annotationId) return a;
-        return { ...a, upvotes: a.upvotes + (vote === 1 ? 1 : 0), downvotes: a.downvotes + (vote === -1 ? 1 : 0) };
-      }));
+      const { data } = await axios.post(`${API}/api/annotations/${annotationId}/vote`, { vote }, { withCredentials: true });
+      if (data.message === 'Already voted') return;
+      // Refetch to get accurate counts
+      fetchAnnotations();
     } catch {}
   };
 
@@ -152,9 +151,11 @@ export default function CommunityAnnotations({ verseId, verseName }) {
                         <CheckCircle className="w-3 h-3 text-green-500" />
                       )}
                     </div>
-                    <button onClick={() => handleDelete(a.annotation_id)} className="p-0.5 text-[#E8E3D9] hover:text-red-400 transition-colors" data-testid={`delete-annotation-${a.annotation_id}`}>
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    {(a.user_id === currentUserId) && (
+                      <button onClick={() => handleDelete(a.annotation_id)} className="p-0.5 text-[#E8E3D9] hover:text-red-400 transition-colors" data-testid={`delete-annotation-${a.annotation_id}`}>
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                   <p className="text-sm text-[#2C2A29] leading-relaxed mb-2">{a.text}</p>
                   <div className="flex items-center gap-3">

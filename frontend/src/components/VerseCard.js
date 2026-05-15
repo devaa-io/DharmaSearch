@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { Bookmark, BookmarkCheck, Share2, Copy, Check, Sparkles, RefreshCw, ChevronDown, ChevronUp, Image, Download, X, Globe, MapPin, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext';
 import CommunityAnnotations from './CommunityAnnotations';
 import CorrectionModal from './CorrectionModal';
 
@@ -15,6 +16,8 @@ const CARD_THEMES = [
 ];
 
 export default function VerseCard({ verse, expanded: initialExpanded = false, isBookmarked: initialBookmark = false, onBookmarkChange }) {
+  const { user } = useAuth();
+  const currentUserId = user?.id || user?._id || null;
   const [showExplanation, setShowExplanation] = useState(false);
   const [explanation, setExplanation] = useState('');
   const [loadingExplain, setLoadingExplain] = useState(false);
@@ -306,7 +309,7 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
               {loadingExplain ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
               {showExplanation ? 'Hide Explanation' : 'AI Explanation'}
             </button>
-            <CommunityAnnotations verseId={verse.verse_id} verseName={verse.text_name} />
+            <CommunityAnnotations verseId={verse.verse_id} verseName={verse.text_name} currentUserId={currentUserId} />
             <button onClick={() => setShowCorrection(true)} className="flex items-center gap-1.5 text-xs font-medium text-[#A39E93] hover:text-[#D97757] transition-colors" data-testid={`correction-btn-${verse.verse_id}`}>
               <AlertTriangle className="w-3.5 h-3.5" />
               Suggest Correction
