@@ -25,7 +25,8 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
       const { data } = await axios.post(`${API}/api/ai-explain`, { verse_id: verse.verse_id }, { withCredentials: true });
       setExplanation(data.explanation);
     } catch (err) {
-      setExplanation('Failed to load explanation. Please try again.');
+      const detail = err.response?.data?.detail;
+      setExplanation(typeof detail === 'string' ? detail : 'Failed to load explanation. Please try again.');
     } finally {
       setLoadingExplain(false);
     }
@@ -57,12 +58,24 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
     }
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     const text = `"${verse.translation}"\n\n— ${verse.text_name}, Chapter ${verse.chapter}, Verse ${verse.verse_number}`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    toast.success('Copied to clipboard');
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success('Copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for non-clipboard environments
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try { document.execCommand('copy'); setCopied(true); toast.success('Copied to clipboard'); setTimeout(() => setCopied(false), 2000); } catch { toast.error('Could not copy text'); }
+      document.body.removeChild(textarea);
+    }
   };
 
   const handleShare = async () => {

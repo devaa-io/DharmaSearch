@@ -241,43 +241,45 @@ async def ai_search(input: SearchInput, request: Request):
 
     verse_text = "\n".join(verse_index)
 
-    chat = LlmChat(
-        api_key=api_key,
-        session_id=session_id,
-        system_message=f"""You are a Hindu scripture scholar. Given the user's query, find the most relevant verses from this collection. Return ONLY a JSON array of verse_ids (strings) that match, ordered by relevance. Return at most 10 results. If nothing matches, return an empty array [].
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=session_id,
+            system_message=f"""You are a Hindu scripture scholar. Given the user's query, find the most relevant verses from this collection. Return ONLY a JSON array of verse_ids (strings) that match, ordered by relevance. Return at most 10 results. If nothing matches, return an empty array [].
 
 Available verses:
 {verse_text}"""
-    )
-    chat.with_model("openai", "gpt-5.2")
+        )
+        chat.with_model("openai", "gpt-5.2")
 
-    user_msg = UserMessage(text=f"Find verses related to: {input.query}")
-    response = await chat.send_message(user_msg)
+        user_msg = UserMessage(text=f"Find verses related to: {input.query}")
+        response = await chat.send_message(user_msg)
 
-    # Parse the response to get verse IDs
-    import json
-    try:
-        # Try to extract JSON array from response
-        text = response.strip()
-        if "```" in text:
-            text = text.split("```")[1]
-            if text.startswith("json"):
-                text = text[4:]
-        verse_ids = json.loads(text.strip())
-    except Exception:
-        verse_ids = []
+        # Parse the response to get verse IDs
+        import json
+        try:
+            text = response.strip()
+            if "```" in text:
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+            verse_ids = json.loads(text.strip())
+        except Exception:
+            verse_ids = []
 
-    # Fetch the actual verses
-    if verse_ids:
-        matched_verses = await db.verses.find(
-            {"verse_id": {"$in": verse_ids}},
-            {"_id": 0}
-        ).to_list(50)
-        # Sort by the order returned by AI
-        id_order = {vid: i for i, vid in enumerate(verse_ids)}
-        matched_verses.sort(key=lambda v: id_order.get(v["verse_id"], 999))
-        return matched_verses
-    return []
+        # Fetch the actual verses
+        if verse_ids:
+            matched_verses = await db.verses.find(
+                {"verse_id": {"$in": verse_ids}},
+                {"_id": 0}
+            ).to_list(50)
+            id_order = {vid: i for i, vid in enumerate(verse_ids)}
+            matched_verses.sort(key=lambda v: id_order.get(v["verse_id"], 999))
+            return matched_verses
+        return []
+    except Exception as e:
+        logger.error(f"AI search error: {e}")
+        raise HTTPException(status_code=503, detail="AI search is temporarily unavailable. Please try keyword search instead.")
 
 # --- AI Explain ---
 @api_router.post("/ai-explain")
@@ -292,24 +294,28 @@ async def ai_explain(input: ExplainInput, request: Request):
     api_key = os.environ.get("EMERGENT_LLM_KEY")
     session_id = f"explain-{user['_id']}-{uuid.uuid4().hex[:8]}"
 
-    chat = LlmChat(
-        api_key=api_key,
-        session_id=session_id,
-        system_message="You are a revered Hindu scripture scholar. Provide a clear, insightful explanation of the given verse. Include its context within the text, philosophical significance, and practical application. Keep it concise but profound (3-4 paragraphs)."
-    )
-    chat.with_model("openai", "gpt-5.2")
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=session_id,
+            system_message="You are a revered Hindu scripture scholar. Provide a clear, insightful explanation of the given verse. Include its context within the text, philosophical significance, and practical application. Keep it concise but profound (3-4 paragraphs)."
+        )
+        chat.with_model("openai", "gpt-5.2")
 
-    verse_context = f"""
+        verse_context = f"""
 Text: {verse['text_name']}
 Chapter: {verse['chapter']} - {verse.get('chapter_name', '')}
 Verse: {verse['verse_number']}
 Sanskrit/Original: {verse.get('text', '')}
 Translation: {verse['translation']}
 """
-    user_msg = UserMessage(text=f"Please explain this verse:\n{verse_context}")
-    explanation = await chat.send_message(user_msg)
+        user_msg = UserMessage(text=f"Please explain this verse:\n{verse_context}")
+        explanation = await chat.send_message(user_msg)
 
-    return {"verse": verse, "explanation": explanation}
+        return {"verse": verse, "explanation": explanation}
+    except Exception as e:
+        logger.error(f"AI explain error: {e}")
+        raise HTTPException(status_code=503, detail="AI explanation is temporarily unavailable. Please try again later.")
 
 # --- Daily Verse ---
 @api_router.get("/daily-verse")

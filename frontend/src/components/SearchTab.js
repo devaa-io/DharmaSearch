@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Search, Sparkles, RefreshCw, Filter } from 'lucide-react';
+import { toast } from 'sonner';
 import VerseCard from './VerseCard';
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -40,6 +41,12 @@ export default function SearchTab() {
       }
     } catch (err) {
       console.error('Search failed', err);
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string') {
+        toast.error(detail);
+      } else {
+        toast.error(searchMode === 'ai' ? 'AI search unavailable. Try keyword search instead.' : 'Search failed. Please try again.');
+      }
       setResults([]);
     } finally {
       setLoading(false);
