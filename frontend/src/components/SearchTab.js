@@ -69,7 +69,7 @@ export default function SearchTab() {
       {/* Header */}
       <div className="mb-6">
         <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#2C2A29] mb-1">Search Scriptures</h2>
-        <p className="text-xs text-[#A39E93]">Find verses by meaning or exact keywords across 9 sacred texts</p>
+        <p className="text-xs text-[#A39E93]">Find verses by meaning or exact keywords across 16 sacred texts</p>
       </div>
 
       {/* Mode toggle */}

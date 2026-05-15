@@ -1,46 +1,38 @@
 # DharmaSearch - Hindu Scripture Quote Finder
 
 ## Problem Statement
-Create an app to find and pinpoint quotes from Hindu sacred texts including Ramayana, Bhagavad Gita, Devi Mahatmyam, and all major Hindu scriptures.
+Find and pinpoint quotes from Hindu sacred texts. Expanded to 16 texts with Kerala-specific scriptures, reading plans, transliteration, and temple connections.
 
 ## Architecture
-- **Frontend**: React + Tailwind CSS + shadcn/ui, sidebar dashboard layout
-- **Backend**: FastAPI + MongoDB + emergentintegrations (OpenAI GPT-5.2)
-- **Auth**: JWT httpOnly cookies
-- **Data**: 180 curated verses across 9 sacred texts
+- Frontend: React + Tailwind CSS + shadcn/ui, sidebar dashboard
+- Backend: FastAPI + MongoDB + emergentintegrations (OpenAI GPT-5.2)
+- Auth: JWT httpOnly cookies
+- Data: 208 curated verses across 16 sacred texts, 5 reading plans
 
-## What's Been Implemented (May 15, 2026)
+## 16 Sacred Texts
+### Original 9
+1. Bhagavad Gita (18 ch) 2. Ramayana (7 Kandas) 3. Devi Mahatmyam (13 ch) 4. Upanishads (8 texts) 5. Yoga Sutras (4 Padas) 6. Mahabharata (5 Parvas) 7. Vedas (4 Vedas) 8. Hanuman Chalisa 9. Puranas (4 texts)
 
-### Iteration 1 - MVP
-- JWT auth (register/login/logout)
-- 3 texts: Bhagavad Gita, Ramayana, Devi Mahatmyam (107 verses)
-- Keyword search, AI search, AI explanations
-- Browse by text/chapter/verse
-- Bookmarks, daily verse, copy/share
+### Kerala-specific 7 (new in iteration 3)
+10. Srimad Bhagavatam 11. Narayaneeyam 12. Adhyatma Ramayanam 13. Lalita Sahasranama 14. Vishnu Sahasranama 15. Soundarya Lahari 16. Vivekachudamani
 
-### Iteration 2 - UI Overhaul & Expansion
-- Added 6 more texts: Upanishads, Yoga Sutras, Mahabharata, Vedas, Hanuman Chalisa, Puranas (180 verses total)
-- Complete UI overhaul: asymmetric landing page, sidebar dashboard, cleaner verse cards
-- Share as Image feature with 4 themes (Dark, Light, Night, Parchment)
-- Canvas-based image generation for social sharing
-- Better error handling for AI features (graceful 503)
-- Default to keyword search while AI key is inactive
-
-## 9 Sacred Texts
-1. Bhagavad Gita (18 chapters)
-2. Ramayana (7 Kandas)
-3. Devi Mahatmyam (13 chapters)
-4. Upanishads (8 texts: Isha, Kena, Katha, Mundaka, Mandukya, Chandogya, Brihadaranyaka, Taittiriya)
-5. Yoga Sutras of Patanjali (4 Padas)
-6. Mahabharata (5 Parvas)
-7. Vedas (4 Vedas: Rig, Yajur, Sama, Atharva)
-8. Hanuman Chalisa (40 verses)
-9. Puranas (4 texts: Vishnu, Shiva, Bhagavata, Garuda)
+## Features Implemented
+- [x] JWT auth, keyword search, AI search (GPT-5.2), AI explanations
+- [x] Browse 16 texts by text/chapter/verse
+- [x] Bookmark, copy, share quotes
+- [x] Share as Image (4 themes: Dark, Light, Night, Parchment)
+- [x] Daily verse of the day
+- [x] 5 pre-built reading plans (7 Days of Gita, Upanishad Intro, Kerala Devotion, Yoga Path, Divine Feminine)
+- [x] Custom reading plan creation
+- [x] Plan progress tracking (mark days complete)
+- [x] Malayalam & Hindi transliteration for Kerala texts
+- [x] Temple connections (Guruvayur, Padmanabhaswamy, Sabarimala, Chottanikkara, etc.)
+- [x] Sidebar dashboard layout, asymmetric landing page
 
 ## Known Issues
-- EMERGENT_LLM_KEY needs balance for AI search & explanations
+- EMERGENT_LLM_KEY needs balance for AI features
 
 ## Backlog
 ### P0 - Activate LLM key for AI features
-### P1 - Expand verse database to 500+ per text, add Thirukkural
-### P2 - Dark mode, audio (TTS), community annotations
+### P1 - Expand verse database, add Tamil/Telugu/Kannada transliterations
+### P2 - Dark mode, audio (TTS), community annotations, email reminders for plans
