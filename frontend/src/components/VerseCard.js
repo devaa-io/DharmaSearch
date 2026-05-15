@@ -1,7 +1,9 @@
 import React, { useState, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { Bookmark, BookmarkCheck, Share2, Copy, Check, Sparkles, RefreshCw, ChevronDown, ChevronUp, Image, Download, X, Globe, MapPin } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Share2, Copy, Check, Sparkles, RefreshCw, ChevronDown, ChevronUp, Image, Download, X, Globe, MapPin, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import CommunityAnnotations from './CommunityAnnotations';
+import CorrectionModal from './CorrectionModal';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -23,6 +25,7 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(0);
   const [transLang, setTransLang] = useState(null);
+  const [showCorrection, setShowCorrection] = useState(false);
   const canvasRef = useRef(null);
 
   const LANG_LABELS = { ml: 'Malayalam', hi: 'Hindi', ta: 'Tamil', te: 'Telugu', kn: 'Kannada' };
@@ -298,10 +301,15 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
           )}
 
           {/* Actions row */}
-          <div className="pt-3 border-t border-[#E8E3D9]/50">
+          <div className="pt-3 border-t border-[#E8E3D9]/50 flex items-center gap-4 flex-wrap">
             <button onClick={handleExplain} className="flex items-center gap-1.5 text-xs font-medium text-[#D97757] hover:text-[#C16648] transition-colors" data-testid={`explain-${verse.verse_id}`}>
               {loadingExplain ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
               {showExplanation ? 'Hide Explanation' : 'AI Explanation'}
+            </button>
+            <CommunityAnnotations verseId={verse.verse_id} verseName={verse.text_name} />
+            <button onClick={() => setShowCorrection(true)} className="flex items-center gap-1.5 text-xs font-medium text-[#A39E93] hover:text-[#D97757] transition-colors" data-testid={`correction-btn-${verse.verse_id}`}>
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Suggest Correction
             </button>
           </div>
 
@@ -320,6 +328,11 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
           )}
         </div>
       </div>
+
+      {/* Correction Modal */}
+      {showCorrection && (
+        <CorrectionModal verse={verse} onClose={() => setShowCorrection(false)} />
+      )}
 
       {/* Share as Image Modal */}
       {showImageModal && (

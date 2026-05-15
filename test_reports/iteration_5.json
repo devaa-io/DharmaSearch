@@ -1,0 +1,49 @@
+{
+  "summary": "Iteration-5 e2e of community annotations + corrections feature. Backend: 33/33 pytest pass (added TestAnnotations: auth-required, public GET, create+vote+sort-by-upvotes+delete, non-owner cannot delete; TestCorrections: auth-required, submit->pending->admin-approve-applies-to-verse(translation persisted, then reverted), reject-does-not-apply, non-admin 403, invalid status 400). Frontend Playwright: Admin login -> /dashboard, Daily Verse card (bg-2-7) renders with Community toggle + Suggest Correction. Toggled community panel, opened annotation form, posted 'TEST_UI_ANN' with Advaita tradition, annotation appeared with 'Admin' user_name and 'Advaita (Shankaracharya)' tradition badge. Upvote click incremented count from 0 to 1. Suggest Correction button opened modal, submitted translation field with TEST_UI_CORRECTION value + reason, modal closed on success. Annotation delete cleanup succeeded. Plans tab still lists 6 plans incl. plan-karkkidakam-30.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/ai-search & /api/ai-explain", "issue": "Still 503 - EMERGENT_LLM_KEY inactive (expected)."},
+      {"endpoint": "POST /api/annotations/{id}/vote", "issue": "When user clicks the same vote twice, returns 200 'Already voted' but no idempotency-aware UI feedback. Frontend always increments local counter regardless, causing UI drift from server count on duplicate clicks."},
+      {"endpoint": "POST /api/annotations", "issue": "No validation on `tradition` string - any value is accepted and stored, including ones not in the UI's TRADITIONS list. Consider enum validation."},
+      {"endpoint": "POST /api/corrections", "issue": "Field is free-form string; only ['translation','text','keywords','chapter_name'] are applied on approve. Submitting other fields creates correction that silently no-ops on approval. Add field whitelist validation at submit time."},
+      {"endpoint": "PATCH /api/corrections/{id}", "issue": "No check for status transitions - an already-approved correction can be approved again, re-applying suggested_value to the verse (overwrites any later edits). Should reject if status != 'pending'."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "CommunityAnnotations.handleVote", "issue": "Local optimistic update always increments upvotes/downvotes regardless of server response. If user votes the same direction twice, server returns 'Already voted' but UI counter still increments, drifting from real DB value until page reload.", "selector": "[data-testid=upvote-*]", "priority": "MEDIUM"},
+      {"component": "CommunityAnnotations annotation card", "issue": "Trash/delete button is shown on every annotation regardless of ownership. Non-owners see the trash icon and only get a 403 toast after clicking. Hide delete for annotations where a.user_id !== current user (or hide unless admin).", "selector": "[data-testid=delete-annotation-*]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "CommunityAnnotations toggle", "issues": ["Initial label reads 'Community (...)' until panel expanded. Pre-fetching count or rendering 'Community (0)' when no data would feel less placeholder-y."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_dharma_app.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Frontend: In handleVote, only update local counts after server returns success and ignore 'Already voted'. Better: rely on a refetch after vote to keep state authoritative.",
+    "Frontend: Hide delete-annotation trash button unless annotation.user_id === current user._id or user.role === 'admin'.",
+    "Backend: Add Pydantic enum validation for AnnotationCreate.tradition and CorrectionCreate.field (whitelist: translation/text/keywords/chapter_name).",
+    "Backend: PATCH /api/corrections/{id} should reject if correction.status != 'pending' to prevent re-approval re-writing the verse.",
+    "Backend (carried): Reactivate EMERGENT_LLM_KEY to enable AI features."
+  ],
+  "critical_code_review_comments": [
+    "server.py ~870 lines - splitting into routers/annotations.py and routers/corrections.py recommended.",
+    "review_correction does not validate `field` whitelist before applying $set; relies on hard-coded list. Same list duplicated implicitly between submit and approve - extract to a constant ALLOWED_CORRECTION_FIELDS.",
+    "delete_annotation also deletes votes via db.annotation_votes.delete_many - good; but POST /annotations/{id}/vote does not verify the annotation exists, so users can create orphan vote docs by voting on non-existent annotation_ids.",
+    "Annotations endpoint allows empty `text` (no min_length validation on Pydantic model). Frontend disables submit, but API accepts empty string.",
+    "CommunityAnnotations.js: on submit, prepends new annotation to local state without re-sorting by upvotes - new (0-upvote) annotation appears on top even when other annotations have higher upvotes. After server-side persistence the GET re-sorts correctly only on next panel re-open."
+  ],
+  "updated_files": ["/app/backend/tests/test_dharma_app.py"],
+  "success_rate": {"backend": "100% (33/33 pytest pass)", "frontend": "100% of community annotation + correction UI flows tested passed (login, panel expand, post annotation with tradition, badge+name display, upvote increment, correction modal open+submit, delete cleanup, Plans tab still shows 6 plans incl karkkidakam-30)"},
+  "test_credentials": "Admin: admin@example.com / admin123",
+  "seed_data_creation": "Tests create TEST_UI_ANN/TEST_UI_CORRECTION/TEST_CORRECTION_SUFFIX/TEST_REVERT/TEST_ANN docs and clean them up. Backend test also performs revert-correction so verse data returns to original value. One TEST_REVERT correction (status=approved) and one TEST_SHOULD_NOT_APPLY (status=rejected) remain in db.corrections from test run.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "test_dharma_app.py now contains TestAnnotations (4 tests) and TestCorrections (3 tests) covering full flow. Key testids verified: toggle-community-{verse_id}, annotations-panel-{verse_id}, add-annotation-{verse_id}, annotation-form-{verse_id}, annotation-text-{verse_id}, annotation-tradition-{verse_id}, submit-annotation-{verse_id}, annotation-ann-* (each), upvote-{annotation_id}, downvote-{annotation_id}, delete-annotation-{annotation_id}, correction-btn-{verse_id}, correction-modal, correction-field-select, correction-suggested-input, correction-reason-input, correction-submit-btn. Daily Verse page already shows full VerseCard with these affordances when logged in. Note: clicking sidebar 'Search' via plain text= selector did NOT navigate - the search route may need exploration; for now use Daily Verse card. Frontend hides nothing for non-owners on delete button - flagged.",
+  "rca_of_the_issue": "No bugs blocking acceptance criteria. Identified minor UX/validation gaps in vote optimistic update (UI drift on duplicate vote), delete button visibility, and missing whitelist validations on tradition/field/status transitions. All 18 listed feature checkpoints in the review request are functional end-to-end."
+}

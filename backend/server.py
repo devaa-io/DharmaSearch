@@ -101,6 +101,18 @@ class PlanCreate(BaseModel):
     verse_ids: List[str]
     duration_days: Optional[int] = None
 
+class AnnotationCreate(BaseModel):
+    verse_id: str
+    text: str
+    tradition: Optional[str] = None
+
+class CorrectionCreate(BaseModel):
+    verse_id: str
+    field: str
+    current_value: str
+    suggested_value: str
+    reason: Optional[str] = ""
+
 # --- Auth Routes ---
 @api_router.post("/auth/register")
 async def register(input: RegisterInput):
@@ -497,6 +509,148 @@ async def update_progress(plan_id: str, request: Request):
         })
     return {"message": "Progress updated"}
 
+# --- Community Annotations ---
+@api_router.get("/annotations/{verse_id}")
+async def get_annotations(verse_id: str):
+    """Get all annotations for a verse (public)"""
+    annotations = await db.annotations.find(
+        {"verse_id": verse_id}, {"_id": 0}
+    ).sort("upvotes", -1).to_list(100)
+    return annotations
+
+@api_router.post("/annotations")
+async def create_annotation(input: AnnotationCreate, request: Request):
+    user = await get_current_user(request)
+    annotation_id = f"ann-{uuid.uuid4().hex[:10]}"
+    doc = {
+        "annotation_id": annotation_id,
+        "verse_id": input.verse_id,
+        "text": input.text,
+        "tradition": input.tradition,
+        "user_id": user["_id"],
+        "user_name": user.get("name", "Anonymous"),
+        "upvotes": 0,
+        "downvotes": 0,
+        "is_verified": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.annotations.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+@api_router.post("/annotations/{annotation_id}/vote")
+async def vote_annotation(annotation_id: str, request: Request):
+    user = await get_current_user(request)
+    body = await request.json()
+    vote = body.get("vote")  # 1 or -1
+    if vote not in [1, -1]:
+        raise HTTPException(status_code=400, detail="Vote must be 1 or -1")
+    existing = await db.annotation_votes.find_one({
+        "user_id": user["_id"], "annotation_id": annotation_id
+    })
+    if existing:
+        if existing["vote"] == vote:
+            return {"message": "Already voted"}
+        # Change vote
+        old_vote = existing["vote"]
+        await db.annotation_votes.update_one(
+            {"user_id": user["_id"], "annotation_id": annotation_id},
+            {"$set": {"vote": vote}}
+        )
+        inc = {"upvotes": 0, "downvotes": 0}
+        if old_vote == 1:
+            inc["upvotes"] = -1
+        else:
+            inc["downvotes"] = -1
+        if vote == 1:
+            inc["upvotes"] = inc.get("upvotes", 0) + 1
+        else:
+            inc["downvotes"] = inc.get("downvotes", 0) + 1
+        await db.annotations.update_one(
+            {"annotation_id": annotation_id}, {"$inc": inc}
+        )
+    else:
+        await db.annotation_votes.insert_one({
+            "user_id": user["_id"],
+            "annotation_id": annotation_id,
+            "vote": vote
+        })
+        field = "upvotes" if vote == 1 else "downvotes"
+        await db.annotations.update_one(
+            {"annotation_id": annotation_id}, {"$inc": {field: 1}}
+        )
+    return {"message": "Vote recorded"}
+
+@api_router.delete("/annotations/{annotation_id}")
+async def delete_annotation(annotation_id: str, request: Request):
+    user = await get_current_user(request)
+    ann = await db.annotations.find_one({"annotation_id": annotation_id})
+    if not ann:
+        raise HTTPException(status_code=404, detail="Annotation not found")
+    if ann["user_id"] != user["_id"] and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    await db.annotations.delete_one({"annotation_id": annotation_id})
+    await db.annotation_votes.delete_many({"annotation_id": annotation_id})
+    return {"message": "Annotation deleted"}
+
+# --- Corrections / Feedback ---
+@api_router.post("/corrections")
+async def submit_correction(input: CorrectionCreate, request: Request):
+    user = await get_current_user(request)
+    correction_id = f"cor-{uuid.uuid4().hex[:10]}"
+    doc = {
+        "correction_id": correction_id,
+        "verse_id": input.verse_id,
+        "field": input.field,
+        "current_value": input.current_value,
+        "suggested_value": input.suggested_value,
+        "reason": input.reason,
+        "user_id": user["_id"],
+        "user_name": user.get("name", "Anonymous"),
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.corrections.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+@api_router.get("/corrections")
+async def get_corrections(request: Request, status: Optional[str] = None):
+    user = await get_current_user(request)
+    query = {}
+    if user.get("role") != "admin":
+        query["user_id"] = user["_id"]
+    if status:
+        query["status"] = status
+    corrections = await db.corrections.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return corrections
+
+@api_router.patch("/corrections/{correction_id}")
+async def review_correction(correction_id: str, request: Request):
+    user = await get_current_user(request)
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    body = await request.json()
+    new_status = body.get("status")  # "approved" or "rejected"
+    if new_status not in ["approved", "rejected"]:
+        raise HTTPException(status_code=400, detail="Status must be 'approved' or 'rejected'")
+    correction = await db.corrections.find_one({"correction_id": correction_id})
+    if not correction:
+        raise HTTPException(status_code=404, detail="Correction not found")
+    await db.corrections.update_one(
+        {"correction_id": correction_id},
+        {"$set": {"status": new_status, "reviewed_by": user["_id"], "reviewed_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    # If approved, apply the correction to the verse
+    if new_status == "approved":
+        field = correction["field"]
+        if field in ["translation", "text", "keywords", "chapter_name"]:
+            await db.verses.update_one(
+                {"verse_id": correction["verse_id"]},
+                {"$set": {field: correction["suggested_value"]}}
+            )
+    return {"message": f"Correction {new_status}"}
+
 # --- Startup ---
 async def seed_admin():
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@example.com")
@@ -547,6 +701,11 @@ async def seed_scriptures():
     await db.bookmarks.create_index([("user_id", 1), ("verse_id", 1)])
     await db.reading_plans.create_index("plan_id", unique=True)
     await db.plan_progress.create_index([("user_id", 1), ("plan_id", 1)])
+    await db.annotations.create_index("verse_id")
+    await db.annotations.create_index("annotation_id", unique=True)
+    await db.annotation_votes.create_index([("user_id", 1), ("annotation_id", 1)])
+    await db.corrections.create_index("correction_id", unique=True)
+    await db.corrections.create_index("status")
 
     # Seed pre-built reading plans
     await seed_reading_plans()

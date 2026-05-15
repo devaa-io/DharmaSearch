@@ -318,3 +318,187 @@ class TestAI:
         r = admin_session.post(f"{BASE_URL}/api/ai-search",
                                json={"query": "duty"}, timeout=120)
         assert r.status_code in (200, 500, 503)
+
+
+
+# ---- Community Annotations ----
+class TestAnnotations:
+    def test_create_annotation_requires_auth(self):
+        r = requests.post(f"{BASE_URL}/api/annotations",
+                          json={"verse_id": "bg-2-47", "text": "x", "tradition": "advaita"})
+        assert r.status_code == 401
+
+    def test_get_annotations_public(self):
+        r = requests.get(f"{BASE_URL}/api/annotations/bg-2-47")
+        assert r.status_code == 200
+        assert isinstance(r.json(), list)
+
+    def test_annotation_create_vote_sort_delete(self, admin_session, new_user_session):
+        # Admin creates two annotations on same verse with different traditions
+        verse_id = "bg-2-47"
+        r1 = admin_session.post(f"{BASE_URL}/api/annotations", json={
+            "verse_id": verse_id,
+            "text": "TEST_ANN advaita interpretation",
+            "tradition": "advaita"
+        })
+        assert r1.status_code == 200, r1.text
+        ann1 = r1.json()
+        assert ann1["tradition"] == "advaita"
+        assert ann1["upvotes"] == 0
+        assert ann1["verse_id"] == verse_id
+        ann1_id = ann1["annotation_id"]
+
+        r2 = admin_session.post(f"{BASE_URL}/api/annotations", json={
+            "verse_id": verse_id,
+            "text": "TEST_ANN bhakti interpretation",
+            "tradition": "bhakti"
+        })
+        assert r2.status_code == 200
+        ann2_id = r2.json()["annotation_id"]
+
+        # New user upvotes ann2 -> should sort above ann1
+        v = new_user_session.post(f"{BASE_URL}/api/annotations/{ann2_id}/vote",
+                                  json={"vote": 1})
+        assert v.status_code == 200
+
+        # Admin also upvotes ann2 -> upvotes=2
+        v2 = admin_session.post(f"{BASE_URL}/api/annotations/{ann2_id}/vote",
+                                json={"vote": 1})
+        assert v2.status_code == 200
+
+        # GET sorted by upvotes desc
+        listing = requests.get(f"{BASE_URL}/api/annotations/{verse_id}").json()
+        # find both
+        ids = [a["annotation_id"] for a in listing]
+        assert ann1_id in ids and ann2_id in ids
+        # ann2 should come first (higher upvotes)
+        pos2 = ids.index(ann2_id)
+        pos1 = ids.index(ann1_id)
+        assert pos2 < pos1, f"Expected ann2 (more upvotes) first; got order {ids}"
+        ann2_full = listing[pos2]
+        assert ann2_full["upvotes"] >= 2
+        assert "_id" not in ann2_full
+
+        # Switch vote from upvote to downvote on ann2
+        sw = new_user_session.post(f"{BASE_URL}/api/annotations/{ann2_id}/vote",
+                                   json={"vote": -1})
+        assert sw.status_code == 200
+        listing2 = requests.get(f"{BASE_URL}/api/annotations/{verse_id}").json()
+        ann2_after = next(a for a in listing2 if a["annotation_id"] == ann2_id)
+        # upvotes decreased, downvotes increased
+        assert ann2_after["upvotes"] == 1
+        assert ann2_after["downvotes"] == 1
+
+        # Invalid vote value
+        bad = admin_session.post(f"{BASE_URL}/api/annotations/{ann1_id}/vote",
+                                 json={"vote": 5})
+        assert bad.status_code == 400
+
+        # Delete both as admin
+        d1 = admin_session.delete(f"{BASE_URL}/api/annotations/{ann1_id}")
+        d2 = admin_session.delete(f"{BASE_URL}/api/annotations/{ann2_id}")
+        assert d1.status_code == 200 and d2.status_code == 200
+
+    def test_non_owner_cannot_delete(self, admin_session, new_user_session):
+        r = admin_session.post(f"{BASE_URL}/api/annotations", json={
+            "verse_id": "bg-2-20", "text": "TEST_ANN admin owned", "tradition": "dvaita"
+        })
+        ann_id = r.json()["annotation_id"]
+        # new_user (non-admin, non-owner) cannot delete
+        d = new_user_session.delete(f"{BASE_URL}/api/annotations/{ann_id}")
+        assert d.status_code == 403
+        # cleanup
+        admin_session.delete(f"{BASE_URL}/api/annotations/{ann_id}")
+
+
+# ---- Corrections / Feedback ----
+class TestCorrections:
+    def test_create_correction_requires_auth(self):
+        r = requests.post(f"{BASE_URL}/api/corrections", json={
+            "verse_id": "bg-2-47", "field": "translation",
+            "current_value": "x", "suggested_value": "y", "reason": "test"
+        })
+        assert r.status_code == 401
+
+    def test_correction_submit_approve_applies_to_verse(self, admin_session, new_user_session):
+        verse_id = "bg-2-20"
+        # Fetch original verse translation
+        orig = requests.get(f"{BASE_URL}/api/scriptures/bhagavad-gita/verses/{verse_id}").json()
+        original_translation = orig["translation"]
+
+        # User submits a correction
+        new_translation = original_translation + " [TEST_CORRECTION_SUFFIX]"
+        sub = new_user_session.post(f"{BASE_URL}/api/corrections", json={
+            "verse_id": verse_id,
+            "field": "translation",
+            "current_value": original_translation,
+            "suggested_value": new_translation,
+            "reason": "TEST_REASON improving clarity"
+        })
+        assert sub.status_code == 200, sub.text
+        cor = sub.json()
+        assert cor["status"] == "pending"
+        assert cor["field"] == "translation"
+        cor_id = cor["correction_id"]
+
+        # Non-admin GET /corrections -> only own pending visible
+        own = new_user_session.get(f"{BASE_URL}/api/corrections").json()
+        assert any(c["correction_id"] == cor_id for c in own)
+
+        # Admin GET /corrections sees pending
+        adm = admin_session.get(f"{BASE_URL}/api/corrections",
+                                params={"status": "pending"}).json()
+        assert any(c["correction_id"] == cor_id for c in adm)
+
+        # Non-admin cannot approve
+        bad = new_user_session.patch(f"{BASE_URL}/api/corrections/{cor_id}",
+                                     json={"status": "approved"})
+        assert bad.status_code == 403
+
+        # Invalid status
+        bad2 = admin_session.patch(f"{BASE_URL}/api/corrections/{cor_id}",
+                                   json={"status": "weird"})
+        assert bad2.status_code == 400
+
+        # Admin approves
+        appr = admin_session.patch(f"{BASE_URL}/api/corrections/{cor_id}",
+                                   json={"status": "approved"})
+        assert appr.status_code == 200
+
+        # Verse translation now updated in DB
+        updated = requests.get(
+            f"{BASE_URL}/api/scriptures/bhagavad-gita/verses/{verse_id}").json()
+        assert updated["translation"] == new_translation
+
+        # Revert via second correction so we don't pollute fixture for retests
+        revert = new_user_session.post(f"{BASE_URL}/api/corrections", json={
+            "verse_id": verse_id, "field": "translation",
+            "current_value": new_translation,
+            "suggested_value": original_translation,
+            "reason": "TEST_REVERT"
+        })
+        revert_id = revert.json()["correction_id"]
+        admin_session.patch(f"{BASE_URL}/api/corrections/{revert_id}",
+                            json={"status": "approved"})
+        check = requests.get(
+            f"{BASE_URL}/api/scriptures/bhagavad-gita/verses/{verse_id}").json()
+        assert check["translation"] == original_translation
+
+    def test_correction_reject_does_not_apply(self, admin_session, new_user_session):
+        verse_id = "bg-4-7"
+        orig = requests.get(f"{BASE_URL}/api/scriptures/bhagavad-gita/verses/{verse_id}").json()
+        original = orig["translation"]
+        sub = new_user_session.post(f"{BASE_URL}/api/corrections", json={
+            "verse_id": verse_id, "field": "translation",
+            "current_value": original,
+            "suggested_value": "TEST_SHOULD_NOT_APPLY",
+            "reason": "TEST"
+        })
+        cor_id = sub.json()["correction_id"]
+        rej = admin_session.patch(f"{BASE_URL}/api/corrections/{cor_id}",
+                                  json={"status": "rejected"})
+        assert rej.status_code == 200
+        # Verse unchanged
+        chk = requests.get(
+            f"{BASE_URL}/api/scriptures/bhagavad-gita/verses/{verse_id}").json()
+        assert chk["translation"] == original
