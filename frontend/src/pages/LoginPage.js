@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
-import { BookOpen, Eye, EyeOff } from 'lucide-react';
+import { BookOpen, Eye, EyeOff, Flame } from 'lucide-react';
 
 function formatApiErrorDetail(detail) {
   if (detail == null) return "Something went wrong. Please try again.";
@@ -40,9 +40,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-[#D97757] rounded-full flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
+            <Flame className="w-6 h-6 text-[#D97757]" strokeWidth={1.5} />
             <span className="font-heading text-2xl font-bold text-[#2C2A29]">DharmaSearch</span>
           </Link>
           <h1 className="font-heading text-3xl font-bold text-[#2C2A29] mb-2">Welcome Back</h1>

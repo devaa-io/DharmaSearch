@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Search, Sparkles, RefreshCw, Filter } from 'lucide-react';
+import { Search, Sparkles, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import VerseCard from './VerseCard';
 
@@ -11,6 +11,12 @@ const textOptions = [
   { value: 'bhagavad-gita', label: 'Bhagavad Gita' },
   { value: 'ramayana', label: 'Ramayana' },
   { value: 'devi-mahatmyam', label: 'Devi Mahatmyam' },
+  { value: 'upanishads', label: 'Upanishads' },
+  { value: 'yoga-sutras', label: 'Yoga Sutras' },
+  { value: 'mahabharata', label: 'Mahabharata' },
+  { value: 'vedas', label: 'Vedas' },
+  { value: 'hanuman-chalisa', label: 'Hanuman Chalisa' },
+  { value: 'puranas', label: 'Puranas' },
 ];
 
 export default function SearchTab() {
@@ -42,11 +48,8 @@ export default function SearchTab() {
     } catch (err) {
       console.error('Search failed', err);
       const detail = err.response?.data?.detail;
-      if (typeof detail === 'string') {
-        toast.error(detail);
-      } else {
-        toast.error(searchMode === 'ai' ? 'AI search unavailable. Try keyword search instead.' : 'Search failed. Please try again.');
-      }
+      if (typeof detail === 'string') toast.error(detail);
+      else toast.error(searchMode === 'ai' ? 'AI search unavailable. Try keyword search.' : 'Search failed.');
       setResults([]);
     } finally {
       setLoading(false);
@@ -54,125 +57,113 @@ export default function SearchTab() {
   };
 
   return (
-    <div className="animate-fade-in-up" data-testid="search-section">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 bg-[#D97757]/10 rounded-xl flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-[#D97757]" />
-        </div>
-        <div>
-          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#2C2A29]">Search Scriptures</h2>
-          <p className="text-sm text-[#75716B]">Find verses by meaning or keywords</p>
-        </div>
+    <div className="animate-fade-in" data-testid="search-section">
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#2C2A29] mb-1">Search Scriptures</h2>
+        <p className="text-xs text-[#A39E93]">Find verses by meaning or exact keywords across 9 sacred texts</p>
       </div>
 
-      {/* Search Mode Toggle */}
-      <div className="flex gap-2 mb-4">
+      {/* Mode toggle */}
+      <div className="flex gap-1 p-1 bg-[#F5F2EA] rounded-lg w-fit mb-5">
         <button
           onClick={() => setSearchMode('ai')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-            searchMode === 'ai'
-              ? 'bg-[#D97757] text-white'
-              : 'bg-white border border-[#E8E3D9] text-[#75716B] hover:bg-[#F5F2EA]'
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-medium transition-all ${
+            searchMode === 'ai' ? 'bg-white text-[#2C2A29] shadow-sm' : 'text-[#75716B] hover:text-[#2C2A29]'
           }`}
           data-testid="search-mode-ai"
         >
-          <Sparkles className="w-4 h-4" />
+          <Sparkles className="w-3.5 h-3.5" />
           AI Search
         </button>
         <button
           onClick={() => setSearchMode('keyword')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-            searchMode === 'keyword'
-              ? 'bg-[#D97757] text-white'
-              : 'bg-white border border-[#E8E3D9] text-[#75716B] hover:bg-[#F5F2EA]'
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-medium transition-all ${
+            searchMode === 'keyword' ? 'bg-white text-[#2C2A29] shadow-sm' : 'text-[#75716B] hover:text-[#2C2A29]'
           }`}
           data-testid="search-mode-keyword"
         >
-          <Search className="w-4 h-4" />
-          Keyword Search
+          <Search className="w-3.5 h-3.5" />
+          Keyword
         </button>
       </div>
 
-      {/* Search Bar */}
-      <form onSubmit={handleSearch} className="mb-6" data-testid="search-form">
-        <div className="flex flex-col sm:flex-row gap-3">
+      {/* Search form */}
+      <form onSubmit={handleSearch} className="mb-8" data-testid="search-form">
+        <div className="flex gap-2">
           <div className="flex-1 relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A39E93]">
-              {searchMode === 'ai' ? <Sparkles className="w-5 h-5" /> : <Search className="w-5 h-5" />}
-            </div>
             <input
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder={searchMode === 'ai' ? "Ask anything... e.g., 'verses about duty and righteousness'" : "Search by keyword..."}
-              className="w-full rounded-full border border-[#E8E3D9] bg-white pl-12 pr-4 py-4 shadow-sm focus:ring-2 focus:ring-[#D97757] focus:border-transparent outline-none transition-all text-[#2C2A29]"
+              placeholder={searchMode === 'ai' ? "e.g., 'What does Krishna say about the eternal soul?'" : "Search for: dharma, soul, devotion..."}
+              className="w-full border border-[#E8E3D9] rounded-lg bg-white pl-4 pr-4 py-3 text-sm focus:ring-2 focus:ring-[#D97757] focus:border-transparent outline-none transition-all text-[#2C2A29] placeholder:text-[#A39E93]"
               data-testid="search-input"
             />
           </div>
-          <div className="flex gap-2">
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A39E93]" />
-              <select
-                value={textFilter}
-                onChange={e => setTextFilter(e.target.value)}
-                className="appearance-none rounded-full border border-[#E8E3D9] bg-white pl-9 pr-8 py-4 text-sm text-[#2C2A29] focus:ring-2 focus:ring-[#D97757] focus:border-transparent outline-none"
-                data-testid="search-filter"
-              >
-                {textOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-            <button
-              type="submit"
-              disabled={loading || !query.trim()}
-              className="bg-[#D97757] text-white rounded-full px-6 py-4 font-medium hover:bg-[#C16648] transition-colors disabled:opacity-50 flex items-center gap-2"
-              data-testid="search-submit-btn"
-            >
-              {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
-              Search
-            </button>
-          </div>
+          <select
+            value={textFilter}
+            onChange={e => setTextFilter(e.target.value)}
+            className="border border-[#E8E3D9] rounded-lg bg-white px-3 py-3 text-xs text-[#2C2A29] focus:ring-2 focus:ring-[#D97757] focus:border-transparent outline-none hidden sm:block"
+            data-testid="search-filter"
+          >
+            {textOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <button
+            type="submit"
+            disabled={loading || !query.trim()}
+            className="bg-[#2C2A29] text-white rounded-lg px-5 py-3 text-sm font-medium hover:bg-[#1a1918] transition-colors disabled:opacity-40 flex items-center gap-2"
+            data-testid="search-submit-btn"
+          >
+            {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            <span className="hidden sm:inline">Search</span>
+          </button>
         </div>
-        {searchMode === 'ai' && (
-          <p className="text-xs text-[#A39E93] mt-2 ml-2">
-            AI search understands meaning and context. Try natural language queries.
-          </p>
-        )}
+        {/* Mobile filter */}
+        <select
+          value={textFilter}
+          onChange={e => setTextFilter(e.target.value)}
+          className="sm:hidden mt-2 w-full border border-[#E8E3D9] rounded-lg bg-white px-3 py-2.5 text-xs text-[#2C2A29]"
+        >
+          {textOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
       </form>
 
       {/* Results */}
       {loading && (
         <div className="flex flex-col items-center py-20">
-          <RefreshCw className="w-8 h-8 text-[#D97757] animate-spin mb-3" />
-          <p className="text-[#75716B]">{searchMode === 'ai' ? 'AI is searching through scriptures...' : 'Searching...'}</p>
+          <RefreshCw className="w-5 h-5 text-[#D97757] animate-spin mb-3" />
+          <p className="text-xs text-[#75716B]">{searchMode === 'ai' ? 'AI is searching through scriptures...' : 'Searching...'}</p>
         </div>
       )}
 
       {!loading && searched && results.length === 0 && (
         <div className="text-center py-16">
-          <Search className="w-12 h-12 text-[#E8E3D9] mx-auto mb-3" />
-          <p className="text-[#75716B]">No verses found. Try a different query or search mode.</p>
+          <p className="text-sm text-[#75716B]">No verses found. Try different words or switch search mode.</p>
         </div>
       )}
 
       {!loading && results.length > 0 && (
         <div data-testid="search-results">
-          <p className="text-sm text-[#75716B] mb-4">{results.length} verse{results.length > 1 ? 's' : ''} found</p>
-          <div className="space-y-4">
+          <p className="text-xs text-[#A39E93] mb-4">{results.length} result{results.length > 1 ? 's' : ''}</p>
+          <div className="space-y-3">
             {results.map(v => <VerseCard key={v.verse_id} verse={v} />)}
           </div>
         </div>
       )}
 
       {!searched && !loading && (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 bg-[#D97757]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-8 h-8 text-[#D97757]" />
+        <div className="text-center py-16 max-w-sm mx-auto">
+          <div className="w-12 h-12 bg-[#D97757]/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+            {searchMode === 'ai' ? <Sparkles className="w-5 h-5 text-[#D97757]" /> : <Search className="w-5 h-5 text-[#D97757]" />}
           </div>
-          <p className="font-heading text-xl text-[#2C2A29] mb-2">Search Ancient Wisdom</p>
-          <p className="text-sm text-[#75716B] max-w-md mx-auto">
+          <p className="text-sm text-[#2C2A29] font-medium mb-1">
+            {searchMode === 'ai' ? 'Ask a question' : 'Search by keyword'}
+          </p>
+          <p className="text-xs text-[#A39E93] leading-relaxed">
             {searchMode === 'ai'
-              ? 'Ask in natural language, like "What does Krishna say about the eternal soul?" or "Verses about the power of the Goddess"'
-              : 'Search for keywords like "dharma", "soul", "devotion", "Rama"'}
+              ? 'Try: "verses about the nature of the soul" or "What does the Ramayana say about duty?"'
+              : 'Try: "dharma", "soul", "devotion", "karma", "meditation"'}
           </p>
         </div>
       )}

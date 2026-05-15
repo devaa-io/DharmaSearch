@@ -8,9 +8,11 @@ const API = process.env.REACT_APP_BACKEND_URL;
 export default function DailyVerse() {
   const [verse, setVerse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ texts: 0, verses: 0 });
 
   useEffect(() => {
     fetchDailyVerse();
+    fetchStats();
   }, []);
 
   const fetchDailyVerse = async () => {
@@ -25,55 +27,65 @@ export default function DailyVerse() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const { data } = await axios.get(`${API}/api/scriptures`);
+      setStats({ texts: data.length, verses: 180 });
+    } catch {}
+  };
+
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
   return (
-    <div className="animate-fade-in-up" data-testid="daily-verse-section">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 bg-[#D97757]/10 rounded-xl flex items-center justify-center">
-          <Sun className="w-5 h-5 text-[#D97757]" />
-        </div>
-        <div>
-          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#2C2A29]">Verse of the Day</h2>
-          <p className="text-sm text-[#75716B]">A daily dose of ancient wisdom</p>
-        </div>
+    <div className="animate-fade-in" data-testid="daily-verse-section">
+      {/* Welcome banner */}
+      <div className="mb-8">
+        <p className="text-xs text-[#A39E93] uppercase tracking-widest mb-2">{today}</p>
+        <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#2C2A29] mb-1">Verse of the Day</h2>
+        <p className="text-sm text-[#75716B]">A daily invitation to reflect on ancient wisdom</p>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <RefreshCw className="w-6 h-6 text-[#D97757] animate-spin" />
+          <RefreshCw className="w-5 h-5 text-[#D97757] animate-spin" />
         </div>
       ) : verse ? (
-        <div className="max-w-3xl">
+        <div className="max-w-2xl">
           <VerseCard verse={verse} expanded />
         </div>
       ) : (
         <p className="text-[#75716B] text-center py-10">No verse available today.</p>
       )}
 
-      {/* Decorative section */}
-      <div className="mt-16 grid md:grid-cols-2 gap-6">
-        <div className="relative rounded-2xl overflow-hidden h-64">
-          <img
-            src="https://images.unsplash.com/photo-1488875482628-eee706cbfad5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwzfHxsb3R1cyUyMGZsb3dlciUyMGNhbG0lMjBzdW5yaXNlfGVufDB8fHx8MTc3ODgyODQ1Nnww&ixlib=rb-4.1.0&q=85"
-            alt="Lotus flower"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4 text-white">
-            <p className="font-scripture text-lg italic">"The soul is never born, nor does it die."</p>
-            <p className="text-xs mt-1 opacity-80">Bhagavad Gita 2.20</p>
-          </div>
+      {/* Stats strip */}
+      <div className="mt-12 grid grid-cols-3 gap-4 max-w-lg">
+        <div className="text-center py-4 border border-[#E8E3D9] rounded-lg bg-white">
+          <p className="font-heading text-2xl font-bold text-[#D97757]">{stats.texts}</p>
+          <p className="text-xs text-[#A39E93] mt-1">Sacred Texts</p>
         </div>
-        <div className="relative rounded-2xl overflow-hidden h-64">
-          <img
-            src="https://images.unsplash.com/photo-1643300788512-64b38ad876c6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2ODl8MHwxfHNlYXJjaHwyfHxzYW5za3JpdCUyMG1hbnVzY3JpcHR8ZW58MHx8fHwxNzc4ODI4NDU2fDA&ixlib=rb-4.1.0&q=85"
-            alt="Ancient manuscript"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4 text-white">
-            <p className="font-scripture text-lg italic">"Dharma protects those who protect dharma."</p>
-            <p className="text-xs mt-1 opacity-80">Ramayana 3.1</p>
-          </div>
+        <div className="text-center py-4 border border-[#E8E3D9] rounded-lg bg-white">
+          <p className="font-heading text-2xl font-bold text-[#D97757]">180+</p>
+          <p className="text-xs text-[#A39E93] mt-1">Verses</p>
+        </div>
+        <div className="text-center py-4 border border-[#E8E3D9] rounded-lg bg-white">
+          <p className="font-heading text-2xl font-bold text-[#D97757]">AI</p>
+          <p className="text-xs text-[#A39E93] mt-1">Explanations</p>
+        </div>
+      </div>
+
+      {/* Inspiration cards */}
+      <div className="mt-8 grid sm:grid-cols-2 gap-4 max-w-2xl">
+        <div className="bg-[#2C2A29] rounded-lg p-5">
+          <p className="font-scripture text-base italic text-white/90 leading-relaxed">
+            "Truth alone triumphs, not falsehood."
+          </p>
+          <p className="text-xs text-white/40 mt-3">Mundaka Upanishad</p>
+        </div>
+        <div className="bg-[#F5F2EA] rounded-lg p-5">
+          <p className="font-scripture text-base italic text-[#2C2A29] leading-relaxed">
+            "Dharma protects those who protect dharma."
+          </p>
+          <p className="text-xs text-[#A39E93] mt-3">Mahabharata</p>
         </div>
       </div>
     </div>

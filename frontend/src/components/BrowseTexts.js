@@ -13,9 +13,7 @@ export default function BrowseTexts() {
   const [verses, setVerses] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchScriptures();
-  }, []);
+  useEffect(() => { fetchScriptures(); }, []);
 
   const fetchScriptures = async () => {
     try {
@@ -55,128 +53,130 @@ export default function BrowseTexts() {
   };
 
   const goBack = () => {
-    if (selectedChapter !== null) {
-      setSelectedChapter(null);
-      setVerses([]);
-    } else if (selectedText) {
-      setSelectedText(null);
-      setChapters([]);
-    }
+    if (selectedChapter !== null) { setSelectedChapter(null); setVerses([]); }
+    else if (selectedText) { setSelectedText(null); setChapters([]); }
   };
 
   const getTextName = (id) => scriptures.find(s => s.text_id === id)?.name || id;
   const getChapterName = (ch) => chapters.find(c => c.chapter === ch)?.chapter_name || `Chapter ${ch}`;
 
-  const textImages = {
-    'bhagavad-gita': 'https://images.unsplash.com/photo-1643300788512-64b38ad876c6?w=400',
-    'ramayana': 'https://images.unsplash.com/photo-1617904472808-7e038208077a?w=400',
-    'devi-mahatmyam': 'https://images.unsplash.com/photo-1488875482628-eee706cbfad5?w=400',
-  };
+  // Breadcrumb
+  const crumbs = ['All Texts'];
+  if (selectedText) crumbs.push(getTextName(selectedText));
+  if (selectedChapter !== null) crumbs.push(getChapterName(selectedChapter));
 
   return (
-    <div className="animate-fade-in-up" data-testid="browse-section">
+    <div className="animate-fade-in" data-testid="browse-section">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1.5 text-xs text-[#A39E93] mb-6">
+        {crumbs.map((c, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && <ChevronRight className="w-3 h-3" />}
+            <span className={i === crumbs.length - 1 ? 'text-[#2C2A29] font-medium' : 'cursor-pointer hover:text-[#D97757]'} onClick={() => {
+              if (i === 0) { setSelectedText(null); setSelectedChapter(null); setChapters([]); setVerses([]); }
+              else if (i === 1 && selectedChapter !== null) { setSelectedChapter(null); setVerses([]); }
+            }}>
+              {c}
+            </span>
+          </React.Fragment>
+        ))}
+      </div>
+
       {/* Header */}
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-6">
         {(selectedText || selectedChapter !== null) && (
-          <button onClick={goBack} className="text-[#75716B] hover:text-[#D97757] transition-colors" data-testid="browse-back-btn">
-            <ArrowLeft className="w-5 h-5" />
+          <button onClick={goBack} className="p-1.5 rounded-lg text-[#75716B] hover:text-[#D97757] hover:bg-[#D97757]/5 transition-all" data-testid="browse-back-btn">
+            <ArrowLeft className="w-4 h-4" />
           </button>
         )}
-        <div className="w-10 h-10 bg-[#D97757]/10 rounded-xl flex items-center justify-center">
-          <Compass className="w-5 h-5 text-[#D97757]" />
-        </div>
         <div>
-          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#2C2A29]">
+          <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#2C2A29]">
             {selectedChapter !== null
-              ? `${getTextName(selectedText)} - ${getChapterName(selectedChapter)}`
+              ? getChapterName(selectedChapter)
               : selectedText
                 ? getTextName(selectedText)
-                : 'Browse Sacred Texts'}
+                : 'Sacred Texts'}
           </h2>
-          <p className="text-sm text-[#75716B]">
+          <p className="text-xs text-[#A39E93]">
             {selectedChapter !== null
               ? `${verses.length} verses`
               : selectedText
                 ? `${chapters.length} chapters`
-                : 'Explore by text, chapter, and verse'}
+                : `${scriptures.length} texts available`}
           </p>
         </div>
       </div>
 
       {loading && (
         <div className="flex items-center justify-center py-20">
-          <RefreshCw className="w-6 h-6 text-[#D97757] animate-spin" />
+          <RefreshCw className="w-5 h-5 text-[#D97757] animate-spin" />
         </div>
       )}
 
-      {/* Scripture Selection */}
+      {/* Scripture list — flat table-like */}
       {!selectedText && !loading && (
-        <div className="grid md:grid-cols-3 gap-6" data-testid="scripture-list">
-          {scriptures.map(s => (
+        <div className="space-y-1" data-testid="scripture-list">
+          {scriptures.map((s, i) => (
             <button
               key={s.text_id}
               onClick={() => selectText(s.text_id)}
-              className="group text-left bg-white border border-[#E8E3D9] rounded-2xl overflow-hidden hover:-translate-y-1 hover:shadow-md transition-all duration-300"
+              className="group w-full flex items-center gap-4 p-4 bg-white border border-[#E8E3D9] rounded-lg hover:border-[#D97757]/30 hover:bg-[#D97757]/[0.02] transition-all text-left"
               data-testid={`scripture-${s.text_id}`}
             >
-              <div className="relative h-40 overflow-hidden">
-                <img
-                  src={textImages[s.text_id] || s.image}
-                  alt={s.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-3 left-4 text-white">
-                  <span className="text-xs bg-white/20 backdrop-blur-sm rounded-full px-2 py-0.5">{s.total_chapters} chapters</span>
+              <div className="w-10 h-10 rounded-lg bg-[#D97757]/10 flex items-center justify-center flex-shrink-0">
+                <span className="font-heading text-sm font-bold text-[#D97757]">{i + 1}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-heading text-base font-bold text-[#2C2A29] group-hover:text-[#D97757] transition-colors">
+                    {s.name}
+                  </h3>
+                  <span className="text-[10px] text-[#A39E93] bg-[#F5F2EA] px-2 py-0.5 rounded">{s.language}</span>
                 </div>
+                <p className="text-xs text-[#75716B] mt-0.5 truncate">{s.description}</p>
               </div>
-              <div className="p-6">
-                <h3 className="font-heading text-xl font-bold text-[#2C2A29] mb-2 group-hover:text-[#D97757] transition-colors">
-                  {s.name}
-                  <ChevronRight className="w-5 h-5 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </h3>
-                <p className="text-sm text-[#75716B] leading-relaxed line-clamp-2">{s.description}</p>
+              <div className="text-right flex-shrink-0">
+                <p className="text-xs text-[#A39E93]">{s.total_chapters} ch.</p>
               </div>
+              <ChevronRight className="w-4 h-4 text-[#E8E3D9] group-hover:text-[#D97757] transition-colors flex-shrink-0" />
             </button>
           ))}
         </div>
       )}
 
-      {/* Chapter Selection */}
+      {/* Chapter list */}
       {selectedText && selectedChapter === null && !loading && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="chapter-list">
+        <div className="space-y-1" data-testid="chapter-list">
           {chapters.map(c => (
             <button
               key={c.chapter}
               onClick={() => selectChapter(c.chapter)}
-              className="group text-left bg-white border border-[#E8E3D9] rounded-2xl p-6 hover:-translate-y-1 hover:shadow-md transition-all duration-300"
+              className="group w-full flex items-center gap-4 p-4 bg-white border border-[#E8E3D9] rounded-lg hover:border-[#D97757]/30 hover:bg-[#D97757]/[0.02] transition-all text-left"
               data-testid={`chapter-${c.chapter}`}
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="w-10 h-10 bg-[#D97757]/10 rounded-xl flex items-center justify-center mb-3">
-                    <span className="font-heading text-lg font-bold text-[#D97757]">{c.chapter}</span>
-                  </div>
-                  <h3 className="font-heading text-lg font-bold text-[#2C2A29] group-hover:text-[#D97757] transition-colors">
-                    {c.chapter_name || `Chapter ${c.chapter}`}
-                  </h3>
-                  <p className="text-sm text-[#75716B] mt-1">{c.verse_count} verse{c.verse_count > 1 ? 's' : ''}</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-[#A39E93] group-hover:text-[#D97757] transition-colors mt-2" />
+              <div className="w-8 h-8 rounded bg-[#F5F2EA] flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-[#75716B]">{c.chapter}</span>
               </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-medium text-[#2C2A29] group-hover:text-[#D97757] transition-colors">
+                  {c.chapter_name || `Chapter ${c.chapter}`}
+                </h3>
+              </div>
+              <span className="text-xs text-[#A39E93] flex-shrink-0">{c.verse_count} v.</span>
+              <ChevronRight className="w-4 h-4 text-[#E8E3D9] group-hover:text-[#D97757] transition-colors flex-shrink-0" />
             </button>
           ))}
         </div>
       )}
 
-      {/* Verse List */}
+      {/* Verse list */}
       {selectedChapter !== null && !loading && (
-        <div className="space-y-4" data-testid="verse-list">
+        <div className="space-y-3" data-testid="verse-list">
           {verses.map(v => <VerseCard key={v.verse_id} verse={v} />)}
           {verses.length === 0 && (
             <div className="text-center py-16">
-              <BookOpen className="w-12 h-12 text-[#E8E3D9] mx-auto mb-3" />
-              <p className="text-[#75716B]">No verses found in this chapter.</p>
+              <BookOpen className="w-10 h-10 text-[#E8E3D9] mx-auto mb-3" />
+              <p className="text-sm text-[#75716B]">No verses in this chapter.</p>
             </div>
           )}
         </div>

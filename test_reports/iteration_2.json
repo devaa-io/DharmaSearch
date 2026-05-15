@@ -1,0 +1,44 @@
+{
+  "summary": "Round-2 e2e testing of DharmaSearch after UI overhaul and expansion to 9 scriptures / 180+ verses. Backend: 20/20 pytest tests pass (test_dharma_app.py updated for 9 texts with hyphenated text_ids: bhagavad-gita, ramayana, devi-mahatmyam, upanishads, yoga-sutras, mahabharata, vedas, hanuman-chalisa, puranas). New keyword tests for 'yoga' (hits Yoga Sutras + Gita + Mahabharata) and 'Om' (hits Vedas/Upanishads) pass. AI endpoints now return 503 with friendly message 'AI search is temporarily unavailable. Please try keyword search instead.' (fix from iteration 1 confirmed). Frontend: Landing page lists all 9 texts and shows '9 SACRED TEXTS · 180+ VERSES'. Login (admin/admin123) works. Dashboard sidebar with 4 tabs (Daily Verse, Search, Browse, Saved). Daily Verse shows verse-of-the-day card + stats cards (9 Sacred Texts, 180+ Verses, AI Explanations). Browse > 9 scriptures listed with chapter counts (Gita 18ch, Ramayana 7ch, Devi 13ch, Upanishads 8ch, Yoga Sutras 4ch, Mahabharata 5ch, Vedas 4ch, Hanuman Chalisa 1ch, Puranas 4ch). Upanishads loads chapters (Isha, Kena, Katha, Mundaka, Mandukya, Chandogya, Brihadaranyaka, Taittiriya). Gita > Ch.2 Sankhya Yoga loads 11 verses. Keyword search 'dharma' returns 20 results across Gita/Mahabharata/Ramayana/Upanishads/Vedas/Puranas; 'yoga' returns Yoga Sutras; 'Om' returns Vedas/Upanishads. Share-as-Image modal: opens correctly, 4 themes (Dark/Light/Night/Parchment) all selectable, canvas renders verse preview, Download Image button present. Bookmark add works (verse appears highlighted). Copy button works without dev-overlay crash (fix from iteration 1 confirmed).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/ai-search & /api/ai-explain", "issue": "Still return 503 because EMERGENT_LLM_KEY remains inactive. Backend now wraps errors and returns a friendly 503 message (this is acceptable per problem statement). When key is reactivated, retest these endpoints for 200 responses."},
+      {"endpoint": "POST /api/bookmarks", "issue": "Returns 400 'Already bookmarked' when verse is already saved. Backend behaviour is correct (duplicate prevention) but frontend should treat this as a no-op rather than logging an error (see frontend issue)."},
+      {"endpoint": "GET /api/scriptures/{text_id}/chapters", "issue": "Still no 404 for invalid text_id (returns empty list). Cosmetic."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "BookmarksTab/VerseCard - bookmark click handler", "issue": "When a verse is already bookmarked (e.g., from a previous session or daily-verse), clicking the bookmark icon POSTs /api/bookmarks again and gets a 400 'Already bookmarked'. The frontend logs this as a console error and renders a toast which can stack and overlay sidebar nav clicks (nav-saved click began to time out after this 400 in our Playwright run). Fix: in VerseCard.handleBookmark, on 400 with 'Already bookmarked', treat as already-set (just set bookmarked=true) instead of throwing/toasting an error.", "selector": "[data-testid^=bookmark-]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [
+      {"flow": "Search tab default mode = AI", "issue": "AI is the default search mode on the Search tab. Because EMERGENT_LLM_KEY is inactive, the very first search a user does returns 503 and the screen shows 'No verses found. Try different words or switch search mode.' plus a sonner toast 'AI search unavailable. Try keyword search.' This UX is technically handled but the empty-state copy is shown alongside the toast which may be confusing. Consider defaulting to Keyword mode until the LLM key is restored.", "affected_selectors": ["[data-testid=search-mode-ai]", "[data-testid=search-mode-keyword]"]}
+    ],
+    "design_issues": [
+      {"screen": "Search results empty state", "issues": ["Empty-state copy 'No verses found. Try different words or switch search mode.' is shown both when keyword search yields nothing AND when AI 503 occurs - they should be distinguished."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_dharma_app.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Frontend: Handle 400 'Already bookmarked' in VerseCard.handleBookmark by setting bookmarked=true silently instead of console.error/toast - prevents toast stacking and overlay click interception.",
+    "Frontend: Consider defaulting Search tab to Keyword mode while EMERGENT_LLM_KEY is inactive, OR check key health on Search-tab mount and disable AI mode with a tooltip explanation.",
+    "Backend: Reactivate EMERGENT_LLM_KEY so AI search/AI explanation can return 200 instead of 503 (still the only blocker for AI features).",
+    "Backend (cosmetic): Return 404 from /api/scriptures/{text_id}/chapters when text_id does not exist."
+  ],
+  "critical_code_review_comments": [
+    "VerseCard.handleBookmark should differentiate add (POST) from already-exists (400) - either GET /api/bookmarks first or treat 400 as success-state.",
+    "SearchTab AI search empty-state vs 503 error are conflated - the 'No verses found' message renders even when network returned 503.",
+    "server.py: AI search system_message still embeds the entire 180-verse corpus per call - costly and will not scale. Use Mongo text index or vector embeddings.",
+    "scripture_data_extended.py: 9 scriptures with hyphenated text_ids - if a frontend route or hardcoded reference uses underscores anywhere it will break.",
+    "Dashboard.js: Sidebar nav has good data-testid coverage; Saved tab triggers a refetch every time it is opened - consider client-side cache."
+  ],
+  "updated_files": ["/app/backend/tests/test_dharma_app.py"],
+  "success_rate": {"backend": "100% (20/20 pytest pass; AI endpoints return graceful 503 due to inactive key - expected)", "frontend": "~95% (landing, auth, sidebar nav, daily verse, browse 9 texts, chapters, verses, keyword search across texts, share-as-image, bookmark add, copy all work. Minor: 400-on-duplicate-bookmark surfaces as toast and can overlay clicks.)"},
+  "test_credentials": "Admin: admin@example.com / admin123 (worked). Registered test user during run: testuser_<ts>@example.com / testpass123.",
+  "seed_data_creation": "None - relied on existing 180-verse seed across 9 scriptures.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests at /app/backend/tests/test_dharma_app.py now expect exactly 9 scriptures with hyphenated text_ids and AI tests tolerate 200/500/503. Frontend testids: nav-{daily-verse|search|browse|saved}, logout-btn, search-input, search-submit-btn, search-mode-{ai|keyword}, search-filter, search-results, verse-card-<verse_id>, copy-<verse_id>, image-<verse_id> (share-as-image button - NOT share-image-), share-<verse_id>, bookmark-<verse_id>, explain-<verse_id>, image-modal, image-modal-close, theme-{dark|light|night|parchment}, download-image-btn. Default Search mode is AI; switch to keyword first when testing keyword flow. Bookmark 400 'Already bookmarked' triggers a toast that can stack and block sidebar clicks - clear bookmarks before saved-tab tests.",
+  "rca_of_the_issue": "AI endpoints still return 503 because EMERGENT_LLM_KEY in /app/backend/.env is inactive (upstream LiteLLM AuthenticationError). Backend now wraps the exception and returns HTTPException(503, 'AI search is temporarily unavailable...') - confirmed via curl. This is acceptable; only fix is to provision an active key. Bookmark-overlay issue: clicking the bookmark icon on a verse that is already saved POSTs to /api/bookmarks and gets 400; the SearchTab/VerseCard does not branch on err.response.status==400 with this specific message, so it console.errors and sometimes raises a toast. After 1-2 such toasts the sonner overlay can intercept clicks on nav-saved during Playwright runs. Reproduction: login admin -> Search -> Keyword -> 'dharma' -> click bookmark on first card twice -> click Saved in sidebar - second-click POST returns 400 and Saved nav becomes intermittently unclickable. Mitigation: in handleBookmark, if response.status === 400 simply setBookmarked(true) and skip toast."
+}

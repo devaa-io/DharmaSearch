@@ -77,11 +77,12 @@ class TestScriptures:
         assert r.status_code == 200
         data = r.json()
         assert isinstance(data, list)
-        assert len(data) == 3, f"Expected 3 scriptures, got {len(data)}"
+        assert len(data) == 9, f"Expected 9 scriptures, got {len(data)}"
         text_ids = [s["text_id"] for s in data]
-        # at least the three named scriptures should be present
-        for t in text_ids:
-            assert isinstance(t, str)
+        # Expected text_ids
+        expected = {"bhagavad-gita", "ramayana", "devi-mahatmyam", "upanishads",
+                    "yoga-sutras", "mahabharata", "vedas", "hanuman-chalisa", "puranas"}
+        assert expected.issubset(set(text_ids)), f"Missing scriptures. Got: {text_ids}"
 
     def test_chapters_for_each_scripture(self):
         r = requests.get(f"{BASE_URL}/api/scriptures")
@@ -130,6 +131,21 @@ class TestSearch:
         r = requests.get(f"{BASE_URL}/api/search", params={"q": "zzzznonexistentxyz"})
         assert r.status_code == 200
         assert r.json() == []
+
+    def test_keyword_search_yoga(self):
+        r = requests.get(f"{BASE_URL}/api/search", params={"q": "yoga"})
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) > 0, "No results for 'yoga'"
+        # Should hit Yoga Sutras or Gita
+        text_ids = {v.get("text_id") for v in data}
+        assert any(t in text_ids for t in ("yoga-sutras", "bhagavad-gita")), f"Unexpected text_ids: {text_ids}"
+
+    def test_keyword_search_om(self):
+        r = requests.get(f"{BASE_URL}/api/search", params={"q": "Om"})
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) > 0, "No results for 'Om'"
 
 
 # ---- Daily Verse ----
@@ -188,8 +204,8 @@ class TestAI:
 
     def test_ai_search_authenticated(self, admin_session):
         r = admin_session.post(f"{BASE_URL}/api/ai-search", json={"query": "duty and righteousness"}, timeout=120)
-        # Accept 200 with list (may be empty if LLM parsing fails) or 500 if LLM fails
-        assert r.status_code in (200, 500), f"Unexpected: {r.status_code} {r.text[:300]}"
+        # AI features may fail with 503/500 due to inactive EMERGENT_LLM_KEY (expected)
+        assert r.status_code in (200, 500, 503), f"Unexpected: {r.status_code} {r.text[:300]}"
         if r.status_code == 200:
             assert isinstance(r.json(), list)
 
@@ -200,7 +216,7 @@ class TestAI:
         verses = requests.get(f"{BASE_URL}/api/scriptures/{s['text_id']}/chapters/{chapters[0]['chapter']}/verses").json()
         verse_id = verses[0]["verse_id"]
         r = admin_session.post(f"{BASE_URL}/api/ai-explain", json={"verse_id": verse_id}, timeout=120)
-        assert r.status_code in (200, 500), f"Unexpected: {r.status_code} {r.text[:300]}"
+        assert r.status_code in (200, 500, 503), f"Unexpected: {r.status_code} {r.text[:300]}"
         if r.status_code == 200:
             data = r.json()
             assert "explanation" in data
