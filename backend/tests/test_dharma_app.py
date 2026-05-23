@@ -320,6 +320,36 @@ class TestAI:
         assert r.status_code in (200, 500, 503)
 
 
+# ---- TTS (Audio Recitation) ----
+class TestTTS:
+    def test_tts_requires_auth(self):
+        r = requests.post(f"{BASE_URL}/api/tts",
+                          json={"verse_id": "bg-2-47", "voice": "sage"})
+        assert r.status_code == 401
+
+    def test_tts_verse_not_found(self, admin_session):
+        r = admin_session.post(f"{BASE_URL}/api/tts",
+                               json={"verse_id": "no-such-verse", "voice": "sage"},
+                               timeout=60)
+        assert r.status_code == 404
+
+    def test_tts_generates_or_503(self, admin_session):
+        r = admin_session.post(f"{BASE_URL}/api/tts",
+                               json={"verse_id": "bg-2-47", "voice": "nova"},
+                               timeout=120)
+        assert r.status_code in (200, 503)
+        if r.status_code == 200:
+            data = r.json()
+            assert "audio_base64" in data and isinstance(data["audio_base64"], str)
+            assert len(data["audio_base64"]) > 100
+            # second call should hit cache
+            r2 = admin_session.post(f"{BASE_URL}/api/tts",
+                                    json={"verse_id": "bg-2-47", "voice": "nova"},
+                                    timeout=30)
+            assert r2.status_code == 200
+            assert r2.json().get("cached") is True
+
+
 
 # ---- Community Annotations ----
 class TestAnnotations:

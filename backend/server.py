@@ -360,6 +360,65 @@ Translation: {verse['translation']}
         logger.error(f"AI explain error: {e}")
         raise HTTPException(status_code=503, detail="AI explanation is temporarily unavailable. Please try again later.")
 
+# --- Audio Recitation (TTS) ---
+class TTSInput(BaseModel):
+    verse_id: str
+    voice: Optional[str] = "sage"
+
+@api_router.post("/tts")
+async def generate_tts(input: TTSInput, request: Request):
+    user = await get_current_user(request)
+    verse = await db.verses.find_one({"verse_id": input.verse_id}, {"_id": 0})
+    if not verse:
+        raise HTTPException(status_code=404, detail="Verse not found")
+
+    # Check cache first
+    cached = await db.tts_cache.find_one(
+        {"verse_id": input.verse_id, "voice": input.voice}, {"_id": 0}
+    )
+    if cached:
+        return {"audio_base64": cached["audio_base64"], "cached": True}
+
+    # Generate audio
+    try:
+        from emergentintegrations.llm.openai import OpenAITextToSpeech
+        api_key = os.environ.get("EMERGENT_LLM_KEY")
+        tts = OpenAITextToSpeech(api_key=api_key)
+
+        # Build recitation text: Sanskrit first, then translation
+        recitation_text = ""
+        if verse.get("text"):
+            recitation_text += verse["text"] + ". "
+        recitation_text += verse["translation"]
+
+        # Truncate to 4096 chars (TTS limit)
+        if len(recitation_text) > 4000:
+            recitation_text = recitation_text[:4000]
+
+        audio_base64 = await tts.generate_speech_base64(
+            text=recitation_text,
+            model="tts-1-hd",
+            voice=input.voice,
+            speed=0.85
+        )
+
+        # Cache for future use
+        await db.tts_cache.update_one(
+            {"verse_id": input.verse_id, "voice": input.voice},
+            {"$set": {
+                "verse_id": input.verse_id,
+                "voice": input.voice,
+                "audio_base64": audio_base64,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }},
+            upsert=True
+        )
+
+        return {"audio_base64": audio_base64, "cached": False}
+    except Exception as e:
+        logger.error(f"TTS error: {e}")
+        raise HTTPException(status_code=503, detail="Audio generation is temporarily unavailable. Please try again later.")
+
 # --- Daily Verse ---
 @api_router.get("/daily-verse")
 async def get_daily_verse():
@@ -706,6 +765,7 @@ async def seed_scriptures():
     await db.annotation_votes.create_index([("user_id", 1), ("annotation_id", 1)])
     await db.corrections.create_index("correction_id", unique=True)
     await db.corrections.create_index("status")
+    await db.tts_cache.create_index([("verse_id", 1), ("voice", 1)])
 
     # Seed pre-built reading plans
     await seed_reading_plans()

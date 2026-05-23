@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { Bookmark, BookmarkCheck, Share2, Copy, Check, Sparkles, RefreshCw, ChevronDown, ChevronUp, Image, Download, X, Globe, MapPin, AlertTriangle } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Share2, Copy, Check, Sparkles, RefreshCw, ChevronDown, ChevronUp, Image, Download, X, Globe, MapPin, AlertTriangle, Volume2, Pause, Loader } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import CommunityAnnotations from './CommunityAnnotations';
@@ -29,7 +29,10 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
   const [selectedTheme, setSelectedTheme] = useState(0);
   const [transLang, setTransLang] = useState(null);
   const [showCorrection, setShowCorrection] = useState(false);
+  const [audioState, setAudioState] = useState('idle'); // idle, loading, playing, paused
+  const [selectedVoice, setSelectedVoice] = useState('sage');
   const canvasRef = useRef(null);
+  const audioRef = useRef(null);
 
   const LANG_LABELS = { ml: 'Malayalam', hi: 'Hindi', ta: 'Tamil', te: 'Telugu', kn: 'Kannada' };
   const availableTranslits = verse.transliterations ? Object.keys(verse.transliterations) : [];
@@ -46,6 +49,40 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
       setExplanation(typeof detail === 'string' ? detail : 'Failed to load explanation. Please try again.');
     } finally {
       setLoadingExplain(false);
+    }
+  };
+
+  const handleAudio = async () => {
+    if (audioState === 'playing') {
+      if (audioRef.current) { audioRef.current.pause(); }
+      setAudioState('paused');
+      return;
+    }
+    if (audioState === 'paused' && audioRef.current) {
+      audioRef.current.play();
+      setAudioState('playing');
+      return;
+    }
+    setAudioState('loading');
+    try {
+      const { data } = await axios.post(`${API}/api/tts`, {
+        verse_id: verse.verse_id, voice: selectedVoice
+      }, { withCredentials: true });
+      if (!data.audio_base64) {
+        setAudioState('idle');
+        toast.error('Audio generation returned empty. Please try again.');
+        return;
+      }
+      const audio = new Audio(`data:audio/mp3;base64,${data.audio_base64}`);
+      audioRef.current = audio;
+      audio.onended = () => setAudioState('idle');
+      audio.onerror = () => { setAudioState('idle'); toast.error('Audio playback failed'); };
+      audio.play();
+      setAudioState('playing');
+    } catch (err) {
+      setAudioState('idle');
+      const detail = err.response?.data?.detail;
+      toast.error(typeof detail === 'string' ? detail : 'Audio generation failed');
     }
   };
 
@@ -305,6 +342,35 @@ export default function VerseCard({ verse, expanded: initialExpanded = false, is
 
           {/* Actions row */}
           <div className="pt-3 border-t border-[#E8E3D9]/50 flex items-center gap-4 flex-wrap">
+            {/* Audio recitation */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleAudio}
+                disabled={audioState === 'loading'}
+                className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                  audioState === 'playing' ? 'text-green-600' : audioState === 'loading' ? 'text-[#A39E93]' : 'text-[#2C2A29] hover:text-[#D97757]'
+                }`}
+                data-testid={`audio-${verse.verse_id}`}
+              >
+                {audioState === 'loading' ? <Loader className="w-3.5 h-3.5 animate-spin" /> : audioState === 'playing' ? <Pause className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                {audioState === 'loading' ? 'Generating...' : audioState === 'playing' ? 'Pause' : audioState === 'paused' ? 'Resume' : 'Listen'}
+              </button>
+              {audioState === 'idle' && (
+                <select
+                  value={selectedVoice}
+                  onChange={e => setSelectedVoice(e.target.value)}
+                  className="text-[10px] border border-[#E8E3D9] rounded px-1 py-0.5 bg-white text-[#75716B]"
+                  data-testid={`voice-select-${verse.verse_id}`}
+                >
+                  <option value="sage">Sage</option>
+                  <option value="onyx">Onyx</option>
+                  <option value="nova">Nova</option>
+                  <option value="echo">Echo</option>
+                  <option value="shimmer">Shimmer</option>
+                  <option value="fable">Fable</option>
+                </select>
+              )}
+            </div>
             <button onClick={handleExplain} className="flex items-center gap-1.5 text-xs font-medium text-[#D97757] hover:text-[#C16648] transition-colors" data-testid={`explain-${verse.verse_id}`}>
               {loadingExplain ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
               {showExplanation ? 'Hide Explanation' : 'AI Explanation'}
