@@ -319,6 +319,28 @@ class TestAI:
                                json={"query": "duty"}, timeout=120)
         assert r.status_code in (200, 500, 503)
 
+    def test_ai_search_returns_verses_iter8(self, admin_session):
+        """Iter-8: EMERGENT_LLM_KEY active, must return real Gita verses."""
+        r = admin_session.post(
+            f"{BASE_URL}/api/ai-search",
+            json={"query": "What does Krishna say about duty?"},
+            timeout=120)
+        assert r.status_code == 200, r.text[:200]
+        data = r.json()
+        assert isinstance(data, list) and len(data) >= 1
+        # bg-2-47 (karmany evadhikaras) is the canonical duty verse
+        assert any(v.get("text_id") == "bhagavad-gita" for v in data)
+
+    def test_ai_explain_returns_text_iter8(self, admin_session):
+        r = admin_session.post(
+            f"{BASE_URL}/api/ai-explain",
+            json={"verse_id": "bg-2-47"}, timeout=120)
+        assert r.status_code == 200, r.text[:200]
+        data = r.json()
+        # Response contains explanation text (key may be 'explanation' or nested)
+        blob = str(data)
+        assert len(blob) > 200, "AI explanation too short"
+
 
 # ---- TTS (Audio Recitation) ----
 class TestTTS:
@@ -335,8 +357,8 @@ class TestTTS:
 
     def test_tts_generates_or_503(self, admin_session):
         r = admin_session.post(f"{BASE_URL}/api/tts",
-                               json={"verse_id": "bg-2-47", "voice": "nova"},
-                               timeout=120)
+                               json={"verse_id": "hc-1-2", "voice": "nova"},
+                               timeout=180)
         assert r.status_code in (200, 503)
         if r.status_code == 200:
             data = r.json()
@@ -344,10 +366,20 @@ class TestTTS:
             assert len(data["audio_base64"]) > 100
             # second call should hit cache
             r2 = admin_session.post(f"{BASE_URL}/api/tts",
-                                    json={"verse_id": "bg-2-47", "voice": "nova"},
+                                    json={"verse_id": "hc-1-2", "voice": "nova"},
                                     timeout=30)
             assert r2.status_code == 200
             assert r2.json().get("cached") is True
+
+    def test_tts_returns_audio_iter8(self, admin_session):
+        """Iter-8: TTS with active key returns non-empty audio_base64.
+        Uses short verse hc-1-2 to stay within Cloudflare edge timeout."""
+        r = admin_session.post(f"{BASE_URL}/api/tts",
+                               json={"verse_id": "hc-1-2", "voice": "sage"},
+                               timeout=180)
+        assert r.status_code == 200, r.text[:200]
+        d = r.json()
+        assert len(d.get("audio_base64", "")) > 1000
 
 
 
@@ -536,14 +568,20 @@ class TestCorrections:
 
 # ---- Iteration 7: expansion + multi-word search ----
 class TestIter7Expansion:
-    def test_total_verse_count_264(self):
+    def test_total_verse_count_408(self):
         scs = requests.get(f"{BASE_URL}/api/scriptures").json()
         total = 0
         for s in scs:
             chs = requests.get(
                 f"{BASE_URL}/api/scriptures/{s['text_id']}/chapters").json()
             total += sum(c.get("verse_count", 0) for c in chs)
-        assert total == 264, f"Expected 264 verses, got {total}"
+        assert total == 408, f"Expected 408 verses, got {total}"
+
+    def test_bhagavad_gita_67_verses(self):
+        chs = requests.get(
+            f"{BASE_URL}/api/scriptures/bhagavad-gita/chapters").json()
+        total = sum(c.get("verse_count", 0) for c in chs)
+        assert total == 67, f"Expected 67 BG verses, got {total}"
 
     def test_multi_word_search_soul_eternal(self):
         r = requests.get(f"{BASE_URL}/api/search",

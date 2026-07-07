@@ -42,6 +42,8 @@ def get_all_verses():
     from scripture_data_kerala import get_kerala_verses
     from scripture_data_expansion import get_all_expansion_verses
     from scripture_data_kerala_expansion import get_kerala_expansion_verses
+    from scripture_data_mass_expansion import get_kerala_mass_expansion
+    from scripture_data_general_expansion import get_general_mass_expansion
     verses = []
     verses.extend(_gita_verses())
     verses.extend(_ramayana_verses())
@@ -50,6 +52,8 @@ def get_all_verses():
     verses.extend(get_kerala_verses())
     verses.extend(get_all_expansion_verses())
     verses.extend(get_kerala_expansion_verses())
+    verses.extend(get_kerala_mass_expansion())
+    verses.extend(get_general_mass_expansion())
     return verses
 
 

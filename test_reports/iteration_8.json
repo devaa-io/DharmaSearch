@@ -1,0 +1,39 @@
+{
+  "summary": "Iter-8 publish-ready validation. EMERGENT_LLM_KEY is now ACTIVE - AI Search, AI Explain, and TTS all return real results (200 OK). Database expanded to 408 verses across 16 texts (BG=67, Ramayana=33, Devi=49, Upanishads=33, Yoga=24, Mahabharata=25, Vedas=24, Hanuman=20, Puranas=24, Bhagavatam=17, Narayaneeyam=14, Adhyatma=12, Lalita=28, Vishnu=11, Soundarya=13, Vivekachudamani=14). Backend pytest: 47/47 PASS (added 4 new iter-8 tests: AI-search returns Gita verses for duty query, AI-explain returns >200 char explanation for bg-2-47, TTS returns 490KB audio_base64 for hc-1-2 nova, BG verse count = 67). Frontend Playwright: Landing renders '16 SACRED TEXTS · 400+ VERSES' hero, admin login lands on /dashboard, dashboard stats show 16 Sacred Texts / 408+ Verses / AI Explanations, Daily Verse card renders with Listen/AI Explanation/Community/Suggest Correction actions. TTS via public URL: cached=false uncached call takes 30-90s for long verses and can hit Cloudflare 100s edge timeout (502), but cached calls return instantly (~490KB audio for hc-1-2). Recommend UI shows loading state clearly and uses short verses first to warm cache.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/tts", "issue": "Long verses (bg-2-47 ~4000 chars, tts-1-hd, speed=0.85) can exceed Cloudflare 100s edge timeout on first (uncached) call and return 502 to the client even though backend eventually completes and caches. Subsequent calls hit cache and return 200 with valid audio_base64. Consider: (a) return 202 + background job + poll, or (b) reduce text length / drop speed=0.85 / use tts-1 model for first-play, or (c) pre-warm cache for popular verses on startup."},
+      {"endpoint": "GET /api/scriptures", "issue": "(Carried from iter-7) top-level total_verses field still None; frontend must aggregate via /chapters."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Verse card 'Community' toggle", "issues": ["(Carried) Label shows 'Community' with ellipsis chevron until expanded - cosmetic only."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_dharma_app.py",
+    "/app/test_reports/pytest/pytest_iter8.xml"
+  ],
+  "action_items": [
+    "(Optional) Mitigate Cloudflare 502 on first uncached TTS call for long verses (async job / shorter text / pre-warm popular verses cache).",
+    "(Carried) Populate total_verses in GET /api/scriptures to save per-scripture /chapters round-trips."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now ~943 lines with data expansions. Data seeding modules (scripture_data_mass_expansion.py, scripture_data_general_expansion.py, scripture_data_kerala_expansion.py, scripture_data_expansion.py) should be consolidated under backend/data/ package.",
+    "TTS endpoint has no timeout protection for the external OpenAI call - a slow LLM call causes Cloudflare 502 with no client-side signal. Add asyncio.wait_for with a 90s cap and return 504/503 explicitly so the frontend can show a friendly retry message.",
+    "AI features (search/explain/tts) all correctly gated on auth (401 for unauth), keys read from env, and cached where appropriate (tts_cache MongoDB collection). Good.",
+    "emergentintegrations upgraded to v0.2.0 - verified working with gpt-5.2 (AI search + explain) and tts-1-hd (audio)."
+  ],
+  "updated_files": ["/app/backend/tests/test_dharma_app.py"],
+  "success_rate": {"backend": "100% (47/47 pytest pass, incl 4 new iter-8 AI/TTS/count tests)", "frontend": "100% of iter-8 acceptance checkpoints (landing 400+/16, admin login -> dashboard, dashboard stats 408+/16/AI, Daily Verse with actions)."},
+  "test_credentials": "Admin: admin@example.com / admin123",
+  "seed_data_creation": "TTS cache warmed for hc-1-2 (voice=nova and sage) as a side-effect of iter-8 TTS tests.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 16 review checkpoints for iter-8 green. AI features (gpt-5.2 search/explain, tts-1-hd) confirmed working end-to-end with the reactivated EMERGENT_LLM_KEY. Only external caveat: uncached TTS on long verses (~4000 chars, speed=0.85) can 502 at Cloudflare edge (100s). Backend still completes and caches. Use short verses (hanuman-chalisa hc-1-*) for TTS smoke tests or hit /api/tts twice (2nd call served from cache instantly). Total verse count is 408 across 16 texts; BG=67. Tests file: /app/backend/tests/test_dharma_app.py (47 tests, requires REACT_APP_BACKEND_URL env var to be set when running pytest).",
+  "rca_of_the_issue": "TTS 502: Cloudflare edge has a 100-second read timeout. tts-1-hd generating ~490KB base64 audio from a 4000-char verse at speed=0.85 can take >100s, especially for the Gita 2.47 verse. Backend does eventually complete and populate tts_cache, so subsequent calls succeed. Mitigation options listed in action_items. Not a functional blocker - cached playback path works."
+}

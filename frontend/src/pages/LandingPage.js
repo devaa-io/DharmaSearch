@@ -151,7 +151,7 @@ export default function LandingPage() {
             <div className="lg:col-span-7 lg:pr-8">
               <div className="inline-flex items-center gap-2 text-[#D97757] text-xs font-semibold tracking-widest uppercase mb-8">
                 <div className="w-8 h-px bg-[#D97757]" />
-                16 Sacred Texts &middot; 260+ Verses
+                16 Sacred Texts &middot; 400+ Verses
               </div>
               <h1 className="font-heading text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-6xl leading-[1.05] tracking-tight text-[#2C2A29] mb-6">
                 The scriptures of<br className="hidden sm:block" /> ancient India,<br className="hidden sm:block" />
@@ -266,7 +266,7 @@ export default function LandingPage() {
               <div className="mt-6 p-4 bg-[#D97757]/5 border border-[#D97757]/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-4xl">
                 <div>
                   <p className="text-sm font-medium text-[#2C2A29]">Ready for the full experience?</p>
-                  <p className="text-xs text-[#75716B]">AI search, reading plans, bookmarks, share as image, and 260+ verses</p>
+                  <p className="text-xs text-[#75716B]">AI search, reading plans, bookmarks, share as image, and 400+ verses</p>
                 </div>
                 <Link to="/register" className="text-sm bg-[#D97757] text-white px-5 py-2.5 rounded-lg font-medium hover:bg-[#C16648] transition-colors whitespace-nowrap" data-testid="sample-cta">Create Free Account</Link>
               </div>
@@ -287,7 +287,7 @@ export default function LandingPage() {
               <div className="grid sm:grid-cols-2 gap-x-8 gap-y-10">
                 {[
                   { icon: Sparkles, title: "AI Semantic Search", desc: "Ask naturally: 'What does Krishna say about the soul?' — AI finds the right verses by meaning." },
-                  { icon: Search, title: "Keyword Search", desc: "Quick text matching across 260+ verses from 16 texts. Filter by any scripture." },
+                  { icon: Search, title: "Keyword Search", desc: "Quick text matching across 400+ verses from 16 texts. Filter by any scripture." },
                   { icon: Calendar, title: "Reading Plans", desc: "Structured study paths: 7 Days of Gita, Kerala's Devotional Heritage, Karkkidakam 30-day Ramayana, and more." },
                   { icon: Globe, title: "Transliterations", desc: "Read verses in Malayalam, Hindi, and other Indian scripts. Especially for Kerala's sacred texts." },
                   { icon: MapPin, title: "Temple Connections", desc: "Discover which temples are linked to each verse — Guruvayur, Padmanabhaswamy, Sabarimala, and more." },
@@ -343,7 +343,7 @@ export default function LandingPage() {
             <Flame className="w-4 h-4 text-[#D97757]" strokeWidth={1.5} />
             <span className="font-heading text-sm font-bold text-[#2C2A29]">DharmaSearch</span>
           </div>
-          <p className="text-xs text-[#A39E93]">16 texts &middot; 260+ verses &middot; AI-powered</p>
+          <p className="text-xs text-[#A39E93]">16 texts &middot; 400+ verses &middot; AI-powered</p>
         </div>
       </footer>
     </div>
