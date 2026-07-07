@@ -1,0 +1,39 @@
+{
+  "summary": "Iteration-7 e2e validation of scripture expansion (208 -> 264 verses), multi-word search fix, and Tamil/Telugu/Kannada transliteration display. Backend: 43/43 pytest pass (36 pre-existing + 7 new TestIter7Expansion covering 264-count aggregation, multi-word 'soul eternal' >=20 hits, vasudhaiva kutumbakam -> av-4-3 Vedas, Mahamrityunjaya -> sp-2-3 Puranas, bg-2-27 has >=2 transliteration languages, taitt-3 matr-devo-bhava, public multi-word). Frontend Playwright: Landing hero renders '260+ Verses' & '16 Sacred Texts'. Public search 'soul eternal' returns Bhagavad/Upanishad hits; 'Guruvayur temple' -> Narayaneeyam. Admin login -> /dashboard, Daily Verse card renders, stats show 260+ / 16 / AI. Browse lists all 16 scriptures. BG Ch2 (Sankhya Yoga) now shows 15 verses (expanded from previous ~7). Verse cards show SCRIPT row with 5 buttons: Malayalam, Hindi, Tamil, Telugu, Kannada + Reset; Tamil click renders Tamil script (க்லைவ்யம்...). Verse card actions: Listen(+voice dropdown), AI Explanation, Community, Suggest Correction, plus header icons (copy, image, share, bookmark). Plans tab lists 6 plans (Gita 7-day, Upanishad, Kerala, Yoga Path, Divine Feminine, Karkkidakam-30).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/ai-search & /api/ai-explain & /api/tts", "issue": "503 EMERGENT_LLM_KEY inactive (expected per handoff note)."},
+      {"endpoint": "GET /api/scriptures", "issue": "Response items lack top-level `total_verses` count (all None) even though total_chapters is populated. Frontend must aggregate via /chapters endpoint. Consider adding total_verses to /scriptures response to reduce chatter."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Verse card 'Community' toggle", "issues": ["Label shows 'Community (...)' with ellipsis until panel expanded / count fetched - already flagged in iter-5, still present."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_dharma_app.py",
+    "/app/test_reports/pytest/pytest_iter7.xml"
+  ],
+  "action_items": [
+    "(Optional) Populate `total_verses` in GET /api/scriptures aggregation so clients don't need per-scripture /chapters roundtrips to compute 264.",
+    "(Carried) Reactivate EMERGENT_LLM_KEY to enable AI search / explanation / TTS.",
+    "(Carried) Fix Community label ellipsis: pre-fetch count or default to '(0)'."
+  ],
+  "critical_code_review_comments": [
+    "Multi-word keyword_search now splits on whitespace and ranks by number of matching tokens - verified working. Still no stemming/plurals: e.g. 'eternal souls' with plural 's' will match 'soul' since we substring on token, but 'meditations' vs 'meditation' relies on substring inclusion which works one way only. Acceptable for MVP.",
+    "server.py continues to grow past ~900 lines with data expansions; scripture_data_expansion.py and scripture_data_kerala_expansion.py should be consolidated into a single data package or moved under backend/data/.",
+    "Not all newly-added verses have all 5 transliterations (per note - expected). UI correctly hides buttons that have no data via existence check - good."
+  ],
+  "updated_files": ["/app/backend/tests/test_dharma_app.py"],
+  "success_rate": {"backend": "100% (43/43 pytest pass)", "frontend": "100% of iteration-7 acceptance checkpoints verified (landing 260+/16, public multi-word search, Guruvayur, admin login, dashboard stats, 16 texts in Browse, BG-2 15 verses, 5-language transliteration buttons on expanded verses, Tamil click renders Tamil script, 6 reading plans)."},
+  "test_credentials": "Admin: admin@example.com / admin123",
+  "seed_data_creation": "No new seed data this iteration (annotations/corrections TEST_ docs may still linger from iter-5).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 16 review checkpoints from iteration_7 are green. New backend tests in TestIter7Expansion class cover 264-count, multi-word search, vasudhaiva/Mahamrityunjaya famous verses, and transliteration language presence on bg-2-27. Transliteration UI selector: SCRIPT row with buttons 'Malayalam' 'Hindi' 'Tamil' 'Telugu' 'Kannada' 'Reset' - present per-verse when transliterations dict has any entries; active language button gets orange background. BG chapter 2 verse_ids present: bg-2-3, bg-2-7, bg-2-11, bg-2-13, bg-2-14, bg-2-17, bg-2-19, bg-2-20, bg-2-22, bg-2-27, bg-2-47, bg-2-48, bg-2-55, bg-2-62, bg-2-63.",
+  "rca_of_the_issue": "No blocking issues. Publish-ready from testing perspective. Only outstanding items are external LLM key inactivation (503 on AI/TTS - documented as pre-existing) and cosmetic Community(...) label from iter-5."
+}

@@ -30,7 +30,7 @@ export default function DailyVerse() {
   const fetchStats = async () => {
     try {
       const { data } = await axios.get(`${API}/api/scriptures`);
-      setStats({ texts: data.length, verses: 180 });
+      setStats({ texts: data.length, verses: 260 });
     } catch {}
   };
 
@@ -64,7 +64,7 @@ export default function DailyVerse() {
           <p className="text-xs text-[#A39E93] mt-1">Sacred Texts</p>
         </div>
         <div className="text-center py-4 border border-[#E8E3D9] rounded-lg bg-white">
-          <p className="font-heading text-2xl font-bold text-[#D97757]">180+</p>
+          <p className="font-heading text-2xl font-bold text-[#D97757]">260+</p>
           <p className="text-xs text-[#A39E93] mt-1">Verses</p>
         </div>
         <div className="text-center py-4 border border-[#E8E3D9] rounded-lg bg-white">

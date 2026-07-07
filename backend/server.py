@@ -210,9 +210,14 @@ async def get_sample_verses():
 @api_router.get("/public/search")
 async def public_search(q: str):
     """Public keyword search - limited to 5 results for preview"""
+    import re
+    words = [re.escape(w) for w in q.strip().split() if w]
+    if not words:
+        return []
+    pattern = "|".join(words)
     query = {"$or": [
-        {"translation": {"$regex": q, "$options": "i"}},
-        {"keywords": {"$regex": q, "$options": "i"}}
+        {"translation": {"$regex": pattern, "$options": "i"}},
+        {"keywords": {"$regex": pattern, "$options": "i"}}
     ]}
     verses = await db.verses.find(query, {"_id": 0}).limit(5).to_list(5)
     return verses
@@ -251,14 +256,25 @@ async def get_verse(text_id: str, verse_id: str):
 # --- Search ---
 @api_router.get("/search")
 async def keyword_search(q: str, text_filter: Optional[str] = None):
+    import re
+    words = [re.escape(w) for w in q.strip().split() if w]
+    if not words:
+        return []
+    # Match ANY word in the query (OR logic)
+    pattern = "|".join(words)
     query = {"$or": [
-        {"text": {"$regex": q, "$options": "i"}},
-        {"translation": {"$regex": q, "$options": "i"}},
-        {"keywords": {"$regex": q, "$options": "i"}}
+        {"text": {"$regex": pattern, "$options": "i"}},
+        {"translation": {"$regex": pattern, "$options": "i"}},
+        {"keywords": {"$regex": pattern, "$options": "i"}}
     ]}
     if text_filter:
         query["text_id"] = text_filter
     verses = await db.verses.find(query, {"_id": 0}).limit(50).to_list(50)
+    # Score by number of word matches and sort
+    def score(v):
+        text = f"{v.get('translation','')} {v.get('keywords','')} {v.get('text','')}".lower()
+        return sum(1 for w in words if w.lower() in text)
+    verses.sort(key=score, reverse=True)
     return verses
 
 # --- AI Search ---

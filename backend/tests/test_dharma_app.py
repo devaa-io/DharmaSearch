@@ -532,3 +532,72 @@ class TestCorrections:
         chk = requests.get(
             f"{BASE_URL}/api/scriptures/bhagavad-gita/verses/{verse_id}").json()
         assert chk["translation"] == original
+
+
+# ---- Iteration 7: expansion + multi-word search ----
+class TestIter7Expansion:
+    def test_total_verse_count_264(self):
+        scs = requests.get(f"{BASE_URL}/api/scriptures").json()
+        total = 0
+        for s in scs:
+            chs = requests.get(
+                f"{BASE_URL}/api/scriptures/{s['text_id']}/chapters").json()
+            total += sum(c.get("verse_count", 0) for c in chs)
+        assert total == 264, f"Expected 264 verses, got {total}"
+
+    def test_multi_word_search_soul_eternal(self):
+        r = requests.get(f"{BASE_URL}/api/search",
+                         params={"q": "soul eternal"})
+        assert r.status_code == 200
+        data = r.json()
+        assert isinstance(data, list)
+        assert len(data) >= 20, f"Expected 20+ results, got {len(data)}"
+
+    def test_search_vasudhaiva_kutumbakam(self):
+        r = requests.get(f"{BASE_URL}/api/search",
+                         params={"q": "vasudhaiva kutumbakam"})
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 1
+        # Should return Vedas result (av-4-3)
+        assert any(v.get("verse_id") == "av-4-3" for v in data)
+        v = next(v for v in data if v.get("verse_id") == "av-4-3")
+        assert v["text_name"] == "Vedas"
+
+    def test_search_mahamrityunjaya(self):
+        r = requests.get(f"{BASE_URL}/api/search",
+                         params={"q": "Mahamrityunjaya"})
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 1
+        assert any(v.get("verse_id") == "sp-2-3" for v in data)
+
+    def test_new_verses_have_multi_transliterations(self):
+        # bg-2-3 and bg-2-27 should have ta/te/kn transliterations
+        r = requests.get(
+            f"{BASE_URL}/api/scriptures/bhagavad-gita/verses/bg-2-27")
+        assert r.status_code == 200
+        v = r.json()
+        tr = v.get("transliterations", {})
+        # At least some of ta/te/kn should be present
+        langs_present = [k for k in ("ta", "te", "kn", "hi", "ml") if k in tr]
+        assert len(langs_present) >= 2, (
+            f"bg-2-27 missing transliterations, has: {list(tr.keys())}")
+
+    def test_famous_verse_matr_devo_bhava(self):
+        # taitt-3
+        r = requests.get(
+            f"{BASE_URL}/api/scriptures/upanishads/verses/taitt-3")
+        assert r.status_code == 200
+        v = r.json()
+        assert "matr" in v.get("text", "").lower() or \
+               "mother" in v.get("translation", "").lower()
+
+    def test_public_search_multi_word(self):
+        r = requests.get(f"{BASE_URL}/api/public/search",
+                         params={"q": "soul eternal"})
+        assert r.status_code == 200
+        data = r.json()
+        # public/search may return a sample subset
+        assert isinstance(data, list)
+        assert len(data) >= 1

@@ -40,12 +40,16 @@ def get_scripture_metadata():
 def get_all_verses():
     from scripture_data_extended import get_extended_verses
     from scripture_data_kerala import get_kerala_verses
+    from scripture_data_expansion import get_all_expansion_verses
+    from scripture_data_kerala_expansion import get_kerala_expansion_verses
     verses = []
     verses.extend(_gita_verses())
     verses.extend(_ramayana_verses())
     verses.extend(_devi_mahatmyam_verses())
     verses.extend(get_extended_verses())
     verses.extend(get_kerala_verses())
+    verses.extend(get_all_expansion_verses())
+    verses.extend(get_kerala_expansion_verses())
     return verses
 
 
