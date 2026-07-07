@@ -225,6 +225,10 @@ async def public_search(q: str):
 @api_router.get("/scriptures")
 async def get_scriptures():
     texts = await db.scriptures.find({}, {"_id": 0}).to_list(100)
+    # Add verse count per text
+    for t in texts:
+        count = await db.verses.count_documents({"text_id": t["text_id"]})
+        t["total_verses"] = count
     return texts
 
 @api_router.get("/scriptures/{text_id}/chapters")

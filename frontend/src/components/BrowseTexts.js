@@ -136,7 +136,7 @@ export default function BrowseTexts() {
                 <p className="text-xs text-[#75716B] mt-0.5 truncate">{s.description}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="text-xs text-[#A39E93]">{s.total_chapters} ch.</p>
+                <p className="text-xs text-[#A39E93]">{s.total_chapters} ch. &middot; {s.total_verses || '—'} v.</p>
               </div>
               <ChevronRight className="w-4 h-4 text-[#E8E3D9] group-hover:text-[#D97757] transition-colors flex-shrink-0" />
             </button>
