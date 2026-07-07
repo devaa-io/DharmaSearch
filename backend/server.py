@@ -411,15 +411,15 @@ async def generate_tts(input: TTSInput, request: Request):
             recitation_text += verse["text"] + ". "
         recitation_text += verse["translation"]
 
-        # Truncate to 4096 chars (TTS limit)
-        if len(recitation_text) > 4000:
-            recitation_text = recitation_text[:4000]
+        # Keep text short to avoid TTS timeout (Cloudflare 100s edge limit)
+        if len(recitation_text) > 1500:
+            recitation_text = recitation_text[:1500]
 
         audio_base64 = await tts.generate_speech_base64(
             text=recitation_text,
-            model="tts-1-hd",
+            model="tts-1",
             voice=input.voice,
-            speed=0.85
+            speed=0.9
         )
 
         # Cache for future use
