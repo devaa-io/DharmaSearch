@@ -6,13 +6,16 @@ Search and study Hindu scripture in one place. DharmaSearch serves verses from t
 
 ## Features
 
-- Full-text verse search, plus a public sample search that works without an account
-- AI search: ask a question in plain language and get relevant verses
-- AI explain: request a plain-language explanation of any verse
-- Text-to-speech playback for verses
-- Daily verse endpoint
-- Bookmarks, reading plans with progress tracking, and per-verse annotations
-- Account system with JWT access and refresh tokens (cookie or bearer)
+- 16 sacred texts with 264 seeded verses, including Kerala-specific texts, browsable by text, chapter and verse
+- Keyword search ranked by relevance, plus AI search in plain language and per-verse AI explanations
+- Transliterations in Malayalam, Hindi, Tamil, Telugu and Kannada
+- Audio recitation through text-to-speech, with multiple voices and caching
+- Six reading plans with progress tracking, including a Karkkidakam 30-day Ramayana plan
+- Bookmarks, copy, share, and share-as-image with selectable themes
+- Community annotations with guru tradition tags and upvoting
+- Corrections workflow: users submit, an admin approves, the fix auto-applies
+- Daily verse endpoint, and a public sample search that works without an account
+- Account system with JWT access and refresh tokens (httpOnly cookie or bearer)
 
 ## Stack
 
@@ -37,7 +40,12 @@ Create `backend/.env`:
 MONGO_URL=mongodb://localhost:27017
 DB_NAME=dharmasearch
 JWT_SECRET=change-me
+EMERGENT_LLM_KEY=your-key        # powers AI search, explanations and TTS
+ADMIN_EMAIL=you@example.com      # admin account for the corrections workflow
+ADMIN_PASSWORD=change-me
 ```
+
+The AI features go through the `emergentintegrations` client; without `EMERGENT_LLM_KEY` the core search and reading features still work.
 
 Run it:
 
