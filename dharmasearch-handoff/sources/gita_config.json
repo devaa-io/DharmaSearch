@@ -1,0 +1,14 @@
+
+{
+  "text_id": "bhagavad-gita",
+  "text_name": "Bhagavad Gita",
+  "language": "Sanskrit",
+  "loader": "loaders/gita.py",
+  "fields": {
+    "devanagari": "text",
+    "iast": "transliteration",
+    "english": "translation",
+    "chapter": "chapter",
+    "verse": "verse"
+  }
+}

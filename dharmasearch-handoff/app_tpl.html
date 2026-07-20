@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DharmaSearch - Read, learn and sit with sacred wisdom</title>
+<meta name="description" content="A guided path through Hindu scripture for newcomers, deep multilingual search for the devoted, a verse of the day, and a silent meditation window. The complete Bhagavad Gita in Devanagari, IAST, Malayalam, Tamil, Telugu, Kannada and English.">
+<meta name="theme-color" content="#e8dcc0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Spectral:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --leaf:#e8dcc0; --leaf-deep:#dcc9a0; --ink:#2b2119; --ink-soft:#5a4b38;
+  --vermilion:#b6321f; --gold:#9a7526; --line:#c4ad82; --card:#f2e9d4; --night:#1a1410;
+  --fs:1; /* reading-size multiplier */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--leaf);
+  background-image:repeating-linear-gradient(0deg,transparent 0 27px,rgba(154,117,38,.05) 27px 28px);
+  color:var(--ink);font-family:'Spectral',Georgia,serif;line-height:1.6;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+button{font-family:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:var(--vermilion)}
+:focus-visible{outline:2px solid var(--vermilion);outline-offset:2px}
+
+/* ---- nav ---- */
+nav{position:sticky;top:0;z-index:20;background:var(--leaf);border-bottom:2px solid var(--ink)}
+.nav-in{max-width:900px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.brand{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;letter-spacing:-.01em;margin-right:auto;background:none;border:none;padding:0}
+.brand span{color:var(--vermilion)}
+.tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:none;border:1px solid transparent;padding:7px 11px;border-radius:2px;color:var(--ink-soft)}
+.tab:hover{color:var(--ink)}
+.tab[aria-current="true"]{color:var(--vermilion);border-color:var(--line);background:var(--card)}
+
+.view{display:none;padding:36px 0 70px}
+.view.on{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--vermilion);margin-bottom:12px}
+h2.big{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(28px,6vw,48px);line-height:1;letter-spacing:-.01em;margin-bottom:8px}
+.lede{font-style:italic;color:var(--ink-soft);max-width:58ch;font-size:calc(17px * var(--fs))}
+
+/* ---- verse card ---- */
+.verse-card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:2px;padding:24px 24px 20px;margin:20px 0;position:relative}
+.vhead{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;color:var(--gold);text-transform:uppercase;margin-bottom:13px;padding-right:76px}
+.vhead b{color:var(--vermilion)}
+.orig{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:calc(22px * var(--fs));line-height:1.42;margin-bottom:11px;white-space:pre-line}
+.trans{font-size:calc(17px * var(--fs));line-height:1.6}
+.temple{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);margin-top:13px;letter-spacing:.03em}
+.temple::before{content:"\25C8  "}
+.langs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 13px}
+.lang{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--line);background:var(--leaf);border-radius:2px;color:var(--ink-soft)}
+.lang[aria-pressed="true"]{background:var(--vermilion);color:var(--leaf);border-color:var(--vermilion)}
+/* card action buttons (bookmark/copy) */
+.vacts{position:absolute;top:18px;right:18px;display:flex;gap:4px}
+.vacts button{width:32px;height:32px;border:1px solid var(--line);background:var(--leaf);border-radius:2px;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
+.vacts button:hover{border-color:var(--vermilion);color:var(--vermilion)}
+.vacts button.saved{background:var(--vermilion);color:var(--leaf);border-color:var(--vermilion)}
+.copied{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--leaf);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 16px;border-radius:3px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none}
+.copied.show{opacity:1}
+
+/* ---- TODAY ---- */
+.saying{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(21px,4vw,29px);line-height:1.35;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:24px 0;margin:28px 0}
+.saying .src{display:block;font-family:'IBM Plex Mono',monospace;font-style:normal;font-size:11px;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;margin-top:13px}
+.doors{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:30px}
+.door{text-align:left;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);padding:18px;border-radius:2px;transition:.15s}
+.door:hover{border-top-color:var(--vermilion);transform:translateY(-2px)}
+.door h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:22px;margin-bottom:4px}
+.door p{font-size:14px;color:var(--ink-soft);line-height:1.45}
+@media(max-width:620px){.doors{grid-template-columns:1fr}}
+
+/* ---- BEGIN ---- */
+.step-nav{display:flex;align-items:center;justify-content:space-between;margin-top:18px;gap:12px;flex-wrap:wrap}
+.step-dots{display:flex;gap:7px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line);border:none;padding:0}
+.dot[aria-current="true"]{background:var(--vermilion)}
+.btn{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--leaf);border:none;padding:11px 18px;border-radius:2px}
+.btn:disabled{opacity:.3;cursor:default}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--ink)}
+.why{background:var(--leaf-deep);border-radius:2px;padding:16px 18px;margin-bottom:2px;font-size:calc(16px * var(--fs));line-height:1.55}
+.why b{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:calc(19px * var(--fs));color:var(--vermilion);display:block;margin-bottom:5px}
+
+/* ---- EXPLORE ---- */
+.searchbar input{width:100%;padding:13px 15px;font-family:'Spectral',serif;font-size:17px;background:var(--card);border:1.5px solid var(--ink);color:var(--ink);border-radius:2px}
+.counts{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin:8px 0 18px;letter-spacing:.05em;line-height:1.6}
+.texts{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:26px}
+.tcard{text-align:left;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);padding:13px 14px;border-radius:2px;transition:.15s}
+.tcard:hover{border-left-color:var(--vermilion);transform:translateX(2px)}
+.tcard[aria-pressed="true"]{border-left-color:var(--vermilion);background:var(--leaf-deep)}
+.tcard h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:19px;line-height:1.05}
+.tcard .meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);letter-spacing:.05em;margin-top:5px;text-transform:uppercase}
+.chapline{background:var(--leaf-deep);border-radius:2px;padding:12px 14px;margin-bottom:14px}
+.chapline .cn{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:20px}
+.chapline .cm{font-size:14px;color:var(--ink-soft);font-style:italic}
+.chapnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chapnav .lang{cursor:pointer}
+.pager{display:flex;justify-content:space-between;gap:10px;margin:22px 0 0}
+mark{background:rgba(182,50,31,.22);color:inherit;padding:0 1px}
+.empty{padding:34px 0;text-align:center;color:var(--ink-soft);font-style:italic}
+
+/* ---- MEDITATE ---- */
+.med-intro{text-align:center;padding:26px 0}
+.med-len{display:inline-flex;gap:6px;margin-top:20px}
+.med-len button{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 14px;border:1px solid var(--ink);background:none;border-radius:2px}
+.med-len button[aria-pressed="true"]{background:var(--ink);color:var(--leaf)}
+.med-stage{position:fixed;inset:0;background:var(--night);z-index:50;display:none;overflow:hidden}
+.med-stage.on{display:block}
+.drift{position:absolute;color:#e8dcc0;font-family:'Cormorant Garamond',serif;font-style:italic;white-space:nowrap;opacity:0;pointer-events:none}
+.med-exit{position:fixed;top:20px;right:20px;z-index:52;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#9a8a6a;background:none;border:1px solid #4a3d2a;padding:9px 14px;border-radius:2px}
+.med-timer{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:52;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.2em;color:#6a5c42}
+.med-done{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#e8dcc0;z-index:53;padding:20px}
+.med-done.on{display:flex}
+.med-done .big{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:34px;margin-bottom:8px}
+
+/* ---- roadmap / about ---- */
+.road{display:grid;gap:8px;margin-top:8px}
+.road-row{display:flex;justify-content:space-between;gap:12px;background:var(--card);border:1px solid var(--line);padding:11px 14px;border-radius:2px;font-size:15px;align-items:center}
+.road-row .st{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:2px;white-space:nowrap}
+.st.done{background:var(--vermilion);color:var(--leaf)}
+.st.prev{background:var(--leaf-deep);color:var(--ink-soft)}
+
+/* reading-size control */
+.rsize{display:inline-flex;gap:4px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin-left:6px}
+.rsize button{width:26px;height:26px;border:1px solid var(--line);background:var(--leaf);border-radius:2px}
+
+footer{border-top:2px solid var(--ink);margin-top:24px;padding:22px 0 46px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);letter-spacing:.04em;line-height:1.9}
+.note{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);margin-top:10px;letter-spacing:.02em}
+.skip{position:absolute;left:-9999px}.skip:focus{left:12px;top:12px;position:fixed;z-index:99;background:var(--ink);color:var(--leaf);padding:10px 14px;border-radius:3px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<a href="#main" class="skip">Skip to content</a>
+<nav>
+  <div class="nav-in">
+    <button class="brand" data-v="today" aria-label="DharmaSearch home">Dharma<span>Search</span></button>
+    <button class="tab" data-v="today" aria-current="true">Today</button>
+    <button class="tab" data-v="begin">Begin</button>
+    <button class="tab" data-v="explore">Explore</button>
+    <button class="tab" data-v="meditate">Meditate</button>
+    <button class="tab" data-v="about">About</button>
+  </div>
+</nav>
+
+<div class="wrap" id="main">
+
+<!-- TODAY -->
+<section class="view on" id="today" aria-label="Today">
+  <div class="eyebrow">Today &middot; <span id="todayDate"></span></div>
+  <h2 class="big">Verse of the day</h2>
+  <div id="votd"></div>
+  <div class="saying" id="saying"></div>
+  <div class="eyebrow">Where would you like to start?</div>
+  <div class="doors">
+    <button class="door" data-v="begin"><h3>Begin</h3><p>New to all this? A short guided path, plain English first, no prior knowledge needed.</p></button>
+    <button class="door" data-v="explore"><h3>Explore</h3><p>Know what you're after? Search every verse in six scripts, or read the Gita chapter by chapter.</p></button>
+    <button class="door" data-v="meditate"><h3>Meditate</h3><p>Ten quiet minutes. Words drift by; you read, and breathe.</p></button>
+  </div>
+</section>
+
+<!-- BEGIN -->
+<section class="view" id="begin" aria-label="Begin - a first path">
+  <div class="eyebrow">Begin &middot; a first path</div>
+  <h2 class="big">Start from anywhere</h2>
+  <p class="lede">A few verses, chosen because they speak to anyone - no background required. Read the plain meaning first, then the scripture itself.</p>
+  <div id="beginBody"></div>
+  <div class="step-nav">
+    <button class="btn ghost" id="bPrev">&larr; Back</button>
+    <div class="step-dots" id="bDots" role="tablist" aria-label="Path progress"></div>
+    <button class="btn" id="bNext">Next &rarr;</button>
+  </div>
+</section>
+
+<!-- EXPLORE -->
+<section class="view" id="explore" aria-label="Explore the library">
+  <div class="eyebrow">Explore &middot; the full library</div>
+  <h2 class="big" style="margin-bottom:16px">Search the scriptures</h2>
+  <div class="searchbar">
+    <input id="q" type="search" placeholder="Search in English or any script - dharma, धर्म, ധര്‍മ്മം, fear&hellip;" autocomplete="off" aria-label="Search verses in any language">
+  </div>
+  <div class="counts" id="counts"></div>
+  <div id="textsWrap"><div class="texts" id="texts"></div></div>
+  <div id="chapArea"></div>
+  <div id="results"></div>
+  <div class="pager" id="pager"></div>
+</section>
+
+<!-- MEDITATE -->
+<section class="view" id="meditate" aria-label="Meditate">
+  <div class="med-intro">
+    <div class="eyebrow">Meditate &middot; silent &amp; still</div>
+    <h2 class="big">Ten minutes of quiet</h2>
+    <p class="lede" style="margin:0 auto 6px">Fragments of scripture drift slowly across a dark screen. Nothing to do but read what surfaces, and let the rest pass. Find a comfortable seat.</p>
+    <div class="med-len" id="medLen" role="group" aria-label="Session length">
+      <button data-min="5">5 min</button>
+      <button data-min="10" aria-pressed="true">10 min</button>
+      <button data-min="20">20 min</button>
+    </div>
+    <div style="margin-top:22px"><button class="btn" id="medStart">Begin sitting</button></div>
+  </div>
+</section>
+
+<!-- ABOUT / ROADMAP -->
+<section class="view" id="about" aria-label="About and roadmap">
+  <div class="eyebrow">About &middot; what's here and what's coming</div>
+  <h2 class="big">An honest map</h2>
+  <p class="lede">Every text is being brought to the same standard: the original in Devanagari, faithful transliteration into Malayalam, Tamil, Telugu and Kannada, and an English translation - with a build that refuses to ship a text that has any gap. The Bhagavad Gita is complete. The rest are on their way.</p>
+  <div class="road" id="road"></div>
+  <p class="note" id="aboutNote"></p>
+  <div style="margin-top:22px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--ink-soft)">READING SIZE</span>
+    <span class="rsize"><button id="fsDown" aria-label="Smaller text">A-</button><button id="fsUp" aria-label="Larger text">A+</button></span>
+  </div>
+</section>
+
+<footer>
+  DharmaSearch &mdash; original text, transliteration &amp; translation. The complete Bhagavad Gita: 701 verses, 18 chapters, six scripts.<br>
+  <span id="footNote"></span><br>
+  Source: <a href="https://github.com/devaa-io/DharmaSearch">github.com/devaa-io/DharmaSearch</a> &middot; <a href="https://devaa.io">devaa.io</a>
+</footer>
+</div>
+
+<div class="med-stage" id="medStage"><button class="med-exit" id="medExit">End &times;</button><div class="med-timer" id="medTimer"></div></div>
+<div class="med-done" id="medDone"><div class="big">Be still.</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.2em;color:#9a8a6a">YOUR SITTING IS COMPLETE</div><div style="margin-top:24px"><button class="btn ghost" id="medBack" style="color:#e8dcc0;border-color:#4a3d2a">Return</button></div></div>
+<div class="copied" id="toast"></div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+"use strict";
+const DB=JSON.parse(document.getElementById('data').textContent);
+const {texts,verses,begin}=DB;
+const chapterMeta=DB.chapterMeta||{};
+const byId=Object.fromEntries(verses.map(v=>[v.id,v]));
+const LANGNAMES={dev:'Devanagari',iast:'IAST',ml:'Malayalam',ta:'Tamil',hi:'Hindi',te:'Telugu',kn:'Kannada'};
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* safe localStorage (works on deployed site; degrades silently in sandboxes) */
+const store={
+  get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+let saved=new Set(store.get('ds_saved')||[]);
+function toggleSave(id){ saved.has(id)?saved.delete(id):saved.add(id); store.set('ds_saved',[...saved]); }
+
+/* reading size */
+let fs=store.get('ds_fs')||1;
+function applyFs(){document.documentElement.style.setProperty('--fs',fs);store.set('ds_fs',fs);}
+applyFs();
+
+/* which scripts a verse actually carries, roman first */
+function scriptsFor(v){
+  const out=[{code:'roman',label:'Roman',text:v.roman}];
+  if(v.dev) out.push({code:'dev',label:'Devanagari',text:v.dev});
+  if(v.iast && v.iast!==v.roman) out.push({code:'iast',label:'IAST',text:v.iast});
+  ['ml','ta','te','kn','hi'].forEach(c=>{ if(v.scripts&&v.scripts[c]) out.push({code:c,label:LANGNAMES[c],text:v.scripts[c]}); });
+  return out;
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1400);}
+
+/* ---- verse renderer ---- */
+function verseBlock(v,q){
+  const wrapId='lw'+v.id.replace(/[^a-z0-9]/gi,'');
+  const sc=scriptsFor(v);
+  const toggle = sc.length>1 ? `<div class="langs" role="group" aria-label="Script" data-for="${wrapId}" data-vid="${esc(v.id)}">
+      ${sc.map((s,i)=>`<button class="lang" data-lang="${s.code}" aria-pressed="${i===0}">${s.label}</button>`).join('')}
+    </div>` : '';
+  const badge = v.complete ? '' : ` &middot; <span style="color:var(--gold)">preview</span>`;
+  const chName = v.cn?` &middot; ${esc(v.cn)}`:'';
+  const isSaved=saved.has(v.id);
+  return `<div class="verse-card">
+    <div class="vacts">
+      <button class="save${isSaved?' saved':''}" data-save="${esc(v.id)}" aria-label="Bookmark verse" aria-pressed="${isSaved}" title="Bookmark">&#9733;</button>
+      <button data-copy="${esc(v.id)}" aria-label="Copy verse" title="Copy">&#8942;</button>
+    </div>
+    <div class="vhead"><b>${esc(v.tn)}</b> &middot; ${v.ch?('Ch '+v.ch+chName+' &middot; '):''}Verse ${v.vn}${badge}</div>
+    <div class="orig" id="${wrapId}">${hl(sc[0].text,q)}</div>
+    ${toggle}
+    <div class="trans">${hl(v.en,q)}</div>
+    ${v.temple?`<div class="temple">${esc(v.temple)}</div>`:''}
+  </div>`;
+}
+function hl(s,q){s=esc(s);if(!q)return s;const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig');return s.replace(re,'<mark>$1</mark>');}
+
+/* delegated: language toggle, bookmark, copy */
+document.addEventListener('click',e=>{
+  const lang=e.target.closest('.lang');
+  if(lang && lang.parentElement.dataset.vid){
+    const bar=lang.parentElement, v=byId[bar.dataset.vid], target=document.getElementById(bar.dataset.for);
+    bar.querySelectorAll('.lang').forEach(x=>x.setAttribute('aria-pressed','false'));
+    lang.setAttribute('aria-pressed','true');
+    const s=scriptsFor(v).find(x=>x.code===lang.dataset.lang); if(s)target.textContent=s.text; return;
+  }
+  const sv=e.target.closest('[data-save]');
+  if(sv){const id=sv.dataset.save;toggleSave(id);const on=saved.has(id);
+    sv.classList.toggle('saved',on);sv.setAttribute('aria-pressed',on);toast(on?'Bookmarked':'Removed');return;}
+  const cp=e.target.closest('[data-copy]');
+  if(cp){const v=byId[cp.dataset.copy];const sc=scriptsFor(v);
+    const text=`${v.tn} ${v.ch?('- Chapter '+v.ch):''} Verse ${v.vn}\n\n${v.dev||v.roman}\n\n${v.en}\n\n(via DharmaSearch)`;
+    (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>toast('Verse copied')).catch(()=>toast('Copy unavailable'));return;}
+});
+
+/* ---- TODAY ---- */
+function daySeed(){const d=new Date();return d.getFullYear()*1000+Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);}
+function pick(a,s){return a[(daySeed()+s)%a.length];}
+function renderToday(){
+  document.getElementById('todayDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('votd').innerHTML=verseBlock(pick(verses,0),'');
+  const shorts=verses.filter(x=>x.en.length>20&&x.en.length<130);
+  const s=pick(shorts,7);
+  document.getElementById('saying').innerHTML=`&ldquo;${esc(s.en)}&rdquo;<span class="src">${esc(s.tn)}</span>`;
+}
+
+/* ---- BEGIN ---- */
+let bStep=0;
+function renderBegin(){
+  const atEnd=bStep>=begin.length;
+  const body=document.getElementById('beginBody');
+  if(atEnd){
+    body.innerHTML=`<div class="why"><b>Keep going</b>You've walked the first steps. The complete Bhagavad Gita - all 701 verses in six scripts - is waiting in Explore, chapter by chapter.</div>
+      <div style="text-align:center;margin-top:20px"><button class="btn" data-v="explore">Open the Gita &rarr;</button></div>`;
+  }else{
+    const item=begin[bStep], v=byId[item.id];
+    body.innerHTML=`<div class="why"><b>${esc(item.title)}</b>${esc(item.why)}</div>`+(v?verseBlock(v,''):'');
+  }
+  const dots=begin.map((_,i)=>`<button class="dot" data-i="${i}" role="tab" aria-current="${i===bStep}" aria-label="Step ${i+1}"></button>`).join('');
+  document.getElementById('bDots').innerHTML=dots;
+  document.getElementById('bPrev').disabled=bStep===0;
+  document.getElementById('bNext').textContent=bStep>=begin.length-1?(atEnd?'Done':'Finish'):'Next \u2192';
+  document.getElementById('bNext').disabled=atEnd;
+}
+document.getElementById('bPrev').onclick=()=>{if(bStep>0){bStep--;renderBegin();scrollUp();}};
+document.getElementById('bNext').onclick=()=>{if(bStep<begin.length){bStep++;renderBegin();scrollUp();}};
+document.getElementById('bDots').onclick=e=>{const d=e.target.closest('.dot');if(d){bStep=+d.dataset.i;renderBegin();scrollUp();}};
+
+/* ---- EXPLORE ---- */
+const elTexts=document.getElementById('texts'),elRes=document.getElementById('results'),
+      elCounts=document.getElementById('counts'),elQ=document.getElementById('q'),
+      elTW=document.getElementById('textsWrap'),elChap=document.getElementById('chapArea'),elPager=document.getElementById('pager');
+let activeText=null, activeChapter=null, page=0;
+const PAGE=25;
+function chaptersOf(tid){return [...new Set(verses.filter(v=>v.tid===tid&&v.ch!=null).map(v=>v.ch))].sort((a,b)=>a-b);}
+function searchBlob(v){ // include every script so any-language search works
+  let s=v.roman+' '+v.en+' '+(v.kw||'')+' '+(v.cn||'')+' '+(v.dev||'')+' '+(v.iast||'');
+  if(v.scripts)for(const k in v.scripts)s+=' '+v.scripts[k];
+  return s.toLowerCase();
+}
+function renderTexts(){
+  elTexts.innerHTML=texts.map(t=>{
+    const n=verses.filter(v=>v.tid===t.id).length;
+    const tag=t.complete?`<span style="color:var(--vermilion)">Complete</span> &middot; ${n} verses`:`${n} verses &middot; preview`;
+    return `<button class="tcard" data-id="${esc(t.id)}" aria-pressed="${activeText===t.id}">
+      <h3>${esc(t.name)}</h3><div class="meta">${esc(t.lang)} &middot; ${tag}</div></button>`;}).join('');
+  elTexts.querySelectorAll('.tcard').forEach(b=>b.onclick=()=>{
+    const same=activeText===b.dataset.id; activeText=same?null:b.dataset.id;
+    const chs=activeText?chaptersOf(activeText):[]; activeChapter=(activeText&&chs.length>1)?chs[0]:null;
+    page=0; elQ.value=''; renderTexts(); runSearch();
+  });
+}
+function renderChapterArea(){
+  elChap.innerHTML='';
+  if(!activeText)return;
+  const meta=chapterMeta[activeText]; const chs=chaptersOf(activeText);
+  if(chs.length<2)return;
+  const m=meta&&meta[activeChapter];
+  const line = m?`<div class="chapline"><div class="cn">Chapter ${activeChapter} &middot; ${esc(m.tr)}</div><div class="cm">${esc(m.mean)}</div></div>`:'';
+  const nav=`<div class="chapnav" role="group" aria-label="Chapters">
+    ${chs.map(c=>`<button class="lang" data-ch="${c}" aria-pressed="${activeChapter===c}">Ch ${c}</button>`).join('')}</div>`;
+  elChap.innerHTML=line+nav;
+  elChap.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{activeChapter=+b.dataset.ch;page=0;runSearch();scrollUp();});
+}
+function runSearch(){
+  const q=elQ.value.trim();
+  let list=verses;
+  if(activeText)list=list.filter(v=>v.tid===activeText);
+  if(q){const ql=q.toLowerCase();list=list.filter(v=>searchBlob(v).includes(ql));}
+  const usingChapter=activeText&&activeChapter!=null&&!q;
+  let view=usingChapter?list.filter(v=>v.ch===activeChapter):list;
+  elTW.style.display=q?'none':'block';
+  renderChapterArea();
+  const tname=activeText?texts.find(t=>t.id===activeText).name:'';
+  elCounts.textContent = q
+    ? `${view.length} verse${view.length!==1?'s':''}${activeText?' in '+tname:' across all texts'}`
+    : (activeText?(usingChapter?`${tname} \u2014 Chapter ${activeChapter} \u2014 ${view.length} verses`:`${view.length} verses in ${tname}`)
+                 :`Pick a text below, or search in any language`);
+  // paginate long lists
+  const pages=Math.ceil(view.length/PAGE)||1; if(page>=pages)page=0;
+  let show=view;
+  if(!q&&!activeText) show=view.slice(0,6);
+  else show=view.slice(page*PAGE,(page+1)*PAGE);
+  elRes.innerHTML=show.length?show.map(v=>verseBlock(v,q)).join('')
+    :`<div class="empty">No verses match &ldquo;${esc(q)}&rdquo;. Try a broader word, or search in another script.</div>`;
+  // pager
+  elPager.innerHTML='';
+  if((q||activeText)&&pages>1){
+    elPager.innerHTML=`<button class="btn ghost" ${page===0?'disabled':''} id="pgPrev">&larr; Prev</button>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);align-self:center">Page ${page+1} / ${pages}</span>
+      <button class="btn ghost" ${page>=pages-1?'disabled':''} id="pgNext">Next &rarr;</button>`;
+    const p=document.getElementById('pgPrev'),n=document.getElementById('pgNext');
+    if(p)p.onclick=()=>{page--;runSearch();scrollUp();}; if(n)n.onclick=()=>{page++;runSearch();scrollUp();};
+  } else if(!q&&!activeText&&view.length>6){
+    elPager.innerHTML=`<div class="empty" style="width:100%">Pick a text or search to explore all ${view.length} verses.</div>`;
+  }
+}
+let st;elQ.oninput=()=>{clearTimeout(st);st=setTimeout(runSearch,120);};
+
+/* ---- MEDITATE ---- */
+let medMin=10,medTimer=null,medEnd=0,driftLoop=null;
+document.getElementById('medLen').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#medLen button').forEach(x=>x.setAttribute('aria-pressed','false'));
+  b.setAttribute('aria-pressed','true');medMin=+b.dataset.min;};
+const stage=document.getElementById('medStage'),done=document.getElementById('medDone');
+const fragments=(()=>{const f=[];verses.forEach(v=>{if(v.en.length<90)f.push(v.en);
+  const w=v.roman.split(/\s+/);if(w.length>=3&&w.length<=8)f.push(v.roman);});return f;})();
+function spawnDrift(){
+  const el=document.createElement('div');el.className='drift';
+  el.textContent=fragments[Math.floor(Math.random()*fragments.length)];
+  el.style.fontSize=(18+Math.random()*22)+'px';el.style.top=(6+Math.random()*80)+'%';el.style.left='100%';
+  stage.appendChild(el);
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){
+    el.style.left='50%';el.style.transform='translateX(-50%)';el.style.transition='opacity 3s';
+    requestAnimationFrame(()=>el.style.opacity=.85);
+    setTimeout(()=>{el.style.opacity=0;setTimeout(()=>el.remove(),3000);},5000);return;}
+  const dur=16+Math.random()*14;
+  el.animate([{transform:'translateX(0)',opacity:0},{opacity:.85,offset:.15},{opacity:.85,offset:.85},
+    {transform:`translateX(-${window.innerWidth+400}px)`,opacity:0}],
+    {duration:dur*1000,easing:'linear'}).onfinish=()=>el.remove();
+}
+function startMed(){
+  stage.classList.add('on');done.classList.remove('on');medEnd=Date.now()+medMin*60000;
+  driftLoop=setInterval(spawnDrift,2600);spawnDrift();
+  document.getElementById('medTimer').textContent=medMin+':00';
+  medTimer=setInterval(()=>{const left=Math.max(0,medEnd-Date.now());
+    const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);
+    document.getElementById('medTimer').textContent=`${m}:${String(s).padStart(2,'0')}`;
+    if(left<=0)endMed(true);},1000);
+}
+function endMed(complete){clearInterval(driftLoop);clearInterval(medTimer);
+  stage.querySelectorAll('.drift').forEach(d=>d.remove());
+  if(complete)done.classList.add('on');else stage.classList.remove('on');}
+document.getElementById('medStart').onclick=startMed;
+document.getElementById('medExit').onclick=()=>endMed(false);
+document.getElementById('medBack').onclick=()=>{done.classList.remove('on');stage.classList.remove('on');};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&stage.classList.contains('on'))endMed(false);});
+
+/* ---- ABOUT / ROADMAP ---- */
+function renderRoad(){
+  const rows=texts.map(t=>{
+    const n=verses.filter(v=>v.tid===t.id).length;
+    const done=t.complete;
+    return `<div class="road-row"><span>${esc(t.name)} <span style="color:var(--ink-soft)">&middot; ${n} verses${done?'':' (sample)'}</span></span>
+      <span class="st ${done?'done':'prev'}">${done?'Complete':'In pipeline'}</span></div>`;
+  }).join('');
+  document.getElementById('road').innerHTML=rows;
+  const doneN=texts.filter(t=>t.complete).length;
+  document.getElementById('aboutNote').textContent=
+    `${doneN} of ${texts.length} texts complete. Each remaining text is sourced from an authoritative Devanagari edition, transliterated script-to-script, and gated so it cannot ship with a single missing verse or field.`;
+}
+document.getElementById('fsUp').onclick=()=>{fs=Math.min(1.5,+(fs+0.1).toFixed(2));applyFs();};
+document.getElementById('fsDown').onclick=()=>{fs=Math.max(0.85,+(fs-0.1).toFixed(2));applyFs();};
+
+/* ---- view switching ---- */
+function scrollUp(){window.scrollTo({top:0,behavior:'smooth'});}
+function show(v){
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id===v));
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-current',t.dataset.v===v));
+  scrollUp();
+}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-v]');if(t){show(t.dataset.v);}});
+
+/* ---- init ---- */
+renderToday();renderBegin();renderTexts();runSearch();renderRoad();
+const scriptList='Devanagari, IAST, Malayalam, Tamil, Telugu, Kannada + English';
+document.getElementById('footNote').textContent=
+  `Static preview \u2014 browse, multilingual search, daily verse, bookmarks & meditation all run offline. AI explanations, audio recitation & accounts run on the full backend. Scripts: ${scriptList}.`;
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "text_id": "kena-upanishad",
+  "text_name": "Kena Upanishad",
+  "language": "Sanskrit",
+  "loader": "loaders/kena.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "english": "translation",
+    "chapter": "chapter",
+    "verse": "verse"
+  }
+}

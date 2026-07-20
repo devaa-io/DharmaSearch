@@ -1,0 +1,12 @@
+{
+  "text_id": "prashna-upanishad",
+  "text_name": "Prashna Upanishad",
+  "language": "Sanskrit",
+  "loader": "loaders/prashna.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "english": "translation",
+    "chapter": "chapter",
+    "verse": "verse"
+  }
+}
