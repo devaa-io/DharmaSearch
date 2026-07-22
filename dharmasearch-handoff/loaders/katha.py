@@ -19,6 +19,7 @@
 import re
 import html
 import requests
+from loaders._wikisource import rendered_text
 
 DEV_URL = "https://sanskritdocuments.org/doc_upanishhat/katha.html"
 EN_TITLE = "Sacred Books of the East/Volume 15/Katha-upanishad"
@@ -33,6 +34,14 @@ WS_HEADERS = {"User-Agent": "DharmaSearch/1.0 (scripture ingest; research use)"}
 DEVA_DIGITS = "०१२३४५६७८९"
 DEVA_MAP = {c: str(i) for i, c in enumerate(DEVA_DIGITS)}
 VALLI_SIZES = {1: 29, 2: 25, 3: 17, 4: 15, 5: 15, 6: 19}
+ENGLISH_NUMBERS = {
+    1: list(range(1, 30)),
+    2: list(range(1, 26)),
+    3: list(range(1, 15)) + [18, 19, 20],
+    4: list(range(1, 16)),
+    5: list(range(1, 16)),
+    6: list(range(1, 20)),
+}
 
 
 def _deva2int(s: str) -> int:
@@ -41,7 +50,9 @@ def _deva2int(s: str) -> int:
 
 def _fetch_devanagari():
     """Return {(valli, verse): devanagari_text} for all 120 Katha verses."""
-    raw = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30).text
+    response = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30)
+    response.raise_for_status()
+    raw = response.text
     txt = html.unescape(re.sub(r"<[^>]+>", " ", raw))
     heads = list(re.finditer(r"Part\s+[IVX]+\s+Canto\s+[IVX]+", txt))
     if len(heads) != 6:
@@ -66,17 +77,18 @@ def _fetch_devanagari():
 
 def _fetch_english():
     """Return {(valli, verse): Muller English} for all 120 Katha verses."""
-    j = requests.get(
+    response = requests.get(
         WS_API,
         params={"action": "parse", "page": EN_TITLE, "prop": "text",
                 "format": "json", "formatversion": 2},
         headers=WS_HEADERS, timeout=40,
-    ).json()
+    )
+    response.raise_for_status()
+    j = response.json()
     ht = j["parse"]["text"]
-    ht = re.sub(r"<sup[^>]*>.*?</sup>", "", ht)
-    txt = html.unescape(re.sub(r"<[^>]+>", " ", ht))
-    txt = re.sub(r"[ \t]+", " ", txt)
+    txt = rendered_text(ht)
     txt = txt.split("↑")[0]
+    txt = re.split(r"\bFootnotes\b", txt, maxsplit=1, flags=re.I)[0]
 
     matches = list(re.finditer(r"(First|Second|Third|Fourth|Fifth|Sixth)\s+Vall[iî]\.?", txt, re.I))
     if len(matches) != 6:
@@ -93,6 +105,11 @@ def _fetch_english():
         e = matches[vidx].start() if vidx < len(matches) else len(txt)
         body = txt[s:e]
         segments = list(re.finditer(r"(?:^|\s)(\d{1,2})\.\s+(.+?)(?=\s\d{1,2}\.\s|\Z)", body, re.S))
+        printed_numbers = [int(vm.group(1)) for vm in segments]
+        if printed_numbers != ENGLISH_NUMBERS[vidx]:
+            raise RuntimeError(
+                f"Katha valli {vidx}: unexpected English numbering {printed_numbers}"
+            )
         for pos, vm in enumerate(segments, 1):
             en[(vidx, pos)] = " ".join(vm.group(2).split())
 

@@ -26,11 +26,12 @@ produces wrong sacred text (proven: "kaman" -> कमन् when it must be क�
 lacks Devanagari, find a better source; do not guess.
 
 ## Current state
-- **Bhagavad Gita: COMPLETE.** 701 verses, 18 chapters (with authoritative names +
-  meanings), all six scripts + English, zero gaps. Sourced from the MIT-licensed
-  `gita/gita` GitHub dataset (English: Swami Sivananda, public domain).
-- **The other 15 texts: PREVIEW only** - a small seeded sample from the original
-  `content-export/`, marked "preview" in the app. They still need the full pipeline run.
+- **Seven texts are COMPLETE:** Bhagavad Gita (701 verses) plus Isha, Kena, Katha,
+  Mundaka, Prashna, and Mandukya Upanishads (316 verses). Every completed row has
+  all seven representations and passes the zero-gap gate.
+- **The other 15 text groupings are PREVIEW only** - small seeded samples from the
+  original `content-export/`, marked "preview" in the app. Completed Upanishads are
+  removed from the legacy mixed `upanishads` preview to avoid duplicate search results.
 
 ## Why the rest weren't finished in the chat session
 The chat sandbox could only reach GitHub raw + package mirrors. The authoritative
@@ -42,6 +43,10 @@ moved here.
 - `app_tpl.html`     - the app: UI + logic, with a single `__DATA__` placeholder.
 - `app_data.json`    - the app data payload (texts + verses + chapterMeta + begin path).
 - `build_app.py`     - inlines app_data.json into app_tpl.html -> app.html (deploy this).
+- `verify_pipeline.py` - deterministic offline verification; add `--live` to refetch
+  and compare every configured upstream source.
+- `pipeline_validation.py` - shared release-invariant checks used by ingestion,
+  merging, app generation, tests, and CI.
 - `app.html`         - generated, deployable single file (rename to index.html on host).
 - `ingest_pipeline.py` - the reusable pipeline (source -> 7 representations -> gap gate).
 - `loaders/gita.py`  - worked loader example (reproduces the Gita).
@@ -53,20 +58,23 @@ moved here.
 1. Write `loaders/<text>.py` exposing `def load() -> list[dict]`, returning raw verses
    each with a Devanagari field. Source from an authoritative edition (see below).
 2. Write `sources/<text>.json` mapping the raw keys (see sources/gita_config.json).
-3. Run:  `python ingest_pipeline.py --config sources/<text>.json --out data/<text>.json`
+3. Run: `python3 ingest_pipeline.py --config sources/<text>_config.json --out data/<text>.json`
 4. If it reports gaps, the build FAILS and lists them. Fix the source/loader, rerun,
    until zero gaps. Only a zero-gap dataset is allowed into the app.
 
 ## Rebuilding the app data (after adding texts)
 The app payload (`app_data.json`) is assembled from the per-text `data/*.json` files
 plus chapter metadata and the "begin" path. When you add a completed text:
-1. Merge its `data/<text>.json` into `app_data.json` in the app's verse shape:
+1. Add it to the completed-text merger and merge its `data/<text>.json` into
+   `app_data.json` in the app's verse shape:
    `{id,tid,tn,ch,cn,vn,complete:true,roman(=iast),dev,iast,en,scripts:{ml,ta,te,kn}}`
    and flip that text's `complete` flag to true (with its real verse count).
-2. `python build_app.py --template app_tpl.html --data app_data.json --out app.html`
-3. Deploy app.html (rename to index.html).
+2. `python3 build/merge_completed.py`
+3. `python3 build_app.py --template app_tpl.html --data app_data.json --out app.html`
+4. `python3 verify_pipeline.py --live`
+5. Deploy app.html (rename to index.html).
 (If you prefer, have the app fetch app_data.json at runtime instead of inlining - fine
-for a hosted site, avoids the ~1.5MB single file.)
+for a hosted site, avoids the ~2.2MB single file.)
 
 ## Sourcing notes (targets with clean Devanagari)
 - sanskritdocuments.org - Upanishads, all major stotras (Vishnu/Lalita Sahasranama,

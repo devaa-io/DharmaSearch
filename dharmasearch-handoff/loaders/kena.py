@@ -19,6 +19,7 @@
 import re
 import html
 import requests
+from loaders._wikisource import rendered_text
 
 DEV_URL = "https://sanskritdocuments.org/doc_upanishhat/kena.html"
 EN_TITLE = "Sacred Books of the East/Volume 1/Talavakâra-upanishad"
@@ -41,7 +42,9 @@ def _deva2int(s: str) -> int:
 
 def _fetch_devanagari():
     """Return {(khanda, verse): devanagari_text} for all 35 Kena mantras."""
-    raw = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30).text
+    response = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30)
+    response.raise_for_status()
+    raw = response.text
     txt = html.unescape(re.sub(r"<[^>]+>", " ", raw))
     start = txt.find("केनेषितं")
     end = txt.rfind("॥ ९॥")
@@ -67,17 +70,18 @@ def _fetch_devanagari():
 
 def _fetch_english():
     """Return {(khanda, verse): Muller English} for all 35 Kena mantras."""
-    j = requests.get(
+    response = requests.get(
         WS_API,
         params={"action": "parse", "page": EN_TITLE, "prop": "text",
                 "format": "json", "formatversion": 2},
         headers=WS_HEADERS, timeout=40,
-    ).json()
+    )
+    response.raise_for_status()
+    j = response.json()
     ht = j["parse"]["text"]
-    ht = re.sub(r"<sup[^>]*>.*?</sup>", "", ht)
-    txt = html.unescape(re.sub(r"<[^>]+>", " ", ht))
-    txt = re.sub(r"[ \t]+", " ", txt)
+    txt = rendered_text(ht)
     txt = txt.split("↑")[0]
+    txt = re.split(r"\bFootnotes\b", txt, maxsplit=1, flags=re.I)[0]
     # Wikisource's rendered HTML breaks "Khanda" across a line as "Kha nd a"
     txt = re.sub(r"Kha\s*nd\s*a", "Khanda", txt)
 

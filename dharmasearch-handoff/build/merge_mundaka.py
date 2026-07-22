@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Merge the completed Mundaka Upanishad dataset into app_data.json (idempotent)."""
+"""Legacy single-text merger. Prefer merge_upanishads.py for a full rebuild."""
 import json, shutil, pathlib
 
-BASE = pathlib.Path("/mnt/c/Users/Devan Narayanan/Downloads/DharmaSearch/dharmasearch-handoff")
+BASE = pathlib.Path(__file__).resolve().parents[1]
 APP = BASE / "app_data.json"
 DATA = BASE / "data" / "mundaka-upanishad.json"
 TID = "mundaka-upanishad"

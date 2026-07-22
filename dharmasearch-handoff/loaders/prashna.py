@@ -20,6 +20,7 @@
 import re
 import html
 import requests
+from loaders._wikisource import rendered_text
 
 DEV_URL = "https://sanskritdocuments.org/doc_upanishhat/prashna.html"
 EN_TITLE = "Sacred Books of the East/Volume 15/Prasña-upanishad"
@@ -43,7 +44,9 @@ def _deva2int(s: str) -> int:
 
 def _fetch_devanagari():
     """Return {(prashna, verse): devanagari_text} for all 67 verses."""
-    raw = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30).text
+    response = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30)
+    response.raise_for_status()
+    raw = response.text
     txt = html.unescape(re.sub(r"<[^>]+>", " ", raw))
 
     ordinal_pat = "|".join(ORDINALS)
@@ -68,17 +71,18 @@ def _fetch_devanagari():
 
 def _fetch_english():
     """Return {(prashna, verse): Muller English} for all 67 verses."""
-    j = requests.get(
+    response = requests.get(
         WS_API,
         params={"action": "parse", "page": EN_TITLE, "prop": "text",
                 "format": "json", "formatversion": 2},
         headers=WS_HEADERS, timeout=40,
-    ).json()
+    )
+    response.raise_for_status()
+    j = response.json()
     ht = j["parse"]["text"]
-    ht = re.sub(r"<sup[^>]*>.*?</sup>", "", ht)
-    txt = html.unescape(re.sub(r"<[^>]+>", " ", ht))
-    txt = re.sub(r"[ \t]+", " ", txt)
+    txt = rendered_text(ht)
     txt = txt.split("↑")[0]
+    txt = re.split(r"\bFootnotes\b", txt, maxsplit=1, flags=re.I)[0]
 
     matches = list(re.finditer(r"(First|Second|Third|Fourth|Fifth|Sixth)\s+Qu\s*es\s*tion", txt, re.I))
     if len(matches) != 6:

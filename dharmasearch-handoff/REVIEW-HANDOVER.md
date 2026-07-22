@@ -34,24 +34,27 @@ entry in `app_data.json` (rebuilt into `app.html`).
 | Mandukya | 12 | flat | sanskritdocuments `maandu.html` | Hume, 1921 — PD (pre-1929 US pub) |
 
 Total added this session: **316 verses**. With the Gita (701), `app_data.json` now has
-**22 texts, 7 marked `complete:true`, 1358 verses.**
+**22 text entries, 7 marked `complete:true`, and 1,338 verse rows.** The row count is
+20 lower than the original handover because duplicate previews of now-complete
+Upanishads were removed during review.
 
 ## How to verify (reproducible)
 Every dataset can be regenerated from scratch — this is the core review step:
 
 ```bash
 cd dharmasearch-handoff
-pip install --user indic-transliteration requests   # only deps
+python3 -m pip install --user indic-transliteration requests   # only deps
 for t in isha kena katha mundaka prashna mandukya; do
-  python ingest_pipeline.py --config sources/${t}_config.json --out /tmp/${t}.json
+  python3 ingest_pipeline.py --config sources/${t}_config.json --out /tmp/${t}.json
   # must print "Gaps: 0" and exit 0; then diff /tmp/${t}.json against data/${t}-upanishad.json
 done
 ```
 (All loaders fetch live from sanskritdocuments.org + Wikisource, so this needs network.
 `sanskritdocuments.org` 406s the default requests UA — loaders send a browser UA.)
 
-`build/merge_*.py` show exactly how each `data/*.json` was merged into `app_data.json`
-(idempotent; each backs up before writing and strips prior rows for its `tid`).
+`build/merge_completed.py` reproducibly synchronizes all seven completed texts from
+their canonical datasets; its Upanishad step removes duplicate rows from the legacy
+mixed preview.
 `build_app.py` inlines `app_data.json` into `app_tpl.html` → `app.html` and only writes
 if the payload is valid JSON.
 
@@ -64,14 +67,13 @@ if the payload is valid JSON.
 2. **Mandukya English is manually transcribed** (`loaders/mandukya.py`, `ENGLISH` dict).
    Hume's 1921 text came from archive.org OCR; the 12 verses were hand-cleaned of OCR
    noise. Please diff the dict against the raw scan
-   (archive.org `in.ernet.dli.2015.1291`) to confirm no wording drift. This is the only
+   (archive.org `thirteenprincipa028442mbp`, pp. 391–393) to confirm no wording drift. This is the only
    text whose English is embedded rather than fetched+parsed live.
-3. **Isha appears twice in the app.** The mixed `upanishads` preview grouping still holds
-   a low-fidelity Isha preview (`tid=upanishads`, `id=isha-1…`), while the new complete
-   `isha-upanishad` text is separate. Non-destructive by design, but a dedupe (remove Isha
-   from the preview grouping) is a pending cleanup — flag if you think it should happen now.
-4. **`chapterMeta[<tid>]` `dev` fields are empty** for the new texts (only `tr`/`mean`
-   populated). The app tolerates this; confirm it doesn't break chapter navigation.
+3. **Duplicate previews (resolved).** The mixed `upanishads` grouping contained previews
+   of five now-complete texts, not only Isha. Review removed all 20 duplicate rows while
+   retaining previews for Brihadaranyaka, Chandogya, and Taittiriya.
+4. **`chapterMeta[<tid>]` `dev` fields are empty** for most new texts (only `tr`/`mean`
+   populated). Review confirmed this does not break chapter navigation.
 5. **Section-splitting regexes rely on Wikisource's rendered HTML** (e.g. "Khanda" renders
    as "Kha nd a", valli headers as "Vallî"). Loaders normalise these. If Wikisource
    re-renders, a loader could silently under-count — the `!= expected` asserts in each
@@ -107,8 +109,42 @@ source, proofread if OCR).
 - `loaders/*.py` — one per text, each exposes `load() -> list[dict]`.
 - `sources/*_config.json` — field mappings the pipeline consumes.
 - `data/*.json` — pipeline outputs (zero-gap datasets).
-- `build/merge_*.py` — how each dataset was merged into `app_data.json` (katha/mandukya/
-  mundaka/prashna present; isha/kena used the identical pattern, scripts not retained).
-- `app_data.json` — merged payload (22 texts, 1358 verses). `app.html` — deployable build.
+- `build/merge_completed.py` — portable, idempotent merger for every completed text;
+  validates required fields/counts, synchronizes canonical representations, and removes
+  duplicate Upanishad preview rows.
+- `app_data.json` — merged payload (22 text entries, 1,338 verse rows). `app.html` — deployable build.
 - `_vsn_review/vsn_align5.py` — evidence of the VSN alignment attempts (exploratory).
-- `ingest_pipeline.py`, `build_app.py`, `app_tpl.html` — unchanged pipeline core.
+- `ingest_pipeline.py`, `build_app.py`, `app_tpl.html` — pipeline and static-app core.
+
+## Codex review outcome (2026-07-20)
+- Regenerated all six datasets from the live sources with `python3`; every build had
+  zero gaps and matched its committed `data/*.json` byte-for-byte.
+- Verified Katha's printed numbering in every valli. Vallis 1/2/4/5/6 are contiguous;
+  valli 3 alone reads 1–14, 18–20. The loader now asserts that exact sequence before
+  applying positional alignment.
+- Compared all 12 Mandukya translations with Hume's scan on pp. 391–393. No wording
+  drift was found; the handover's former Archive.org identifier pointed to the unrelated
+  1927 Vishnu Sahasranama scan and has been corrected above.
+- Confirmed empty `chapterMeta.dev` values do not affect navigation: the UI renders
+  `tr` and `mean`, and derives selectable chapters from verse rows.
+- Added HTTP status checks to every loader. Added a portable all-Upanishads merger and
+  removed duplicate preview rows for Isha, Kena, Katha, Mundaka, and Mandukya. The app
+  payload now contains 22 text entries and 1,338 verse rows (7 complete texts).
+- Added shared dataset/app validation, atomic generated-file writes, safe JSON embedding,
+  current-directory-independent loader resolution, regression tests, an offline verifier,
+  opt-in live-source comparison, and GitHub Actions coverage for deterministic checks.
+- The stronger verifier found the Gita app's generated southern-script rows had ASCII
+  periods where the canonical dataset retained danda punctuation. The completed-text
+  merger now synchronizes all seven datasets exactly, and the app payload was corrected.
+- Product/UI review changed complete verses to lead with Devanagari, restricted daily and
+  meditation content to verified rows, made Explore complete-first with explicit filters
+  and text context, clarified bookmark/copy actions, improved responsive navigation and
+  touch targets, added hash/back navigation, and strengthened script typography.
+- Content rendering review found Wikisource inline HTML was splitting transliterated names
+  (for example `Nakiketas` → `Na k iketas`) and final-page material was leaking into five
+  translations. A block-aware parser now preserves inline words, drops style/script/
+  footnote markup, applies explicit end boundaries, and rejects contaminated or implausibly
+  long English during validation. The five affected datasets and app payload were rebuilt.
+- Vishnu Sahasranama remains blocked. No verified public-domain verse-aligned English
+  source was established during review, so neither the unlicensed AI-generated source
+  nor uncertain OCR alignment should ship.

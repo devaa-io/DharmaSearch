@@ -28,11 +28,11 @@ and those sources are one fetch away.
 
 Requirements
 ------------
-    pip install indic-transliteration requests
+    python3 -m pip install -r requirements.txt
 
 Usage
 -----
-    python ingest_pipeline.py --config sources/upanishads.json --out data/upanishads.json
+    python3 ingest_pipeline.py --config sources/isha_config.json --out data/isha-upanishad.json
 
 Each source config is a small JSON file you write per text (see SOURCE_CONFIG_SPEC
 and the worked Gita example at the bottom). The pipeline is source-agnostic: you
@@ -44,14 +44,22 @@ License: MIT (matching the app)
 """
 
 from __future__ import annotations
-import argparse, importlib.util, json, re, sys
+
+import argparse
+import importlib.util
+import json
+import re
+import sys
 from pathlib import Path
+
+from pipeline_io import write_text_atomic
+from pipeline_validation import validate_dataset
 
 try:
     from indic_transliteration import sanscript
     from indic_transliteration.sanscript import transliterate
 except ImportError:
-    sys.exit("Missing dependency. Run:  pip install indic-transliteration requests")
+    sys.exit("Missing dependency. Run: python3 -m pip install -r requirements.txt")
 
 
 # ----------------------------------------------------------------------------
@@ -80,6 +88,11 @@ def clean_devanagari(s: str) -> str:
     s = re.sub(r"[।॥]*\s*\d+[\.\-]\d+\s*[।॥]*", "", s)   # ।।1.1।। style tags
     s = re.sub(r"\n{2,}", "\n", s).strip()
     return s
+
+
+def source_text(value) -> str:
+    """Return source text without converting nulls or other values into scripture."""
+    return value if isinstance(value, str) else ""
 
 
 def to_scripts(devanagari: str) -> dict:
@@ -128,35 +141,53 @@ pipeline core never changes.
 """
 
 
-def load_verses(config: dict) -> list:
+def load_verses(config: dict, config_dir: Path | None = None) -> list:
     """Import the text's loader module and call load()."""
     loader_path = Path(config["loader"])
+    if not loader_path.is_absolute():
+        roots = [config_dir, config_dir.parent] if config_dir else [Path.cwd()]
+        candidates = [(root / loader_path).resolve() for root in roots]
+        loader_path = next((path for path in candidates if path.exists()), candidates[0])
     if not loader_path.exists():
-        sys.exit(f"Loader not found: {loader_path}")
+        raise FileNotFoundError(f"loader not found: {loader_path}")
     spec = importlib.util.spec_from_file_location("loader", loader_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"could not import loader: {loader_path}")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     if not hasattr(mod, "load"):
-        sys.exit(f"{loader_path} must define load() -> list[dict]")
-    return mod.load()
+        raise AttributeError(f"{loader_path} must define load() -> list[dict]")
+    rows = mod.load()
+    if not isinstance(rows, list):
+        raise TypeError(f"{loader_path}: load() must return a list")
+    if not rows:
+        raise ValueError(f"{loader_path}: load() returned no verses")
+    if any(not isinstance(row, dict) for row in rows):
+        raise TypeError(f"{loader_path}: every loaded verse must be a dict")
+    return rows
 
 
 # ----------------------------------------------------------------------------
 # Build
 # ----------------------------------------------------------------------------
-def build(config: dict) -> tuple[list, list]:
-    raw = load_verses(config)
+def build(config: dict, config_dir: Path | None = None) -> tuple[list, list]:
+    raw = load_verses(config, config_dir=config_dir)
     fm = config["fields"]
     tid = config["text_id"]
     tname = config["text_name"]
     out, gaps = [], []
 
+    seen_identities = set()
     for i, rv in enumerate(raw):
-        dev = clean_devanagari(str(rv.get(fm["devanagari"], "")))
-        iast = str(rv.get(fm.get("iast", ""), "")).strip() or derive_iast(dev)
-        english = str(rv.get(fm.get("english", ""), "")).strip()
+        dev = clean_devanagari(source_text(rv.get(fm["devanagari"], "")))
+        iast = source_text(rv.get(fm.get("iast", ""), "")).strip() or derive_iast(dev)
+        english = source_text(rv.get(fm.get("english", ""), "")).strip()
         ch = rv.get(fm.get("chapter", ""), None)
         vn = rv.get(fm.get("verse", ""), i + 1)
+        identity = (ch, vn)
+        if identity in seen_identities:
+            raise ValueError(f"duplicate chapter/verse identity {identity!r}")
+        seen_identities.add(identity)
 
         row = {
             "verse_id": f"{tid}-{ch}-{vn}" if ch is not None else f"{tid}-{vn}",
@@ -178,6 +209,8 @@ def build(config: dict) -> tuple[list, list]:
             gaps.append((row["verse_id"], missing))
         out.append(row)
 
+    if not gaps:
+        validate_dataset(out, expected_text_id=tid)
     return out, gaps
 
 
@@ -189,8 +222,12 @@ def main():
                     help="write output even if gaps exist (NOT recommended for release)")
     args = ap.parse_args()
 
-    config = json.load(open(args.config, encoding="utf-8"))
-    verses, gaps = build(config)
+    config_path = Path(args.config).resolve()
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        verses, gaps = build(config, config_dir=config_path.parent)
+    except (OSError, ValueError, TypeError, AttributeError, ImportError, KeyError) as error:
+        sys.exit(f"BUILD FAILED: {error}")
 
     print(f"Text        : {config['text_name']} ({config['text_id']})")
     print(f"Verses built: {len(verses)}")
@@ -207,9 +244,9 @@ def main():
                 "(Use --allow-gaps only for debugging, never for release.)"
             )
 
-    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    json.dump(verses, open(args.out, "w", encoding="utf-8"), ensure_ascii=False)
-    print(f"\nWrote {args.out}  ({Path(args.out).stat().st_size // 1024} KB)")
+    output_path = Path(args.out)
+    write_text_atomic(output_path, json.dumps(verses, ensure_ascii=False))
+    print(f"\nWrote {args.out}  ({output_path.stat().st_size // 1024} KB)")
     print("Zero gaps - safe to ship." if not gaps else "Written WITH gaps (debug).")
 
 
@@ -293,6 +330,6 @@ Per-text plan:
 For every text the recipe is identical:
   1. write loaders/<text>.py returning raw verses with a Devanagari field
   2. write a config pointing at it
-  3. python ingest_pipeline.py --config <config> --out data/<text>.json
+  3. python3 ingest_pipeline.py --config <config> --out data/<text>.json
   4. build fails if ANY verse is incomplete -> fix source -> rerun -> zero gaps
 """

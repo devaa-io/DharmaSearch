@@ -21,6 +21,7 @@
 import re
 import html
 import requests
+from loaders._wikisource import rendered_text
 
 DEV_URL = "https://sanskritdocuments.org/doc_upanishhat/iisha.html"
 EN_TITLE = "Sacred Books of the East/Volume 1/Vâgasaneyi-samhitâ-upanishad"
@@ -40,7 +41,9 @@ END_MARKER = re.compile(r"॥\s*[" + DEVA_DIGITS + r"]+\s*॥")   # e.g. "॥ �
 
 def _fetch_devanagari():
     """Return the 18 Isha mantras as clean Devanagari strings (index 0 = mantra 1)."""
-    raw = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30).text
+    response = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30)
+    response.raise_for_status()
+    raw = response.text
     txt = html.unescape(re.sub(r"<[^>]+>", " ", raw))
     # The page opens with the "purnam adah" shanti (no number) and closes with another
     # shanti. The 18 numbered mantras run from "ईशा" (mantra 1) to the "॥ १८॥" marker.
@@ -61,17 +64,19 @@ def _fetch_devanagari():
 
 def _fetch_english():
     """Return {mantra_number: Muller English} for mantras 1..18."""
-    j = requests.get(
+    response = requests.get(
         WS_API,
         params={"action": "parse", "page": EN_TITLE, "prop": "text",
                 "format": "json", "formatversion": 2},
         headers=WS_HEADERS, timeout=40,
-    ).json()
+    )
+    response.raise_for_status()
+    j = response.json()
     ht = j["parse"]["text"]
-    ht = re.sub(r"<sup[^>]*>.*?</sup>", "", ht)          # drop footnote reference marks
-    txt = html.unescape(re.sub(r"<[^>]+>", " ", ht))
-    txt = re.sub(r"[ \t]+", " ", txt)
+    txt = rendered_text(ht)
     txt = txt.split("↑")[0]                               # cut the trailing footnotes block
+    txt = txt.split("This Upanishad, though apparently")[0]  # cut Muller's following commentary
+    txt = re.split(r"\bFootnotes\b", txt, maxsplit=1, flags=re.I)[0]
     en = {}
     for m in re.finditer(r"(?:^|\s)(\d{1,2})\.\s+(.+?)(?=\s\d{1,2}\.\s|\Z)", txt, re.S):
         n = int(m.group(1))

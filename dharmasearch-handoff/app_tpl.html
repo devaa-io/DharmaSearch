@@ -4,96 +4,124 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DharmaSearch - Read, learn and sit with sacred wisdom</title>
-<meta name="description" content="A guided path through Hindu scripture for newcomers, deep multilingual search for the devoted, a verse of the day, and a silent meditation window. The complete Bhagavad Gita in Devanagari, IAST, Malayalam, Tamil, Telugu, Kannada and English.">
+<meta name="description" content="A guided path through Hindu scripture for newcomers, deep multilingual search for the devoted, a verse of the day, and a silent meditation window. The complete Bhagavad Gita and six principal Upanishads in seven representations.">
 <meta name="theme-color" content="#e8dcc0">
+<link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Spectral:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --leaf:#e8dcc0; --leaf-deep:#dcc9a0; --ink:#2b2119; --ink-soft:#5a4b38;
-  --vermilion:#b6321f; --gold:#9a7526; --line:#c4ad82; --card:#f2e9d4; --night:#1a1410;
+  --leaf:#eee3c9; --leaf-deep:#e3d2ad; --ink:#241b15; --ink-soft:#62513d;
+  --vermilion:#a83220; --vermilion-dark:#7f2418; --gold:#947023; --line:#c9b183;
+  --card:#fff9eb; --card-soft:#f7edd8; --night:#18120e; --shadow:0 12px 34px rgba(66,45,23,.09);
   --fs:1; /* reading-size multiplier */
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{
   background:var(--leaf);
-  background-image:repeating-linear-gradient(0deg,transparent 0 27px,rgba(154,117,38,.05) 27px 28px);
+  background-image:repeating-linear-gradient(0deg,transparent 0 31px,rgba(148,112,35,.045) 31px 32px);
   color:var(--ink);font-family:'Spectral',Georgia,serif;line-height:1.6;-webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 28px}
 button{font-family:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 a{color:var(--vermilion)}
-:focus-visible{outline:2px solid var(--vermilion);outline-offset:2px}
+:focus-visible{outline:3px solid var(--vermilion);outline-offset:3px}
 
 /* ---- nav ---- */
-nav{position:sticky;top:0;z-index:20;background:var(--leaf);border-bottom:2px solid var(--ink)}
-.nav-in{max-width:900px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.brand{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;letter-spacing:-.01em;margin-right:auto;background:none;border:none;padding:0}
+nav{position:sticky;top:0;z-index:20;background:rgba(238,227,201,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}
+.nav-in{max-width:1040px;margin:0 auto;padding:10px 28px;display:flex;align-items:center;gap:18px}
+.nav-tabs{display:flex;align-items:center;gap:4px;margin-left:auto}
+.brand{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:28px;letter-spacing:-.02em;background:none;border:none;padding:4px 0;min-height:44px}
 .brand span{color:var(--vermilion)}
-.tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:none;border:1px solid transparent;padding:7px 11px;border-radius:2px;color:var(--ink-soft)}
-.tab:hover{color:var(--ink)}
-.tab[aria-current="true"]{color:var(--vermilion);border-color:var(--line);background:var(--card)}
+.tab{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;background:none;border:1px solid transparent;padding:10px 12px;min-height:44px;border-radius:4px;color:var(--ink-soft);transition:background .2s,color .2s,border-color .2s}
+.tab:hover{color:var(--ink);background:rgba(255,249,235,.6)}
+.tab[aria-current="true"]{color:var(--vermilion-dark);border-color:var(--line);background:var(--card)}
 
-.view{display:none;padding:36px 0 70px}
+.view{display:none;padding:48px 0 84px}
 .view.on{display:block;animation:fade .35s ease}
 @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
-.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--vermilion);margin-bottom:12px}
-h2.big{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(28px,6vw,48px);line-height:1;letter-spacing:-.01em;margin-bottom:8px}
-.lede{font-style:italic;color:var(--ink-soft);max-width:58ch;font-size:calc(17px * var(--fs))}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--vermilion);margin-bottom:10px}
+.big{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(36px,6vw,56px);line-height:.98;letter-spacing:-.025em;margin-bottom:12px}
+.lede{color:var(--ink-soft);max-width:64ch;font-size:calc(17px * var(--fs));line-height:1.65}
+.trust-strip{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 26px}
+.trust-item{background:rgba(255,249,235,.72);border:1px solid var(--line);padding:9px 12px;border-radius:999px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.trust-item b{color:var(--vermilion-dark);font-weight:500}
 
 /* ---- verse card ---- */
-.verse-card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:2px;padding:24px 24px 20px;margin:20px 0;position:relative}
-.vhead{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;color:var(--gold);text-transform:uppercase;margin-bottom:13px;padding-right:76px}
+.verse-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:6px;padding:28px 28px 24px;margin:22px 0;position:relative;box-shadow:var(--shadow)}
+.vhead{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.055em;color:var(--gold);text-transform:uppercase;margin-bottom:18px;padding-right:104px;line-height:1.7}
 .vhead b{color:var(--vermilion)}
-.orig{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:calc(22px * var(--fs));line-height:1.42;margin-bottom:11px;white-space:pre-line}
-.trans{font-size:calc(17px * var(--fs));line-height:1.6}
+.orig{font-family:'Cormorant Garamond',serif;font-size:calc(25px * var(--fs));line-height:1.5;margin-bottom:15px;white-space:pre-line;max-width:72ch}
+.orig[data-script="dev"]{font-family:'Noto Serif Devanagari','Nirmala UI',serif;font-style:normal;font-size:calc(25px * var(--fs));line-height:1.72}
+.orig[data-script="iast"],.orig[data-script="roman"]{font-style:italic}
+.translation-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:18px 0 5px}
+.trans{font-size:calc(17px * var(--fs));line-height:1.72;max-width:72ch}
 .temple{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);margin-top:13px;letter-spacing:.03em}
 .temple::before{content:"\25C8  "}
-.langs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 13px}
-.lang{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--line);background:var(--leaf);border-radius:2px;color:var(--ink-soft)}
+.langs{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 15px}
+.lang{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.065em;text-transform:uppercase;padding:8px 11px;min-height:44px;border:1px solid var(--line);background:var(--card-soft);border-radius:4px;color:var(--ink-soft);transition:background .2s,border-color .2s,color .2s}
+.lang:hover{border-color:var(--gold);color:var(--ink)}
 .lang[aria-pressed="true"]{background:var(--vermilion);color:var(--leaf);border-color:var(--vermilion)}
 /* card action buttons (bookmark/copy) */
-.vacts{position:absolute;top:18px;right:18px;display:flex;gap:4px}
-.vacts button{width:32px;height:32px;border:1px solid var(--line);background:var(--leaf);border-radius:2px;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
+.vacts{position:absolute;top:18px;right:18px;display:flex;gap:7px}
+.vacts button{width:44px;height:44px;border:1px solid var(--line);background:var(--card-soft);border-radius:5px;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);transition:background .2s,border-color .2s,color .2s}
+.vacts svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .vacts button:hover{border-color:var(--vermilion);color:var(--vermilion)}
 .vacts button.saved{background:var(--vermilion);color:var(--leaf);border-color:var(--vermilion)}
 .copied{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--leaf);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 16px;border-radius:3px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none}
 .copied.show{opacity:1}
 
 /* ---- TODAY ---- */
-.saying{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(21px,4vw,29px);line-height:1.35;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:24px 0;margin:28px 0}
+.saying{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(23px,4vw,31px);line-height:1.4;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:28px 0;margin:34px 0}
 .saying .src{display:block;font-family:'IBM Plex Mono',monospace;font-style:normal;font-size:11px;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;margin-top:13px}
 .doors{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:30px}
-.door{text-align:left;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);padding:18px;border-radius:2px;transition:.15s}
-.door:hover{border-top-color:var(--vermilion);transform:translateY(-2px)}
+.door{text-align:left;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);padding:22px;border-radius:6px;min-height:150px;transition:transform .2s,border-color .2s,box-shadow .2s;box-shadow:0 8px 24px rgba(66,45,23,.05)}
+.door:hover{border-top-color:var(--vermilion);transform:translateY(-2px);box-shadow:var(--shadow)}
 .door h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:22px;margin-bottom:4px}
 .door p{font-size:14px;color:var(--ink-soft);line-height:1.45}
 @media(max-width:620px){.doors{grid-template-columns:1fr}}
 
 /* ---- BEGIN ---- */
 .step-nav{display:flex;align-items:center;justify-content:space-between;margin-top:18px;gap:12px;flex-wrap:wrap}
-.step-dots{display:flex;gap:7px}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--line);border:none;padding:0}
-.dot[aria-current="true"]{background:var(--vermilion)}
-.btn{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--leaf);border:none;padding:11px 18px;border-radius:2px}
+.step-dots{display:flex;gap:2px}
+.dot{width:40px;height:44px;border:none;padding:0;background:transparent;position:relative}
+.dot::after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:var(--line);inset:50% auto auto 50%;transform:translate(-50%,-50%)}
+.dot[aria-current="true"]::after{background:var(--vermilion);box-shadow:0 0 0 4px rgba(168,50,32,.12)}
+.btn{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;background:var(--ink);color:var(--leaf);border:none;padding:12px 18px;min-height:44px;border-radius:4px;transition:background .2s,color .2s,border-color .2s}
+.btn:hover:not(:disabled){background:var(--vermilion-dark)}
 .btn:disabled{opacity:.3;cursor:default}
 .btn.ghost{background:none;color:var(--ink);border:1px solid var(--ink)}
-.why{background:var(--leaf-deep);border-radius:2px;padding:16px 18px;margin-bottom:2px;font-size:calc(16px * var(--fs));line-height:1.55}
+.why{background:var(--leaf-deep);border:1px solid var(--line);border-radius:6px;padding:18px 20px;margin:24px 0 2px;font-size:calc(16px * var(--fs));line-height:1.6}
 .why b{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:calc(19px * var(--fs));color:var(--vermilion);display:block;margin-bottom:5px}
 
 /* ---- EXPLORE ---- */
-.searchbar input{width:100%;padding:13px 15px;font-family:'Spectral',serif;font-size:17px;background:var(--card);border:1.5px solid var(--ink);color:var(--ink);border-radius:2px}
+.searchbar{position:relative}
+.searchbar::before{content:"";position:absolute;left:16px;top:50%;width:17px;height:17px;border:1.8px solid var(--ink-soft);border-radius:50%;transform:translateY(-60%);pointer-events:none}
+.searchbar::after{content:"";position:absolute;left:29px;top:57%;width:7px;height:1.8px;background:var(--ink-soft);transform:rotate(45deg);pointer-events:none}
+.searchbar input{width:100%;padding:15px 18px 15px 48px;min-height:54px;font-family:'Spectral',serif;font-size:17px;background:var(--card);border:1.5px solid var(--ink);color:var(--ink);border-radius:6px;box-shadow:0 7px 20px rgba(66,45,23,.05)}
 .counts{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin:8px 0 18px;letter-spacing:.05em;line-height:1.6}
-.texts{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:26px}
-.tcard{text-align:left;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);padding:13px 14px;border-radius:2px;transition:.15s}
-.tcard:hover{border-left-color:var(--vermilion);transform:translateX(2px)}
+.library-tools{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:24px 0 14px;flex-wrap:wrap}
+.library-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600}
+.filterbar{display:flex;gap:6px;flex-wrap:wrap}
+.filter{min-height:44px;padding:8px 12px;background:transparent;border:1px solid var(--line);border-radius:999px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+.filter[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--leaf)}
+.filter span{opacity:.7}
+.texts{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:28px}
+.tcard{text-align:left;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);padding:17px 16px;border-radius:6px;min-height:104px;transition:transform .2s,border-color .2s,box-shadow .2s}
+.tcard:hover{border-left-color:var(--vermilion);transform:translateY(-2px);box-shadow:0 8px 20px rgba(66,45,23,.07)}
 .tcard[aria-pressed="true"]{border-left-color:var(--vermilion);background:var(--leaf-deep)}
-.tcard h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:19px;line-height:1.05}
+.tcard h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:21px;line-height:1.1}
 .tcard .meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);letter-spacing:.05em;margin-top:5px;text-transform:uppercase}
-.chapline{background:var(--leaf-deep);border-radius:2px;padding:12px 14px;margin-bottom:14px}
+.status{display:inline-block;margin-top:10px;padding:3px 7px;border-radius:999px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+.status.complete{background:rgba(168,50,32,.11);color:var(--vermilion-dark)}
+.status.preview{background:rgba(98,81,61,.1);color:var(--ink-soft)}
+.text-detail{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:20px;margin:4px 0 18px;box-shadow:0 7px 20px rgba(66,45,23,.05)}
+.text-detail h3{font-family:'Cormorant Garamond',serif;font-size:28px;line-height:1.05;margin-bottom:6px}
+.text-detail p{color:var(--ink-soft);max-width:72ch;font-size:15px;line-height:1.65}
+.chapline{background:var(--leaf-deep);border-radius:6px;padding:14px 16px;margin-bottom:14px}
 .chapline .cn{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:20px}
 .chapline .cm{font-size:14px;color:var(--ink-soft);font-style:italic}
 .chapnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
@@ -105,7 +133,7 @@ mark{background:rgba(182,50,31,.22);color:inherit;padding:0 1px}
 /* ---- MEDITATE ---- */
 .med-intro{text-align:center;padding:26px 0}
 .med-len{display:inline-flex;gap:6px;margin-top:20px}
-.med-len button{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 14px;border:1px solid var(--ink);background:none;border-radius:2px}
+.med-len button{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 16px;min-height:44px;border:1px solid var(--ink);background:none;border-radius:4px}
 .med-len button[aria-pressed="true"]{background:var(--ink);color:var(--leaf)}
 .med-stage{position:fixed;inset:0;background:var(--night);z-index:50;display:none;overflow:hidden}
 .med-stage.on{display:block}
@@ -125,39 +153,74 @@ mark{background:rgba(182,50,31,.22);color:inherit;padding:0 1px}
 
 /* reading-size control */
 .rsize{display:inline-flex;gap:4px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin-left:6px}
-.rsize button{width:26px;height:26px;border:1px solid var(--line);background:var(--leaf);border-radius:2px}
+.rsize button{width:44px;height:44px;border:1px solid var(--line);background:var(--card);border-radius:4px}
 
 footer{border-top:2px solid var(--ink);margin-top:24px;padding:22px 0 46px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);letter-spacing:.04em;line-height:1.9}
 .note{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);margin-top:10px;letter-spacing:.02em}
 .skip{position:absolute;left:-9999px}.skip:focus{left:12px;top:12px;position:fixed;z-index:99;background:var(--ink);color:var(--leaf);padding:10px 14px;border-radius:3px}
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media(max-width:680px){
+  .wrap{padding:0 18px}
+  .nav-in{padding:8px 0 0;display:grid;gap:2px}
+  .brand{margin:0 18px;font-size:26px;justify-self:start}
+  .nav-tabs{width:100%;margin:0;overflow-x:auto;padding:0 12px 7px;gap:2px;scrollbar-width:none}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;padding:9px 11px}
+  .view{padding:34px 0 68px}
+  .big{font-size:40px}
+  .trust-strip{margin:18px 0 22px}
+  .verse-card{padding:22px 20px;margin:18px 0;border-left-width:3px}
+  .vacts{top:16px;right:16px}
+  .vhead{padding-right:100px;min-height:44px;margin-bottom:15px}
+  .orig{font-size:calc(23px * var(--fs));line-height:1.52}
+  .orig[data-script="dev"]{font-size:calc(24px * var(--fs))}
+  .lang{min-height:44px;padding:8px 10px}
+  .doors{gap:10px}
+  .door{min-height:auto;padding:20px}
+  .step-nav{display:grid;grid-template-columns:1fr 1fr}
+  .step-dots{grid-column:1/-1;grid-row:1;justify-content:center}
+  .library-tools{align-items:flex-start}
+  .filterbar{width:100%}
+  .filter{flex:1}
+  .texts{grid-template-columns:1fr}
+  .tcard{min-height:94px}
+  .pager{align-items:center}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
 <a href="#main" class="skip">Skip to content</a>
-<nav>
+<nav aria-label="Primary navigation">
   <div class="nav-in">
     <button class="brand" data-v="today" aria-label="DharmaSearch home">Dharma<span>Search</span></button>
-    <button class="tab" data-v="today" aria-current="true">Today</button>
-    <button class="tab" data-v="begin">Begin</button>
-    <button class="tab" data-v="explore">Explore</button>
-    <button class="tab" data-v="meditate">Meditate</button>
-    <button class="tab" data-v="about">About</button>
+    <div class="nav-tabs">
+      <button class="tab" data-v="today" aria-current="true">Today</button>
+      <button class="tab" data-v="begin">Begin</button>
+      <button class="tab" data-v="explore">Explore</button>
+      <button class="tab" data-v="meditate">Meditate</button>
+      <button class="tab" data-v="about">About</button>
+    </div>
   </div>
 </nav>
 
-<div class="wrap" id="main">
+<main class="wrap" id="main">
 
 <!-- TODAY -->
 <section class="view on" id="today" aria-label="Today">
   <div class="eyebrow">Today &middot; <span id="todayDate"></span></div>
-  <h2 class="big">Verse of the day</h2>
+  <h1 class="big">A verse for today</h1>
+  <p class="lede">Begin with the original. Move through its scripts. Sit with the English when you are ready.</p>
+  <div class="trust-strip" aria-label="Library summary">
+    <span class="trust-item"><b id="completeCount">7</b> complete texts</span>
+    <span class="trust-item"><b id="verifiedCount">1,017</b> verified verses</span>
+    <span class="trust-item"><b>6 scripts</b> + English</span>
+  </div>
   <div id="votd"></div>
   <div class="saying" id="saying"></div>
   <div class="eyebrow">Where would you like to start?</div>
   <div class="doors">
     <button class="door" data-v="begin"><h3>Begin</h3><p>New to all this? A short guided path, plain English first, no prior knowledge needed.</p></button>
-    <button class="door" data-v="explore"><h3>Explore</h3><p>Know what you're after? Search every verse in six scripts, or read the Gita chapter by chapter.</p></button>
+    <button class="door" data-v="explore"><h3>Explore</h3><p>Know what you're after? Search every verse in six scripts, or read a complete text section by section.</p></button>
     <button class="door" data-v="meditate"><h3>Meditate</h3><p>Ten quiet minutes. Words drift by; you read, and breathe.</p></button>
   </div>
 </section>
@@ -165,7 +228,7 @@ footer{border-top:2px solid var(--ink);margin-top:24px;padding:22px 0 46px;font-
 <!-- BEGIN -->
 <section class="view" id="begin" aria-label="Begin - a first path">
   <div class="eyebrow">Begin &middot; a first path</div>
-  <h2 class="big">Start from anywhere</h2>
+  <h1 class="big">Start from anywhere</h1>
   <p class="lede">A few verses, chosen because they speak to anyone - no background required. Read the plain meaning first, then the scripture itself.</p>
   <div id="beginBody"></div>
   <div class="step-nav">
@@ -178,12 +241,23 @@ footer{border-top:2px solid var(--ink);margin-top:24px;padding:22px 0 46px;font-
 <!-- EXPLORE -->
 <section class="view" id="explore" aria-label="Explore the library">
   <div class="eyebrow">Explore &middot; the full library</div>
-  <h2 class="big" style="margin-bottom:16px">Search the scriptures</h2>
+  <h1 class="big">Search the scriptures</h1>
+  <p class="lede" style="margin-bottom:20px">Read seven complete works or search 1,338 passages across every available script.</p>
   <div class="searchbar">
     <input id="q" type="search" placeholder="Search in English or any script - dharma, धर्म, ധര്‍മ്മം, fear&hellip;" autocomplete="off" aria-label="Search verses in any language">
   </div>
   <div class="counts" id="counts"></div>
-  <div id="textsWrap"><div class="texts" id="texts"></div></div>
+  <div id="textsWrap">
+    <div class="library-tools">
+      <div class="library-title">The library</div>
+      <div class="filterbar" role="group" aria-label="Filter library">
+        <button class="filter" data-filter="complete" aria-pressed="true">Complete <span id="filterComplete"></span></button>
+        <button class="filter" data-filter="all" aria-pressed="false">All <span id="filterAll"></span></button>
+        <button class="filter" data-filter="preview" aria-pressed="false">Preview <span id="filterPreview"></span></button>
+      </div>
+    </div>
+    <div class="texts" id="texts"></div>
+  </div>
   <div id="chapArea"></div>
   <div id="results"></div>
   <div class="pager" id="pager"></div>
@@ -193,7 +267,7 @@ footer{border-top:2px solid var(--ink);margin-top:24px;padding:22px 0 46px;font-
 <section class="view" id="meditate" aria-label="Meditate">
   <div class="med-intro">
     <div class="eyebrow">Meditate &middot; silent &amp; still</div>
-    <h2 class="big">Ten minutes of quiet</h2>
+    <h1 class="big">Ten minutes of quiet</h1>
     <p class="lede" style="margin:0 auto 6px">Fragments of scripture drift slowly across a dark screen. Nothing to do but read what surfaces, and let the rest pass. Find a comfortable seat.</p>
     <div class="med-len" id="medLen" role="group" aria-label="Session length">
       <button data-min="5">5 min</button>
@@ -207,8 +281,8 @@ footer{border-top:2px solid var(--ink);margin-top:24px;padding:22px 0 46px;font-
 <!-- ABOUT / ROADMAP -->
 <section class="view" id="about" aria-label="About and roadmap">
   <div class="eyebrow">About &middot; what's here and what's coming</div>
-  <h2 class="big">An honest map</h2>
-  <p class="lede">Every text is being brought to the same standard: the original in Devanagari, faithful transliteration into Malayalam, Tamil, Telugu and Kannada, and an English translation - with a build that refuses to ship a text that has any gap. The Bhagavad Gita is complete. The rest are on their way.</p>
+  <h1 class="big">An honest map</h1>
+  <p class="lede">Every text is being brought to the same standard: the original in Devanagari, faithful transliteration into Malayalam, Tamil, Telugu and Kannada, and an English translation - with a build that refuses to ship a text that has any gap. The Bhagavad Gita and six principal Upanishads are complete; the rest are on their way.</p>
   <div class="road" id="road"></div>
   <p class="note" id="aboutNote"></p>
   <div style="margin-top:22px">
@@ -218,15 +292,15 @@ footer{border-top:2px solid var(--ink);margin-top:24px;padding:22px 0 46px;font-
 </section>
 
 <footer>
-  DharmaSearch &mdash; original text, transliteration &amp; translation. The complete Bhagavad Gita: 701 verses, 18 chapters, six scripts.<br>
+  DharmaSearch &mdash; original text, transliteration &amp; translation. Seven complete texts, with more being built through a zero-gap pipeline.<br>
   <span id="footNote"></span><br>
   Source: <a href="https://github.com/devaa-io/DharmaSearch">github.com/devaa-io/DharmaSearch</a> &middot; <a href="https://devaa.io">devaa.io</a>
 </footer>
-</div>
+</main>
 
 <div class="med-stage" id="medStage"><button class="med-exit" id="medExit">End &times;</button><div class="med-timer" id="medTimer"></div></div>
 <div class="med-done" id="medDone"><div class="big">Be still.</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.2em;color:#9a8a6a">YOUR SITTING IS COMPLETE</div><div style="margin-top:24px"><button class="btn ghost" id="medBack" style="color:#e8dcc0;border-color:#4a3d2a">Return</button></div></div>
-<div class="copied" id="toast"></div>
+<div class="copied" id="toast" role="status" aria-live="polite"></div>
 
 <script id="data" type="application/json">__DATA__</script>
 <script>
@@ -235,6 +309,7 @@ const DB=JSON.parse(document.getElementById('data').textContent);
 const {texts,verses,begin}=DB;
 const chapterMeta=DB.chapterMeta||{};
 const byId=Object.fromEntries(verses.map(v=>[v.id,v]));
+const completeVerses=verses.filter(v=>v.complete);
 const LANGNAMES={dev:'Devanagari',iast:'IAST',ml:'Malayalam',ta:'Tamil',hi:'Hindi',te:'Telugu',kn:'Kannada'};
 const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -251,11 +326,12 @@ let fs=store.get('ds_fs')||1;
 function applyFs(){document.documentElement.style.setProperty('--fs',fs);store.set('ds_fs',fs);}
 applyFs();
 
-/* which scripts a verse actually carries, roman first */
+/* Complete texts lead with the source script; previews fall back to romanisation. */
 function scriptsFor(v){
-  const out=[{code:'roman',label:'Roman',text:v.roman}];
+  const out=[];
   if(v.dev) out.push({code:'dev',label:'Devanagari',text:v.dev});
-  if(v.iast && v.iast!==v.roman) out.push({code:'iast',label:'IAST',text:v.iast});
+  if(v.iast) out.push({code:'iast',label:'IAST',text:v.iast});
+  else if(v.roman) out.push({code:'roman',label:'Transliteration',text:v.roman});
   ['ml','ta','te','kn','hi'].forEach(c=>{ if(v.scripts&&v.scripts[c]) out.push({code:c,label:LANGNAMES[c],text:v.scripts[c]}); });
   return out;
 }
@@ -273,12 +349,13 @@ function verseBlock(v,q){
   const isSaved=saved.has(v.id);
   return `<div class="verse-card">
     <div class="vacts">
-      <button class="save${isSaved?' saved':''}" data-save="${esc(v.id)}" aria-label="Bookmark verse" aria-pressed="${isSaved}" title="Bookmark">&#9733;</button>
-      <button data-copy="${esc(v.id)}" aria-label="Copy verse" title="Copy">&#8942;</button>
+      <button class="save${isSaved?' saved':''}" data-save="${esc(v.id)}" aria-label="Bookmark verse" aria-pressed="${isSaved}" title="Bookmark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z"/></svg></button>
+      <button data-copy="${esc(v.id)}" aria-label="Copy verse" title="Copy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2"/></svg></button>
     </div>
     <div class="vhead"><b>${esc(v.tn)}</b> &middot; ${v.ch?('Ch '+v.ch+chName+' &middot; '):''}Verse ${v.vn}${badge}</div>
-    <div class="orig" id="${wrapId}">${hl(sc[0].text,q)}</div>
+    <div class="orig" id="${wrapId}" data-script="${sc[0].code}">${hl(sc[0].text,q)}</div>
     ${toggle}
+    <div class="translation-label">English translation</div>
     <div class="trans">${hl(v.en,q)}</div>
     ${v.temple?`<div class="temple">${esc(v.temple)}</div>`:''}
   </div>`;
@@ -292,7 +369,7 @@ document.addEventListener('click',e=>{
     const bar=lang.parentElement, v=byId[bar.dataset.vid], target=document.getElementById(bar.dataset.for);
     bar.querySelectorAll('.lang').forEach(x=>x.setAttribute('aria-pressed','false'));
     lang.setAttribute('aria-pressed','true');
-    const s=scriptsFor(v).find(x=>x.code===lang.dataset.lang); if(s)target.textContent=s.text; return;
+    const s=scriptsFor(v).find(x=>x.code===lang.dataset.lang); if(s){target.textContent=s.text;target.dataset.script=s.code;} return;
   }
   const sv=e.target.closest('[data-save]');
   if(sv){const id=sv.dataset.save;toggleSave(id);const on=saved.has(id);
@@ -308,8 +385,8 @@ function daySeed(){const d=new Date();return d.getFullYear()*1000+Math.floor((d-
 function pick(a,s){return a[(daySeed()+s)%a.length];}
 function renderToday(){
   document.getElementById('todayDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('votd').innerHTML=verseBlock(pick(verses,0),'');
-  const shorts=verses.filter(x=>x.en.length>20&&x.en.length<130);
+  document.getElementById('votd').innerHTML=verseBlock(pick(completeVerses,0),'');
+  const shorts=completeVerses.filter(x=>x.en.length>20&&x.en.length<150);
   const s=pick(shorts,7);
   document.getElementById('saying').innerHTML=`&ldquo;${esc(s.en)}&rdquo;<span class="src">${esc(s.tn)}</span>`;
 }
@@ -320,8 +397,8 @@ function renderBegin(){
   const atEnd=bStep>=begin.length;
   const body=document.getElementById('beginBody');
   if(atEnd){
-    body.innerHTML=`<div class="why"><b>Keep going</b>You've walked the first steps. The complete Bhagavad Gita - all 701 verses in six scripts - is waiting in Explore, chapter by chapter.</div>
-      <div style="text-align:center;margin-top:20px"><button class="btn" data-v="explore">Open the Gita &rarr;</button></div>`;
+    body.innerHTML=`<div class="why"><b>Keep going</b>You've walked the first steps. Seven complete works and 1,017 verified verses are waiting in Explore.</div>
+      <div style="text-align:center;margin-top:20px"><button class="btn" data-v="explore">Open the library &rarr;</button></div>`;
   }else{
     const item=begin[bStep], v=byId[item.id];
     body.innerHTML=`<div class="why"><b>${esc(item.title)}</b>${esc(item.why)}</div>`+(v?verseBlock(v,''):'');
@@ -340,7 +417,7 @@ document.getElementById('bDots').onclick=e=>{const d=e.target.closest('.dot');if
 const elTexts=document.getElementById('texts'),elRes=document.getElementById('results'),
       elCounts=document.getElementById('counts'),elQ=document.getElementById('q'),
       elTW=document.getElementById('textsWrap'),elChap=document.getElementById('chapArea'),elPager=document.getElementById('pager');
-let activeText=null, activeChapter=null, page=0;
+let activeText=null, activeChapter=null, page=0, libraryFilter='complete';
 const PAGE=25;
 function chaptersOf(tid){return [...new Set(verses.filter(v=>v.tid===tid&&v.ch!=null).map(v=>v.ch))].sort((a,b)=>a-b);}
 function searchBlob(v){ // include every script so any-language search works
@@ -349,27 +426,33 @@ function searchBlob(v){ // include every script so any-language search works
   return s.toLowerCase();
 }
 function renderTexts(){
-  elTexts.innerHTML=texts.map(t=>{
+  const visible=texts.filter(t=>libraryFilter==='all'||(libraryFilter==='complete'?t.complete:!t.complete));
+  elTexts.innerHTML=visible.map(t=>{
     const n=verses.filter(v=>v.tid===t.id).length;
-    const tag=t.complete?`<span style="color:var(--vermilion)">Complete</span> &middot; ${n} verses`:`${n} verses &middot; preview`;
+    const status=t.complete?'Complete':'Preview';
     return `<button class="tcard" data-id="${esc(t.id)}" aria-pressed="${activeText===t.id}">
-      <h3>${esc(t.name)}</h3><div class="meta">${esc(t.lang)} &middot; ${tag}</div></button>`;}).join('');
+      <h3>${esc(t.name)}</h3><div class="meta">${esc(t.lang)} &middot; ${n} verses</div><span class="status ${status.toLowerCase()}">${status}</span></button>`;}).join('');
   elTexts.querySelectorAll('.tcard').forEach(b=>b.onclick=()=>{
     const same=activeText===b.dataset.id; activeText=same?null:b.dataset.id;
     const chs=activeText?chaptersOf(activeText):[]; activeChapter=(activeText&&chs.length>1)?chs[0]:null;
     page=0; elQ.value=''; renderTexts(); runSearch();
   });
 }
+document.querySelector('.filterbar').onclick=e=>{const b=e.target.closest('[data-filter]');if(!b)return;
+  libraryFilter=b.dataset.filter;activeText=null;activeChapter=null;page=0;
+  document.querySelectorAll('.filter').forEach(x=>x.setAttribute('aria-pressed',x===b));renderTexts();runSearch();};
 function renderChapterArea(){
   elChap.innerHTML='';
   if(!activeText)return;
+  const text=texts.find(t=>t.id===activeText);
   const meta=chapterMeta[activeText]; const chs=chaptersOf(activeText);
-  if(chs.length<2)return;
   const m=meta&&meta[activeChapter];
-  const line = m?`<div class="chapline"><div class="cn">Chapter ${activeChapter} &middot; ${esc(m.tr)}</div><div class="cm">${esc(m.mean)}</div></div>`:'';
-  const nav=`<div class="chapnav" role="group" aria-label="Chapters">
+  const detail=`<div class="text-detail"><h3>${esc(text.name)}</h3><p>${esc(text.desc)}</p></div>`;
+  if(chs.length<2){elChap.innerHTML=detail;return;}
+  const line = m?`<div class="chapline"><div class="cn">Section ${activeChapter} &middot; ${esc(m.tr)}</div><div class="cm">${esc(m.mean)}</div></div>`:'';
+  const nav=`<div class="chapnav" role="group" aria-label="Sections">
     ${chs.map(c=>`<button class="lang" data-ch="${c}" aria-pressed="${activeChapter===c}">Ch ${c}</button>`).join('')}</div>`;
-  elChap.innerHTML=line+nav;
+  elChap.innerHTML=detail+line+nav;
   elChap.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{activeChapter=+b.dataset.ch;page=0;runSearch();scrollUp();});
 }
 function runSearch(){
@@ -388,11 +471,9 @@ function runSearch(){
                  :`Pick a text below, or search in any language`);
   // paginate long lists
   const pages=Math.ceil(view.length/PAGE)||1; if(page>=pages)page=0;
-  let show=view;
-  if(!q&&!activeText) show=view.slice(0,6);
-  else show=view.slice(page*PAGE,(page+1)*PAGE);
-  elRes.innerHTML=show.length?show.map(v=>verseBlock(v,q)).join('')
-    :`<div class="empty">No verses match &ldquo;${esc(q)}&rdquo;. Try a broader word, or search in another script.</div>`;
+  let show=(!q&&!activeText)?[]:view.slice(page*PAGE,(page+1)*PAGE);
+  elRes.innerHTML=(!q&&!activeText)?'':(show.length?show.map(v=>verseBlock(v,q)).join('')
+    :`<div class="empty">No verses match &ldquo;${esc(q)}&rdquo;. Try a broader word, or search in another script.</div>`);
   // pager
   elPager.innerHTML='';
   if((q||activeText)&&pages>1){
@@ -401,8 +482,6 @@ function runSearch(){
       <button class="btn ghost" ${page>=pages-1?'disabled':''} id="pgNext">Next &rarr;</button>`;
     const p=document.getElementById('pgPrev'),n=document.getElementById('pgNext');
     if(p)p.onclick=()=>{page--;runSearch();scrollUp();}; if(n)n.onclick=()=>{page++;runSearch();scrollUp();};
-  } else if(!q&&!activeText&&view.length>6){
-    elPager.innerHTML=`<div class="empty" style="width:100%">Pick a text or search to explore all ${view.length} verses.</div>`;
   }
 }
 let st;elQ.oninput=()=>{clearTimeout(st);st=setTimeout(runSearch,120);};
@@ -413,7 +492,7 @@ document.getElementById('medLen').onclick=e=>{const b=e.target.closest('button')
   document.querySelectorAll('#medLen button').forEach(x=>x.setAttribute('aria-pressed','false'));
   b.setAttribute('aria-pressed','true');medMin=+b.dataset.min;};
 const stage=document.getElementById('medStage'),done=document.getElementById('medDone');
-const fragments=(()=>{const f=[];verses.forEach(v=>{if(v.en.length<90)f.push(v.en);
+const fragments=(()=>{const f=[];completeVerses.forEach(v=>{if(v.en.length<90)f.push(v.en);
   const w=v.roman.split(/\s+/);if(w.length>=3&&w.length<=8)f.push(v.roman);});return f;})();
 function spawnDrift(){
   const el=document.createElement('div');el.className='drift';
@@ -463,19 +542,28 @@ document.getElementById('fsUp').onclick=()=>{fs=Math.min(1.5,+(fs+0.1).toFixed(2
 document.getElementById('fsDown').onclick=()=>{fs=Math.max(0.85,+(fs-0.1).toFixed(2));applyFs();};
 
 /* ---- view switching ---- */
-function scrollUp(){window.scrollTo({top:0,behavior:'smooth'});}
-function show(v){
+function scrollUp(){window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});}
+function show(v,push=true){
+  if(!document.getElementById(v)?.classList.contains('view'))v='today';
   document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id===v));
   document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-current',t.dataset.v===v));
+  if(push&&location.hash!==`#${v}`)history.pushState({view:v},'',`#${v}`);
   scrollUp();
 }
 document.addEventListener('click',e=>{const t=e.target.closest('[data-v]');if(t){show(t.dataset.v);}});
+window.addEventListener('popstate',()=>show(location.hash.slice(1)||'today',false));
 
 /* ---- init ---- */
+document.getElementById('completeCount').textContent=texts.filter(t=>t.complete).length;
+document.getElementById('verifiedCount').textContent=completeVerses.length.toLocaleString();
+document.getElementById('filterComplete').textContent=texts.filter(t=>t.complete).length;
+document.getElementById('filterPreview').textContent=texts.filter(t=>!t.complete).length;
+document.getElementById('filterAll').textContent=texts.length;
 renderToday();renderBegin();renderTexts();runSearch();renderRoad();
+show(location.hash.slice(1)||'today',false);
 const scriptList='Devanagari, IAST, Malayalam, Tamil, Telugu, Kannada + English';
 document.getElementById('footNote').textContent=
-  `Static preview \u2014 browse, multilingual search, daily verse, bookmarks & meditation all run offline. AI explanations, audio recitation & accounts run on the full backend. Scripts: ${scriptList}.`;
+  `Private by default \u2014 reading, multilingual search, bookmarks and meditation stay on this device. Connected features add explanations, audio and accounts. Scripts: ${scriptList}.`;
 </script>
 </body>
 </html>

@@ -1,0 +1,30 @@
+name: Scripture pipeline
+
+on:
+  push:
+    paths:
+      - "dharmasearch-handoff/**"
+      - "frontend/public/scripture-data.json"
+      - ".github/workflows/scripture-pipeline.yml"
+  pull_request:
+    paths:
+      - "dharmasearch-handoff/**"
+      - "frontend/public/scripture-data.json"
+      - ".github/workflows/scripture-pipeline.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dharmasearch-handoff
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: dharmasearch-handoff/requirements.txt
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - run: python verify_pipeline.py

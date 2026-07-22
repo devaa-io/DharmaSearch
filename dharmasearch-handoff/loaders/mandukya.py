@@ -89,7 +89,9 @@ def _deva2int(s: str) -> int:
 
 def _fetch_devanagari():
     """Return {verse: devanagari_text} for all 12 Mandukya verses."""
-    raw = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30).text
+    response = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30)
+    response.raise_for_status()
+    raw = response.text
     txt = html.unescape(re.sub(r"<[^>]+>", " ", raw))
     marker = txt.find("इत्येतदक्षर")
     start = txt.rfind("ॐ", 0, marker) if marker >= 0 else -1
