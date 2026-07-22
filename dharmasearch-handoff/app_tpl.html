@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DharmaSearch - Read, learn and sit with sacred wisdom</title>
+<meta name="description" content="A guided path through Hindu scripture for newcomers, deep multilingual search for the devoted, a verse of the day, and a silent meditation window. The complete Bhagavad Gita and six principal Upanishads in seven representations.">
+<meta name="theme-color" content="#e8dcc0">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --leaf:#eee3c9; --leaf-deep:#e3d2ad; --ink:#241b15; --ink-soft:#62513d;
+  --vermilion:#a83220; --vermilion-dark:#7f2418; --gold:#947023; --line:#c9b183;
+  --card:#fff9eb; --card-soft:#f7edd8; --night:#18120e; --shadow:0 12px 34px rgba(66,45,23,.09);
+  --fs:1; /* reading-size multiplier */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--leaf);
+  background-image:repeating-linear-gradient(0deg,transparent 0 31px,rgba(148,112,35,.045) 31px 32px);
+  color:var(--ink);font-family:'Spectral',Georgia,serif;line-height:1.6;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1040px;margin:0 auto;padding:0 28px}
+button{font-family:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:var(--vermilion)}
+:focus-visible{outline:3px solid var(--vermilion);outline-offset:3px}
+
+/* ---- nav ---- */
+nav{position:sticky;top:0;z-index:20;background:rgba(238,227,201,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}
+.nav-in{max-width:1040px;margin:0 auto;padding:10px 28px;display:flex;align-items:center;gap:18px}
+.nav-tabs{display:flex;align-items:center;gap:4px;margin-left:auto}
+.brand{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:28px;letter-spacing:-.02em;background:none;border:none;padding:4px 0;min-height:44px}
+.brand span{color:var(--vermilion)}
+.tab{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;background:none;border:1px solid transparent;padding:10px 12px;min-height:44px;border-radius:4px;color:var(--ink-soft);transition:background .2s,color .2s,border-color .2s}
+.tab:hover{color:var(--ink);background:rgba(255,249,235,.6)}
+.tab[aria-current="true"]{color:var(--vermilion-dark);border-color:var(--line);background:var(--card)}
+
+.view{display:none;padding:48px 0 84px}
+.view.on{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--vermilion);margin-bottom:10px}
+.big{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(36px,6vw,56px);line-height:.98;letter-spacing:-.025em;margin-bottom:12px}
+.lede{color:var(--ink-soft);max-width:64ch;font-size:calc(17px * var(--fs));line-height:1.65}
+.trust-strip{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 26px}
+.trust-item{background:rgba(255,249,235,.72);border:1px solid var(--line);padding:9px 12px;border-radius:999px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.trust-item b{color:var(--vermilion-dark);font-weight:500}
+
+/* ---- verse card ---- */
+.verse-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:6px;padding:28px 28px 24px;margin:22px 0;position:relative;box-shadow:var(--shadow)}
+.vhead{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.055em;color:var(--gold);text-transform:uppercase;margin-bottom:18px;padding-right:104px;line-height:1.7}
+.vhead b{color:var(--vermilion)}
+.orig{font-family:'Cormorant Garamond',serif;font-size:calc(25px * var(--fs));line-height:1.5;margin-bottom:15px;white-space:pre-line;max-width:72ch}
+.orig[data-script="dev"]{font-family:'Noto Serif Devanagari','Nirmala UI',serif;font-style:normal;font-size:calc(25px * var(--fs));line-height:1.72}
+.orig[data-script="iast"],.orig[data-script="roman"]{font-style:italic}
+.translation-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:18px 0 5px}
+.trans{font-size:calc(17px * var(--fs));line-height:1.72;max-width:72ch}
+.temple{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);margin-top:13px;letter-spacing:.03em}
+.temple::before{content:"\25C8  "}
+.langs{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 15px}
+.lang{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.065em;text-transform:uppercase;padding:8px 11px;min-height:44px;border:1px solid var(--line);background:var(--card-soft);border-radius:4px;color:var(--ink-soft);transition:background .2s,border-color .2s,color .2s}
+.lang:hover{border-color:var(--gold);color:var(--ink)}
+.lang[aria-pressed="true"]{background:var(--vermilion);color:var(--leaf);border-color:var(--vermilion)}
+/* card action buttons (bookmark/copy) */
+.vacts{position:absolute;top:18px;right:18px;display:flex;gap:7px}
+.vacts button{width:44px;height:44px;border:1px solid var(--line);background:var(--card-soft);border-radius:5px;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);transition:background .2s,border-color .2s,color .2s}
+.vacts svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.vacts button:hover{border-color:var(--vermilion);color:var(--vermilion)}
+.vacts button.saved{background:var(--vermilion);color:var(--leaf);border-color:var(--vermilion)}
+.copied{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--leaf);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 16px;border-radius:3px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none}
+.copied.show{opacity:1}
+
+/* ---- TODAY ---- */
+.saying{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(23px,4vw,31px);line-height:1.4;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:28px 0;margin:34px 0}
+.saying .src{display:block;font-family:'IBM Plex Mono',monospace;font-style:normal;font-size:11px;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;margin-top:13px}
+.doors{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:30px}
+.door{text-align:left;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);padding:22px;border-radius:6px;min-height:150px;transition:transform .2s,border-color .2s,box-shadow .2s;box-shadow:0 8px 24px rgba(66,45,23,.05)}
+.door:hover{border-top-color:var(--vermilion);transform:translateY(-2px);box-shadow:var(--shadow)}
+.door h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:22px;margin-bottom:4px}
+.door p{font-size:14px;color:var(--ink-soft);line-height:1.45}
+@media(max-width:620px){.doors{grid-template-columns:1fr}}
+
+/* ---- BEGIN ---- */
+.step-nav{display:flex;align-items:center;justify-content:space-between;margin-top:18px;gap:12px;flex-wrap:wrap}
+.step-dots{display:flex;gap:2px}
+.dot{width:40px;height:44px;border:none;padding:0;background:transparent;position:relative}
+.dot::after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:var(--line);inset:50% auto auto 50%;transform:translate(-50%,-50%)}
+.dot[aria-current="true"]::after{background:var(--vermilion);box-shadow:0 0 0 4px rgba(168,50,32,.12)}
+.btn{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;background:var(--ink);color:var(--leaf);border:none;padding:12px 18px;min-height:44px;border-radius:4px;transition:background .2s,color .2s,border-color .2s}
+.btn:hover:not(:disabled){background:var(--vermilion-dark)}
+.btn:disabled{opacity:.3;cursor:default}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--ink)}
+.why{background:var(--leaf-deep);border:1px solid var(--line);border-radius:6px;padding:18px 20px;margin:24px 0 2px;font-size:calc(16px * var(--fs));line-height:1.6}
+.why b{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:calc(19px * var(--fs));color:var(--vermilion);display:block;margin-bottom:5px}
+
+/* ---- EXPLORE ---- */
+.searchbar{position:relative}
+.searchbar::before{content:"";position:absolute;left:16px;top:50%;width:17px;height:17px;border:1.8px solid var(--ink-soft);border-radius:50%;transform:translateY(-60%);pointer-events:none}
+.searchbar::after{content:"";position:absolute;left:29px;top:57%;width:7px;height:1.8px;background:var(--ink-soft);transform:rotate(45deg);pointer-events:none}
+.searchbar input{width:100%;padding:15px 18px 15px 48px;min-height:54px;font-family:'Spectral',serif;font-size:17px;background:var(--card);border:1.5px solid var(--ink);color:var(--ink);border-radius:6px;box-shadow:0 7px 20px rgba(66,45,23,.05)}
+.counts{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin:8px 0 18px;letter-spacing:.05em;line-height:1.6}
+.library-tools{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:24px 0 14px;flex-wrap:wrap}
+.library-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600}
+.filterbar{display:flex;gap:6px;flex-wrap:wrap}
+.filter{min-height:44px;padding:8px 12px;background:transparent;border:1px solid var(--line);border-radius:999px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+.filter[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--leaf)}
+.filter span{opacity:.7}
+.texts{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:28px}
+.tcard{text-align:left;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);padding:17px 16px;border-radius:6px;min-height:104px;transition:transform .2s,border-color .2s,box-shadow .2s}
+.tcard:hover{border-left-color:var(--vermilion);transform:translateY(-2px);box-shadow:0 8px 20px rgba(66,45,23,.07)}
+.tcard[aria-pressed="true"]{border-left-color:var(--vermilion);background:var(--leaf-deep)}
+.tcard h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:21px;line-height:1.1}
+.tcard .meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);letter-spacing:.05em;margin-top:5px;text-transform:uppercase}
+.status{display:inline-block;margin-top:10px;padding:3px 7px;border-radius:999px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+.status.complete{background:rgba(168,50,32,.11);color:var(--vermilion-dark)}
+.status.preview{background:rgba(98,81,61,.1);color:var(--ink-soft)}
+.text-detail{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:20px;margin:4px 0 18px;box-shadow:0 7px 20px rgba(66,45,23,.05)}
+.text-detail h3{font-family:'Cormorant Garamond',serif;font-size:28px;line-height:1.05;margin-bottom:6px}
+.text-detail p{color:var(--ink-soft);max-width:72ch;font-size:15px;line-height:1.65}
+.chapline{background:var(--leaf-deep);border-radius:6px;padding:14px 16px;margin-bottom:14px}
+.chapline .cn{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:20px}
+.chapline .cm{font-size:14px;color:var(--ink-soft);font-style:italic}
+.chapnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chapnav .lang{cursor:pointer}
+.pager{display:flex;justify-content:space-between;gap:10px;margin:22px 0 0}
+mark{background:rgba(182,50,31,.22);color:inherit;padding:0 1px}
+.empty{padding:34px 0;text-align:center;color:var(--ink-soft);font-style:italic}
+
+/* ---- MEDITATE ---- */
+.med-intro{text-align:center;padding:26px 0}
+.med-len{display:inline-flex;gap:6px;margin-top:20px}
+.med-len button{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 16px;min-height:44px;border:1px solid var(--ink);background:none;border-radius:4px}
+.med-len button[aria-pressed="true"]{background:var(--ink);color:var(--leaf)}
+.med-stage{position:fixed;inset:0;background:var(--night);z-index:50;display:none;overflow:hidden}
+.med-stage.on{display:block}
+.drift{position:absolute;color:#e8dcc0;font-family:'Cormorant Garamond',serif;font-style:italic;white-space:nowrap;opacity:0;pointer-events:none}
+.med-exit{position:fixed;top:20px;right:20px;z-index:52;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#9a8a6a;background:none;border:1px solid #4a3d2a;padding:9px 14px;border-radius:2px}
+.med-timer{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:52;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.2em;color:#6a5c42}
+.med-done{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#e8dcc0;z-index:53;padding:20px}
+.med-done.on{display:flex}
+.med-done .big{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:34px;margin-bottom:8px}
+
+/* ---- roadmap / about ---- */
+.road{display:grid;gap:8px;margin-top:8px}
+.road-row{display:flex;justify-content:space-between;gap:12px;background:var(--card);border:1px solid var(--line);padding:11px 14px;border-radius:2px;font-size:15px;align-items:center}
+.road-row .st{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:2px;white-space:nowrap}
+.st.done{background:var(--vermilion);color:var(--leaf)}
+.st.prev{background:var(--leaf-deep);color:var(--ink-soft)}
+
+/* reading-size control */
+.rsize{display:inline-flex;gap:4px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin-left:6px}
+.rsize button{width:44px;height:44px;border:1px solid var(--line);background:var(--card);border-radius:4px}
+
+footer{border-top:2px solid var(--ink);margin-top:24px;padding:22px 0 46px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);letter-spacing:.04em;line-height:1.9}
+.note{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);margin-top:10px;letter-spacing:.02em}
+.skip{position:absolute;left:-9999px}.skip:focus{left:12px;top:12px;position:fixed;z-index:99;background:var(--ink);color:var(--leaf);padding:10px 14px;border-radius:3px}
+@media(max-width:680px){
+  .wrap{padding:0 18px}
+  .nav-in{padding:8px 0 0;display:grid;gap:2px}
+  .brand{margin:0 18px;font-size:26px;justify-self:start}
+  .nav-tabs{width:100%;margin:0;overflow-x:auto;padding:0 12px 7px;gap:2px;scrollbar-width:none}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;padding:9px 11px}
+  .view{padding:34px 0 68px}
+  .big{font-size:40px}
+  .trust-strip{margin:18px 0 22px}
+  .verse-card{padding:22px 20px;margin:18px 0;border-left-width:3px}
+  .vacts{top:16px;right:16px}
+  .vhead{padding-right:100px;min-height:44px;margin-bottom:15px}
+  .orig{font-size:calc(23px * var(--fs));line-height:1.52}
+  .orig[data-script="dev"]{font-size:calc(24px * var(--fs))}
+  .lang{min-height:44px;padding:8px 10px}
+  .doors{gap:10px}
+  .door{min-height:auto;padding:20px}
+  .step-nav{display:grid;grid-template-columns:1fr 1fr}
+  .step-dots{grid-column:1/-1;grid-row:1;justify-content:center}
+  .library-tools{align-items:flex-start}
+  .filterbar{width:100%}
+  .filter{flex:1}
+  .texts{grid-template-columns:1fr}
+  .tcard{min-height:94px}
+  .pager{align-items:center}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<a href="#main" class="skip">Skip to content</a>
+<nav aria-label="Primary navigation">
+  <div class="nav-in">
+    <button class="brand" data-v="today" aria-label="DharmaSearch home">Dharma<span>Search</span></button>
+    <div class="nav-tabs">
+      <button class="tab" data-v="today" aria-current="true">Today</button>
+      <button class="tab" data-v="begin">Begin</button>
+      <button class="tab" data-v="explore">Explore</button>
+      <button class="tab" data-v="meditate">Meditate</button>
+      <button class="tab" data-v="about">About</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap" id="main">
+
+<!-- TODAY -->
+<section class="view on" id="today" aria-label="Today">
+  <div class="eyebrow">Today &middot; <span id="todayDate"></span></div>
+  <h1 class="big">A verse for today</h1>
+  <p class="lede">Begin with the original. Move through its scripts. Sit with the English when you are ready.</p>
+  <div class="trust-strip" aria-label="Library summary">
+    <span class="trust-item"><b id="completeCount">7</b> complete texts</span>
+    <span class="trust-item"><b id="verifiedCount">1,017</b> verified verses</span>
+    <span class="trust-item"><b>6 scripts</b> + English</span>
+  </div>
+  <div id="votd"></div>
+  <div class="saying" id="saying"></div>
+  <div class="eyebrow">Where would you like to start?</div>
+  <div class="doors">
+    <button class="door" data-v="begin"><h3>Begin</h3><p>New to all this? A short guided path, plain English first, no prior knowledge needed.</p></button>
+    <button class="door" data-v="explore"><h3>Explore</h3><p>Know what you're after? Search every verse in six scripts, or read a complete text section by section.</p></button>
+    <button class="door" data-v="meditate"><h3>Meditate</h3><p>Ten quiet minutes. Words drift by; you read, and breathe.</p></button>
+  </div>
+</section>
+
+<!-- BEGIN -->
+<section class="view" id="begin" aria-label="Begin - a first path">
+  <div class="eyebrow">Begin &middot; a first path</div>
+  <h1 class="big">Start from anywhere</h1>
+  <p class="lede">A few verses, chosen because they speak to anyone - no background required. Read the plain meaning first, then the scripture itself.</p>
+  <div id="beginBody"></div>
+  <div class="step-nav">
+    <button class="btn ghost" id="bPrev">&larr; Back</button>
+    <div class="step-dots" id="bDots" role="tablist" aria-label="Path progress"></div>
+    <button class="btn" id="bNext">Next &rarr;</button>
+  </div>
+</section>
+
+<!-- EXPLORE -->
+<section class="view" id="explore" aria-label="Explore the library">
+  <div class="eyebrow">Explore &middot; the full library</div>
+  <h1 class="big">Search the scriptures</h1>
+  <p class="lede" style="margin-bottom:20px">Read seven complete works or search 1,338 passages across every available script.</p>
+  <div class="searchbar">
+    <input id="q" type="search" placeholder="Search in English or any script - dharma, धर्म, ധര്‍മ്മം, fear&hellip;" autocomplete="off" aria-label="Search verses in any language">
+  </div>
+  <div class="counts" id="counts"></div>
+  <div id="textsWrap">
+    <div class="library-tools">
+      <div class="library-title">The library</div>
+      <div class="filterbar" role="group" aria-label="Filter library">
+        <button class="filter" data-filter="complete" aria-pressed="true">Complete <span id="filterComplete"></span></button>
+        <button class="filter" data-filter="all" aria-pressed="false">All <span id="filterAll"></span></button>
+        <button class="filter" data-filter="preview" aria-pressed="false">Preview <span id="filterPreview"></span></button>
+      </div>
+    </div>
+    <div class="texts" id="texts"></div>
+  </div>
+  <div id="chapArea"></div>
+  <div id="results"></div>
+  <div class="pager" id="pager"></div>
+</section>
+
+<!-- MEDITATE -->
+<section class="view" id="meditate" aria-label="Meditate">
+  <div class="med-intro">
+    <div class="eyebrow">Meditate &middot; silent &amp; still</div>
+    <h1 class="big">Ten minutes of quiet</h1>
+    <p class="lede" style="margin:0 auto 6px">Fragments of scripture drift slowly across a dark screen. Nothing to do but read what surfaces, and let the rest pass. Find a comfortable seat.</p>
+    <div class="med-len" id="medLen" role="group" aria-label="Session length">
+      <button data-min="5">5 min</button>
+      <button data-min="10" aria-pressed="true">10 min</button>
+      <button data-min="20">20 min</button>
+    </div>
+    <div style="margin-top:22px"><button class="btn" id="medStart">Begin sitting</button></div>
+  </div>
+</section>
+
+<!-- ABOUT / ROADMAP -->
+<section class="view" id="about" aria-label="About and roadmap">
+  <div class="eyebrow">About &middot; what's here and what's coming</div>
+  <h1 class="big">An honest map</h1>
+  <p class="lede">Every text is being brought to the same standard: the original in Devanagari, faithful transliteration into Malayalam, Tamil, Telugu and Kannada, and an English translation - with a build that refuses to ship a text that has any gap. The Bhagavad Gita and six principal Upanishads are complete; the rest are on their way.</p>
+  <div class="road" id="road"></div>
+  <p class="note" id="aboutNote"></p>
+  <div style="margin-top:22px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--ink-soft)">READING SIZE</span>
+    <span class="rsize"><button id="fsDown" aria-label="Smaller text">A-</button><button id="fsUp" aria-label="Larger text">A+</button></span>
+  </div>
+</section>
+
+<footer>
+  DharmaSearch &mdash; original text, transliteration &amp; translation. Seven complete texts, with more being built through a zero-gap pipeline.<br>
+  <span id="footNote"></span><br>
+  Source: <a href="https://github.com/devaa-io/DharmaSearch">github.com/devaa-io/DharmaSearch</a> &middot; <a href="https://devaa.io">devaa.io</a>
+</footer>
+</main>
+
+<div class="med-stage" id="medStage"><button class="med-exit" id="medExit">End &times;</button><div class="med-timer" id="medTimer"></div></div>
+<div class="med-done" id="medDone"><div class="big">Be still.</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.2em;color:#9a8a6a">YOUR SITTING IS COMPLETE</div><div style="margin-top:24px"><button class="btn ghost" id="medBack" style="color:#e8dcc0;border-color:#4a3d2a">Return</button></div></div>
+<div class="copied" id="toast" role="status" aria-live="polite"></div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+"use strict";
+const DB=JSON.parse(document.getElementById('data').textContent);
+const {texts,verses,begin}=DB;
+const chapterMeta=DB.chapterMeta||{};
+const byId=Object.fromEntries(verses.map(v=>[v.id,v]));
+const completeVerses=verses.filter(v=>v.complete);
+const LANGNAMES={dev:'Devanagari',iast:'IAST',ml:'Malayalam',ta:'Tamil',hi:'Hindi',te:'Telugu',kn:'Kannada'};
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* safe localStorage (works on deployed site; degrades silently in sandboxes) */
+const store={
+  get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+let saved=new Set(store.get('ds_saved')||[]);
+function toggleSave(id){ saved.has(id)?saved.delete(id):saved.add(id); store.set('ds_saved',[...saved]); }
+
+/* reading size */
+let fs=store.get('ds_fs')||1;
+function applyFs(){document.documentElement.style.setProperty('--fs',fs);store.set('ds_fs',fs);}
+applyFs();
+
+/* Complete texts lead with the source script; previews fall back to romanisation. */
+function scriptsFor(v){
+  const out=[];
+  if(v.dev) out.push({code:'dev',label:'Devanagari',text:v.dev});
+  if(v.iast) out.push({code:'iast',label:'IAST',text:v.iast});
+  else if(v.roman) out.push({code:'roman',label:'Transliteration',text:v.roman});
+  ['ml','ta','te','kn','hi'].forEach(c=>{ if(v.scripts&&v.scripts[c]) out.push({code:c,label:LANGNAMES[c],text:v.scripts[c]}); });
+  return out;
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1400);}
+
+/* ---- verse renderer ---- */
+function verseBlock(v,q){
+  const wrapId='lw'+v.id.replace(/[^a-z0-9]/gi,'');
+  const sc=scriptsFor(v);
+  const toggle = sc.length>1 ? `<div class="langs" role="group" aria-label="Script" data-for="${wrapId}" data-vid="${esc(v.id)}">
+      ${sc.map((s,i)=>`<button class="lang" data-lang="${s.code}" aria-pressed="${i===0}">${s.label}</button>`).join('')}
+    </div>` : '';
+  const badge = v.complete ? '' : ` &middot; <span style="color:var(--gold)">preview</span>`;
+  const chName = v.cn?` &middot; ${esc(v.cn)}`:'';
+  const isSaved=saved.has(v.id);
+  return `<div class="verse-card">
+    <div class="vacts">
+      <button class="save${isSaved?' saved':''}" data-save="${esc(v.id)}" aria-label="Bookmark verse" aria-pressed="${isSaved}" title="Bookmark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z"/></svg></button>
+      <button data-copy="${esc(v.id)}" aria-label="Copy verse" title="Copy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2"/></svg></button>
+    </div>
+    <div class="vhead"><b>${esc(v.tn)}</b> &middot; ${v.ch?('Ch '+v.ch+chName+' &middot; '):''}Verse ${v.vn}${badge}</div>
+    <div class="orig" id="${wrapId}" data-script="${sc[0].code}">${hl(sc[0].text,q)}</div>
+    ${toggle}
+    <div class="translation-label">English translation</div>
+    <div class="trans">${hl(v.en,q)}</div>
+    ${v.temple?`<div class="temple">${esc(v.temple)}</div>`:''}
+  </div>`;
+}
+function hl(s,q){s=esc(s);if(!q)return s;const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig');return s.replace(re,'<mark>$1</mark>');}
+
+/* delegated: language toggle, bookmark, copy */
+document.addEventListener('click',e=>{
+  const lang=e.target.closest('.lang');
+  if(lang && lang.parentElement.dataset.vid){
+    const bar=lang.parentElement, v=byId[bar.dataset.vid], target=document.getElementById(bar.dataset.for);
+    bar.querySelectorAll('.lang').forEach(x=>x.setAttribute('aria-pressed','false'));
+    lang.setAttribute('aria-pressed','true');
+    const s=scriptsFor(v).find(x=>x.code===lang.dataset.lang); if(s){target.textContent=s.text;target.dataset.script=s.code;} return;
+  }
+  const sv=e.target.closest('[data-save]');
+  if(sv){const id=sv.dataset.save;toggleSave(id);const on=saved.has(id);
+    sv.classList.toggle('saved',on);sv.setAttribute('aria-pressed',on);toast(on?'Bookmarked':'Removed');return;}
+  const cp=e.target.closest('[data-copy]');
+  if(cp){const v=byId[cp.dataset.copy];const sc=scriptsFor(v);
+    const text=`${v.tn} ${v.ch?('- Chapter '+v.ch):''} Verse ${v.vn}\n\n${v.dev||v.roman}\n\n${v.en}\n\n(via DharmaSearch)`;
+    (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>toast('Verse copied')).catch(()=>toast('Copy unavailable'));return;}
+});
+
+/* ---- TODAY ---- */
+function daySeed(){const d=new Date();return d.getFullYear()*1000+Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);}
+function pick(a,s){return a[(daySeed()+s)%a.length];}
+function renderToday(){
+  document.getElementById('todayDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('votd').innerHTML=verseBlock(pick(completeVerses,0),'');
+  const shorts=completeVerses.filter(x=>x.en.length>20&&x.en.length<150);
+  const s=pick(shorts,7);
+  document.getElementById('saying').innerHTML=`&ldquo;${esc(s.en)}&rdquo;<span class="src">${esc(s.tn)}</span>`;
+}
+
+/* ---- BEGIN ---- */
+let bStep=0;
+function renderBegin(){
+  const atEnd=bStep>=begin.length;
+  const body=document.getElementById('beginBody');
+  if(atEnd){
+    body.innerHTML=`<div class="why"><b>Keep going</b>You've walked the first steps. Seven complete works and 1,017 verified verses are waiting in Explore.</div>
+      <div style="text-align:center;margin-top:20px"><button class="btn" data-v="explore">Open the library &rarr;</button></div>`;
+  }else{
+    const item=begin[bStep], v=byId[item.id];
+    body.innerHTML=`<div class="why"><b>${esc(item.title)}</b>${esc(item.why)}</div>`+(v?verseBlock(v,''):'');
+  }
+  const dots=begin.map((_,i)=>`<button class="dot" data-i="${i}" role="tab" aria-current="${i===bStep}" aria-label="Step ${i+1}"></button>`).join('');
+  document.getElementById('bDots').innerHTML=dots;
+  document.getElementById('bPrev').disabled=bStep===0;
+  document.getElementById('bNext').textContent=bStep>=begin.length-1?(atEnd?'Done':'Finish'):'Next \u2192';
+  document.getElementById('bNext').disabled=atEnd;
+}
+document.getElementById('bPrev').onclick=()=>{if(bStep>0){bStep--;renderBegin();scrollUp();}};
+document.getElementById('bNext').onclick=()=>{if(bStep<begin.length){bStep++;renderBegin();scrollUp();}};
+document.getElementById('bDots').onclick=e=>{const d=e.target.closest('.dot');if(d){bStep=+d.dataset.i;renderBegin();scrollUp();}};
+
+/* ---- EXPLORE ---- */
+const elTexts=document.getElementById('texts'),elRes=document.getElementById('results'),
+      elCounts=document.getElementById('counts'),elQ=document.getElementById('q'),
+      elTW=document.getElementById('textsWrap'),elChap=document.getElementById('chapArea'),elPager=document.getElementById('pager');
+let activeText=null, activeChapter=null, page=0, libraryFilter='complete';
+const PAGE=25;
+function chaptersOf(tid){return [...new Set(verses.filter(v=>v.tid===tid&&v.ch!=null).map(v=>v.ch))].sort((a,b)=>a-b);}
+function searchBlob(v){ // include every script so any-language search works
+  let s=v.roman+' '+v.en+' '+(v.kw||'')+' '+(v.cn||'')+' '+(v.dev||'')+' '+(v.iast||'');
+  if(v.scripts)for(const k in v.scripts)s+=' '+v.scripts[k];
+  return s.toLowerCase();
+}
+function renderTexts(){
+  const visible=texts.filter(t=>libraryFilter==='all'||(libraryFilter==='complete'?t.complete:!t.complete));
+  elTexts.innerHTML=visible.map(t=>{
+    const n=verses.filter(v=>v.tid===t.id).length;
+    const status=t.complete?'Complete':'Preview';
+    return `<button class="tcard" data-id="${esc(t.id)}" aria-pressed="${activeText===t.id}">
+      <h3>${esc(t.name)}</h3><div class="meta">${esc(t.lang)} &middot; ${n} verses</div><span class="status ${status.toLowerCase()}">${status}</span></button>`;}).join('');
+  elTexts.querySelectorAll('.tcard').forEach(b=>b.onclick=()=>{
+    const same=activeText===b.dataset.id; activeText=same?null:b.dataset.id;
+    const chs=activeText?chaptersOf(activeText):[]; activeChapter=(activeText&&chs.length>1)?chs[0]:null;
+    page=0; elQ.value=''; renderTexts(); runSearch();
+  });
+}
+document.querySelector('.filterbar').onclick=e=>{const b=e.target.closest('[data-filter]');if(!b)return;
+  libraryFilter=b.dataset.filter;activeText=null;activeChapter=null;page=0;
+  document.querySelectorAll('.filter').forEach(x=>x.setAttribute('aria-pressed',x===b));renderTexts();runSearch();};
+function renderChapterArea(){
+  elChap.innerHTML='';
+  if(!activeText)return;
+  const text=texts.find(t=>t.id===activeText);
+  const meta=chapterMeta[activeText]; const chs=chaptersOf(activeText);
+  const m=meta&&meta[activeChapter];
+  const detail=`<div class="text-detail"><h3>${esc(text.name)}</h3><p>${esc(text.desc)}</p></div>`;
+  if(chs.length<2){elChap.innerHTML=detail;return;}
+  const line = m?`<div class="chapline"><div class="cn">Section ${activeChapter} &middot; ${esc(m.tr)}</div><div class="cm">${esc(m.mean)}</div></div>`:'';
+  const nav=`<div class="chapnav" role="group" aria-label="Sections">
+    ${chs.map(c=>`<button class="lang" data-ch="${c}" aria-pressed="${activeChapter===c}">Ch ${c}</button>`).join('')}</div>`;
+  elChap.innerHTML=detail+line+nav;
+  elChap.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{activeChapter=+b.dataset.ch;page=0;runSearch();scrollUp();});
+}
+function runSearch(){
+  const q=elQ.value.trim();
+  let list=verses;
+  if(activeText)list=list.filter(v=>v.tid===activeText);
+  if(q){const ql=q.toLowerCase();list=list.filter(v=>searchBlob(v).includes(ql));}
+  const usingChapter=activeText&&activeChapter!=null&&!q;
+  let view=usingChapter?list.filter(v=>v.ch===activeChapter):list;
+  elTW.style.display=q?'none':'block';
+  renderChapterArea();
+  const tname=activeText?texts.find(t=>t.id===activeText).name:'';
+  elCounts.textContent = q
+    ? `${view.length} verse${view.length!==1?'s':''}${activeText?' in '+tname:' across all texts'}`
+    : (activeText?(usingChapter?`${tname} \u2014 Chapter ${activeChapter} \u2014 ${view.length} verses`:`${view.length} verses in ${tname}`)
+                 :`Pick a text below, or search in any language`);
+  // paginate long lists
+  const pages=Math.ceil(view.length/PAGE)||1; if(page>=pages)page=0;
+  let show=(!q&&!activeText)?[]:view.slice(page*PAGE,(page+1)*PAGE);
+  elRes.innerHTML=(!q&&!activeText)?'':(show.length?show.map(v=>verseBlock(v,q)).join('')
+    :`<div class="empty">No verses match &ldquo;${esc(q)}&rdquo;. Try a broader word, or search in another script.</div>`);
+  // pager
+  elPager.innerHTML='';
+  if((q||activeText)&&pages>1){
+    elPager.innerHTML=`<button class="btn ghost" ${page===0?'disabled':''} id="pgPrev">&larr; Prev</button>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);align-self:center">Page ${page+1} / ${pages}</span>
+      <button class="btn ghost" ${page>=pages-1?'disabled':''} id="pgNext">Next &rarr;</button>`;
+    const p=document.getElementById('pgPrev'),n=document.getElementById('pgNext');
+    if(p)p.onclick=()=>{page--;runSearch();scrollUp();}; if(n)n.onclick=()=>{page++;runSearch();scrollUp();};
+  }
+}
+let st;elQ.oninput=()=>{clearTimeout(st);st=setTimeout(runSearch,120);};
+
+/* ---- MEDITATE ---- */
+let medMin=10,medTimer=null,medEnd=0,driftLoop=null;
+document.getElementById('medLen').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#medLen button').forEach(x=>x.setAttribute('aria-pressed','false'));
+  b.setAttribute('aria-pressed','true');medMin=+b.dataset.min;};
+const stage=document.getElementById('medStage'),done=document.getElementById('medDone');
+const fragments=(()=>{const f=[];completeVerses.forEach(v=>{if(v.en.length<90)f.push(v.en);
+  const w=v.roman.split(/\s+/);if(w.length>=3&&w.length<=8)f.push(v.roman);});return f;})();
+function spawnDrift(){
+  const el=document.createElement('div');el.className='drift';
+  el.textContent=fragments[Math.floor(Math.random()*fragments.length)];
+  el.style.fontSize=(18+Math.random()*22)+'px';el.style.top=(6+Math.random()*80)+'%';el.style.left='100%';
+  stage.appendChild(el);
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){
+    el.style.left='50%';el.style.transform='translateX(-50%)';el.style.transition='opacity 3s';
+    requestAnimationFrame(()=>el.style.opacity=.85);
+    setTimeout(()=>{el.style.opacity=0;setTimeout(()=>el.remove(),3000);},5000);return;}
+  const dur=16+Math.random()*14;
+  el.animate([{transform:'translateX(0)',opacity:0},{opacity:.85,offset:.15},{opacity:.85,offset:.85},
+    {transform:`translateX(-${window.innerWidth+400}px)`,opacity:0}],
+    {duration:dur*1000,easing:'linear'}).onfinish=()=>el.remove();
+}
+function startMed(){
+  stage.classList.add('on');done.classList.remove('on');medEnd=Date.now()+medMin*60000;
+  driftLoop=setInterval(spawnDrift,2600);spawnDrift();
+  document.getElementById('medTimer').textContent=medMin+':00';
+  medTimer=setInterval(()=>{const left=Math.max(0,medEnd-Date.now());
+    const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);
+    document.getElementById('medTimer').textContent=`${m}:${String(s).padStart(2,'0')}`;
+    if(left<=0)endMed(true);},1000);
+}
+function endMed(complete){clearInterval(driftLoop);clearInterval(medTimer);
+  stage.querySelectorAll('.drift').forEach(d=>d.remove());
+  if(complete)done.classList.add('on');else stage.classList.remove('on');}
+document.getElementById('medStart').onclick=startMed;
+document.getElementById('medExit').onclick=()=>endMed(false);
+document.getElementById('medBack').onclick=()=>{done.classList.remove('on');stage.classList.remove('on');};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&stage.classList.contains('on'))endMed(false);});
+
+/* ---- ABOUT / ROADMAP ---- */
+function renderRoad(){
+  const rows=texts.map(t=>{
+    const n=verses.filter(v=>v.tid===t.id).length;
+    const done=t.complete;
+    return `<div class="road-row"><span>${esc(t.name)} <span style="color:var(--ink-soft)">&middot; ${n} verses${done?'':' (sample)'}</span></span>
+      <span class="st ${done?'done':'prev'}">${done?'Complete':'In pipeline'}</span></div>`;
+  }).join('');
+  document.getElementById('road').innerHTML=rows;
+  const doneN=texts.filter(t=>t.complete).length;
+  document.getElementById('aboutNote').textContent=
+    `${doneN} of ${texts.length} texts complete. Each remaining text is sourced from an authoritative Devanagari edition, transliterated script-to-script, and gated so it cannot ship with a single missing verse or field.`;
+}
+document.getElementById('fsUp').onclick=()=>{fs=Math.min(1.5,+(fs+0.1).toFixed(2));applyFs();};
+document.getElementById('fsDown').onclick=()=>{fs=Math.max(0.85,+(fs-0.1).toFixed(2));applyFs();};
+
+/* ---- view switching ---- */
+function scrollUp(){window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});}
+function show(v,push=true){
+  if(!document.getElementById(v)?.classList.contains('view'))v='today';
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id===v));
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-current',t.dataset.v===v));
+  if(push&&location.hash!==`#${v}`)history.pushState({view:v},'',`#${v}`);
+  scrollUp();
+}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-v]');if(t){show(t.dataset.v);}});
+window.addEventListener('popstate',()=>show(location.hash.slice(1)||'today',false));
+
+/* ---- init ---- */
+document.getElementById('completeCount').textContent=texts.filter(t=>t.complete).length;
+document.getElementById('verifiedCount').textContent=completeVerses.length.toLocaleString();
+document.getElementById('filterComplete').textContent=texts.filter(t=>t.complete).length;
+document.getElementById('filterPreview').textContent=texts.filter(t=>!t.complete).length;
+document.getElementById('filterAll').textContent=texts.length;
+renderToday();renderBegin();renderTexts();runSearch();renderRoad();
+show(location.hash.slice(1)||'today',false);
+const scriptList='Devanagari, IAST, Malayalam, Tamil, Telugu, Kannada + English';
+document.getElementById('footNote').textContent=
+  `Private by default \u2014 reading, multilingual search, bookmarks and meditation stay on this device. Connected features add explanations, audio and accounts. Scripts: ${scriptList}.`;
+</script>
+</body>
+</html>

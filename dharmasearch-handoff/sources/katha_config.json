@@ -1,0 +1,12 @@
+{
+  "text_id": "katha-upanishad",
+  "text_name": "Katha Upanishad",
+  "language": "Sanskrit",
+  "loader": "loaders/katha.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "english": "translation",
+    "chapter": "chapter",
+    "verse": "verse"
+  }
+}

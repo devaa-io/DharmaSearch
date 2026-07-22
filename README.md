@@ -1,78 +1,93 @@
 # DharmaSearch
 
-Search and study Hindu scripture in one place. DharmaSearch serves verses from texts such as the Bhagavad Gita and the Upanishads, with AI-assisted search and explanations, audio playback, bookmarks, reading plans and personal annotations.
+DharmaSearch is an offline-first scripture reader and multilingual search experience, with optional connected features for accounts, AI-assisted study, audio, reading plans and community notes.
+
+The public React library currently includes 22 text groupings and 1,338 passages. Seven works are complete and release-gated: the Bhagavad Gita plus the Isha, Kena, Katha, Mundaka, Prashna and Mandukya Upanishads. Their 1,017 verified verses include Devanagari, IAST, Malayalam, Tamil, Telugu, Kannada and English.
 
 "Dharma protects those who protect dharma."
 
 ## Features
 
-- 16 sacred texts with 264 seeded verses, including Kerala-specific texts, browsable by text, chapter and verse
-- Keyword search ranked by relevance, plus AI search in plain language and per-verse AI explanations
-- Transliterations in Malayalam, Hindi, Tamil, Telugu and Kannada
-- Audio recitation through text-to-speech, with multiple voices and caching
-- Six reading plans with progress tracking, including a Karkkidakam 30-day Ramayana plan
-- Bookmarks, copy, share, and share-as-image with selectable themes
-- Community annotations with guru tradition tags and upvoting
-- Corrections workflow: users submit, an admin approves, the fix auto-applies
-- Daily verse endpoint, and a public sample search that works without an account
-- Account system with JWT access and refresh tokens (httpOnly cookie or bearer)
+### Public reader
+
+- Offline-first Today, Begin, Explore, Meditate and About views at `/`
+- Multilingual search across original text, transliteration, English and southern scripts
+- Complete-text and chapter navigation with preview content clearly distinguished
+- Local bookmarks, script selection, copyable citations and reading-size controls
+- No account, API or database required for public reading
+
+### Optional connected features
+
+- Keyword and AI-assisted search, per-verse explanations and text-to-speech audio
+- Six reading plans with progress tracking
+- Account-backed bookmarks, community annotations and corrections workflow
+- JWT access and refresh tokens using an httpOnly cookie or bearer token
 
 ## Stack
 
-| Layer    | Tech |
-|----------|------|
-| Backend  | FastAPI, Motor (async MongoDB), PyJWT, bcrypt |
-| Frontend | React |
+| Layer | Tech |
+|-------|------|
+| Frontend | React 18, Create React App, CRACO |
+| Backend | FastAPI, Motor (async MongoDB), PyJWT, bcrypt |
 | Database | MongoDB |
+| Content pipeline | Python, deterministic validation and generated JSON |
 
-## Getting started
+## Run the public reader
 
-### Backend
+```bash
+cd frontend
+npm ci
+npm start
+```
+
+Open <http://localhost:3000>. The public library works without the backend. Set `REACT_APP_BACKEND_URL` only when testing login or connected dashboard features.
+
+## Run the connected backend
 
 ```bash
 cd backend
 pip install -r requirements.txt
-```
-
-Create `backend/.env`:
-
-```
-MONGO_URL=mongodb://localhost:27017
-DB_NAME=dharmasearch
-JWT_SECRET=change-me
-EMERGENT_LLM_KEY=your-key        # powers AI search, explanations and TTS
-ADMIN_EMAIL=you@example.com      # admin account for the corrections workflow
-ADMIN_PASSWORD=change-me
-```
-
-The AI features go through the `emergentintegrations` client; without `EMERGENT_LLM_KEY` the core search and reading features still work.
-
-Run it:
-
-```bash
+cp .env.example .env
 uvicorn server:app --reload --port 8001
 ```
 
-### Frontend
+Review `backend/.env.example` before starting. MongoDB is required for connected features. AI search, explanations and TTS additionally require the configured LLM integration key; core public reading and search remain local.
+
+## Verify a production build
 
 ```bash
 cd frontend
-yarn install
-yarn start
+npm ci
+CI=true npm test -- --watchAll=false
+npm run build
+python3 -m http.server 8765 --directory build
 ```
+
+Open <http://localhost:8765>. Use the root URL, not `/app.html`; `app.html` belongs to the separate self-contained prototype.
+
+## Rebuild and verify scripture data
+
+```bash
+cd dharmasearch-handoff
+python3 -m pip install -r requirements.txt
+python3 build/merge_completed.py
+python3 build_app.py
+python3 verify_pipeline.py
+python3 -m unittest discover -s tests -v
+```
+
+`build_app.py` updates both the standalone `app.html` and the React asset at `frontend/public/scripture-data.json`. For a reproducibility audit against current upstream sources, run `python3 verify_pipeline.py --live`.
 
 ## API overview
 
-All routes are prefixed with `/api`.
+All backend routes are prefixed with `/api`.
 
 | Area | Routes |
 |------|--------|
 | Auth | `POST /auth/register`, `/auth/login`, `/auth/logout`, `/auth/refresh`, `GET /auth/me` |
 | Public | `GET /public/sample-verses`, `GET /public/search` |
 | Scriptures | `GET /scriptures`, `/scriptures/{text}/chapters`, `/scriptures/{text}/chapters/{n}/verses`, `/scriptures/{text}/verses/{id}` |
-| Study | `GET /search`, `POST /ai-search`, `POST /ai-explain`, `POST /tts`, `GET /daily-verse` |
+| Study | `GET /search`, `POST /ai-search`, `/ai-explain`, `/tts`, `GET /daily-verse` |
 | Personal | Bookmarks, plans and annotations CRUD |
 
-## Status
-
-Working prototype with seeded scripture data in `backend/scripture_data.py`. Expanding text coverage and refining the AI explanations are the current focus.
+See [REVIEW-HANDOVER.md](dharmasearch-handoff/REVIEW-HANDOVER.md) for content provenance, review findings and blocked texts.

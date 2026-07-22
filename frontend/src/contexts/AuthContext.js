@@ -10,6 +10,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const checkAuth = useCallback(async () => {
+    if (!API) {
+      setUser(false);
+      setLoading(false);
+      return;
+    }
     try {
       const { data } = await axios.get(`${API}/api/auth/me`, { withCredentials: true });
       setUser(data);
@@ -23,19 +28,21 @@ export function AuthProvider({ children }) {
   useEffect(() => { checkAuth(); }, [checkAuth]);
 
   const login = async (email, password) => {
+    if (!API) throw new Error('The connected DharmaSearch service is not configured.');
     const { data } = await axios.post(`${API}/api/auth/login`, { email, password }, { withCredentials: true });
     setUser(data);
     return data;
   };
 
   const register = async (name, email, password) => {
+    if (!API) throw new Error('The connected DharmaSearch service is not configured.');
     const { data } = await axios.post(`${API}/api/auth/register`, { name, email, password }, { withCredentials: true });
     setUser(data);
     return data;
   };
 
   const logout = async () => {
-    await axios.post(`${API}/api/auth/logout`, {}, { withCredentials: true });
+    if (API) await axios.post(`${API}/api/auth/logout`, {}, { withCredentials: true });
     setUser(false);
   };
 

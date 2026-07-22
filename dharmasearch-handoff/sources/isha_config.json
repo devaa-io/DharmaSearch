@@ -1,0 +1,11 @@
+{
+  "text_id": "isha-upanishad",
+  "text_name": "Isha Upanishad",
+  "language": "Sanskrit",
+  "loader": "loaders/isha.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "english": "translation",
+    "verse": "verse"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "text_id": "mundaka-upanishad",
+  "text_name": "Mundaka Upanishad",
+  "language": "Sanskrit",
+  "loader": "loaders/mundaka.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "english": "translation",
+    "chapter": "chapter",
+    "verse": "verse"
+  }
+}

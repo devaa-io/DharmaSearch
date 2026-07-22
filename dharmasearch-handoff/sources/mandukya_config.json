@@ -1,0 +1,11 @@
+{
+  "text_id": "mandukya-upanishad",
+  "text_name": "Mandukya Upanishad",
+  "language": "Sanskrit",
+  "loader": "loaders/mandukya.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "english": "translation",
+    "verse": "verse"
+  }
+}
