@@ -1,0 +1,153 @@
+[
+ {
+  "text_id": "bhagavad-gita",
+  "description": "The Song of God - A 700-verse Hindu scripture that is part of the epic Mahabharata. It is a dialogue between Prince Arjuna and Lord Krishna on the battlefield of Kurukshetra.",
+  "image": "https://images.unsplash.com/photo-1643300788512-64b38ad876c6?w=400",
+  "language": "Sanskrit",
+  "name": "Bhagavad Gita",
+  "total_chapters": 18,
+  "total_verses": 67
+ },
+ {
+  "text_id": "ramayana",
+  "description": "One of the two major Sanskrit epics of ancient India, narrating the life of Rama, prince of Ayodhya. Written by sage Valmiki, it consists of 24,000 verses in seven Kandas.",
+  "image": "https://images.unsplash.com/photo-1617904472808-7e038208077a?w=400",
+  "language": "Sanskrit",
+  "name": "Ramayana",
+  "total_chapters": 7,
+  "total_verses": 33
+ },
+ {
+  "text_id": "devi-mahatmyam",
+  "description": "The Glory of the Goddess - A Hindu religious text describing the victory of the goddess Durga over the demon Mahishasura. Part of the Markandeya Purana with 700 verses in 13 chapters.",
+  "image": "https://images.unsplash.com/photo-1488875482628-eee706cbfad5?w=400",
+  "language": "Sanskrit",
+  "name": "Devi Mahatmyam",
+  "total_chapters": 13,
+  "total_verses": 49
+ },
+ {
+  "text_id": "upanishads",
+  "description": "The philosophical heart of the Vedas. These mystical texts explore the nature of Brahman, Atman, and the ultimate reality through dialogues between teachers and seekers.",
+  "image": "https://images.unsplash.com/photo-1643300788512-64b38ad876c6?w=400",
+  "language": "Sanskrit",
+  "name": "Upanishads",
+  "total_chapters": 8,
+  "total_verses": 33
+ },
+ {
+  "text_id": "yoga-sutras",
+  "description": "The foundational text of Raja Yoga, consisting of 196 sutras organized into four chapters. A systematic guide to the science of yoga and meditation.",
+  "image": "https://images.unsplash.com/photo-1488875482628-eee706cbfad5?w=400",
+  "language": "Sanskrit",
+  "name": "Yoga Sutras of Patanjali",
+  "total_chapters": 4,
+  "total_verses": 24
+ },
+ {
+  "text_id": "mahabharata",
+  "description": "The longest epic poem in the world with over 100,000 verses. Beyond the Bhagavad Gita, it contains profound wisdom on dharma, statecraft, philosophy, and human nature.",
+  "image": "https://images.unsplash.com/photo-1617904472808-7e038208077a?w=400",
+  "language": "Sanskrit",
+  "name": "Mahabharata",
+  "total_chapters": 5,
+  "total_verses": 25
+ },
+ {
+  "text_id": "vedas",
+  "description": "The oldest sacred texts of Hinduism, composed between 1500-1200 BCE. The four Vedas - Rig, Yajur, Sama, and Atharva - contain hymns, rituals, and philosophical insights.",
+  "image": "https://images.unsplash.com/photo-1643300788512-64b38ad876c6?w=400",
+  "language": "Sanskrit",
+  "name": "Vedas",
+  "total_chapters": 4,
+  "total_verses": 24
+ },
+ {
+  "text_id": "hanuman-chalisa",
+  "description": "A devotional hymn of 40 verses composed by Tulsidas in praise of Lord Hanuman. One of the most recited prayers in Hinduism, celebrating devotion, strength, and courage.",
+  "image": "https://images.unsplash.com/photo-1617904472808-7e038208077a?w=400",
+  "language": "Awadhi",
+  "name": "Hanuman Chalisa",
+  "total_chapters": 1,
+  "total_verses": 20
+ },
+ {
+  "text_id": "puranas",
+  "description": "Ancient encyclopedic texts covering cosmology, genealogies, mythology, and dharma. The 18 Mahapuranas include the Vishnu Purana, Shiva Purana, and Bhagavata Purana.",
+  "image": "https://images.unsplash.com/photo-1488875482628-eee706cbfad5?w=400",
+  "language": "Sanskrit",
+  "name": "Puranas",
+  "total_chapters": 4,
+  "total_verses": 24
+ },
+ {
+  "text_id": "srimad-bhagavatam",
+  "description": "The most beloved Purana in Kerala, narrating the life and pastimes of Lord Krishna. Recited during Bhagavatha Saptaham in temples across Kerala, it is central to the devotional life of Malayali Hindus.",
+  "image": "",
+  "language": "Sanskrit",
+  "name": "Srimad Bhagavatam",
+  "region": "Kerala",
+  "total_chapters": 4,
+  "total_verses": 17
+ },
+ {
+  "text_id": "narayaneeyam",
+  "description": "Composed by Melpathur Narayana Bhattathiri at the Guruvayur Temple in 1586 CE. A condensed poetic retelling of the Srimad Bhagavatam in 1036 verses, written as a prayer to Lord Guruvayurappan to cure his paralysis.",
+  "image": "",
+  "language": "Sanskrit",
+  "name": "Narayaneeyam",
+  "region": "Kerala",
+  "total_chapters": 3,
+  "total_verses": 14
+ },
+ {
+  "text_id": "adhyatma-ramayanam",
+  "description": "The Malayalam Ramayana by Thunchaththu Ezhuthachan, the father of Malayalam literature. Written in the 16th century, it brought the Ramayana into every Kerala home and is considered the foundation of modern Malayalam.",
+  "image": "",
+  "language": "Malayalam/Sanskrit",
+  "name": "Adhyatma Ramayanam",
+  "region": "Kerala",
+  "total_chapters": 3,
+  "total_verses": 12
+ },
+ {
+  "text_id": "lalita-sahasranama",
+  "description": "The thousand names of Goddess Lalita (Tripurasundari), from the Brahmanda Purana. Widely recited in Kerala Devi temples, especially during Navaratri, it is a profound meditation on the Divine Feminine.",
+  "image": "",
+  "language": "Sanskrit",
+  "name": "Lalita Sahasranama",
+  "region": "Kerala",
+  "total_chapters": 2,
+  "total_verses": 28
+ },
+ {
+  "text_id": "vishnu-sahasranama",
+  "description": "The thousand names of Lord Vishnu, from the Anushasana Parva of the Mahabharata. Daily recitation is a cornerstone of worship in Kerala Vishnu temples like Padmanabhaswamy and Guruvayur.",
+  "image": "",
+  "language": "Sanskrit",
+  "name": "Vishnu Sahasranama",
+  "region": "Kerala",
+  "total_chapters": 2,
+  "total_verses": 11
+ },
+ {
+  "text_id": "soundarya-lahari",
+  "description": "The 'Waves of Beauty' — a masterpiece by Adi Shankaracharya (born in Kaladi, Kerala). 100 verses praising Goddess Parvati, combining tantric worship with sublime poetry. A jewel of Advaita and Shakta traditions.",
+  "image": "",
+  "language": "Sanskrit",
+  "name": "Soundarya Lahari",
+  "region": "Kerala",
+  "total_chapters": 2,
+  "total_verses": 13
+ },
+ {
+  "text_id": "vivekachudamani",
+  "description": "The 'Crest-Jewel of Discrimination' by Adi Shankaracharya. A treatise on Advaita Vedanta philosophy explaining the path to self-realization. Shankaracharya, born in Kaladi, Kerala, remains one of India's greatest philosophers.",
+  "image": "",
+  "language": "Sanskrit",
+  "name": "Vivekachudamani",
+  "region": "Kerala",
+  "total_chapters": 2,
+  "total_verses": 14
+ }
+]
