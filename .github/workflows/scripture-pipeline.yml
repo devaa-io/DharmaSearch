@@ -5,11 +5,13 @@ on:
     paths:
       - "dharmasearch-handoff/**"
       - "frontend/**"
+      - "netlify.toml"
       - ".github/workflows/scripture-pipeline.yml"
   pull_request:
     paths:
       - "dharmasearch-handoff/**"
       - "frontend/**"
+      - "netlify.toml"
       - ".github/workflows/scripture-pipeline.yml"
 
 jobs:
