@@ -148,3 +148,25 @@ source, proofread if OCR).
 - Vishnu Sahasranama remains blocked. No verified public-domain verse-aligned English
   source was established during review, so neither the unlicensed AI-generated source
   nor uncertain OCR alignment should ship.
+
+## React integration outcome (2026-07-21)
+- The reviewed experience is now the real public React route at `/`; login, registration
+  and the connected dashboard remain available on their existing routes.
+- `build_app.py` writes the same validated payload to
+  `frontend/public/scripture-data.json`, and `verify_pipeline.py` rejects a stale or
+  missing React asset. The browser no longer depends on MongoDB for public reading or
+  multilingual search.
+- Today, Begin, Explore, Meditation and About were migrated into semantic React
+  components. Search uses deferred derived state; bookmarks and reading size use safe
+  local storage; all timers and listeners clean up; complete verses lead with
+  Devanagari; preview rows remain visibly labelled.
+- The public shell no longer loads the Emergent badge or PostHog recorder. When no
+  backend URL is configured, auth probing is skipped rather than generating a failing
+  `/undefined/api/auth/me` request.
+- The frontend dependency declarations were made reproducible: `ajv@8` is a direct
+  dependency instead of a global override that broke older webpack validators;
+  React/React DOM are aligned to 18.3.1 for `react-day-picker@8`; `date-fns` is aligned
+  to its supported v3 range; and ESLint is aligned to the Create React App 5 toolchain.
+- Verified with a successful production build and Playwright in Chromium at desktop and
+  375px mobile widths. Search in English and Malayalam, script switching, bookmarking,
+  hash navigation, zero horizontal overflow and a clean browser console all passed.

@@ -1,70 +1,49 @@
-# Getting Started with Create React App
+# DharmaSearch React frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+The root route is the verified, offline-first scripture library. Login, registration and the older connected dashboard remain available at `/login`, `/register` and `/dashboard`.
 
-## Available Scripts
+## Development
 
-In the project directory, you can run:
+```bash
+npm ci
+npm start
+```
 
-### `npm start`
+Open <http://localhost:3000>. The public route reads `public/scripture-data.json`, so it does not need FastAPI or MongoDB. Configure `REACT_APP_BACKEND_URL` to exercise connected routes.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Production check
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```bash
+npm ci
+npm run build
+python3 -m http.server 8765 --directory build
+```
 
-### `npm test`
+Open <http://localhost:8765>. If that port is busy, choose another one.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Run the non-watch smoke test used by CI with:
 
-### `npm run build`
+```bash
+CI=true npm test -- --watchAll=false
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Responsive production verification
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+On 2026-07-22, the production build was served locally and checked with automated Chromium at a 900 CSS-pixel viewport height. At each exact width the public reader rendered, the browser reported zero console errors, and the document had no horizontal overflow:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+| Width | Client width | Scroll width | Reader rendered | Console errors |
+| ---: | ---: | ---: | :---: | ---: |
+| 375 | 375 | 375 | Yes | 0 |
+| 768 | 768 | 768 | Yes | 0 |
+| 1024 | 1024 | 1024 | Yes | 0 |
+| 1440 | 1440 | 1440 | Yes | 0 |
 
-### `npm run eject`
+The same pass also verified English search (`royal secret`), Malayalam search (`രാജവിദ്യാ`) with automatic display and highlighting of the matching Malayalam script, manual script switching until the query changes, hash navigation, bookmark persistence, Begin-path progress, and meditation-dialog focus entry, Escape dismissal and focus restoration.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Do not edit `public/scripture-data.json` by hand. Rebuild it from the validated source payload:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```bash
+cd ../dharmasearch-handoff
+python3 build_app.py
+python3 verify_pipeline.py
+```

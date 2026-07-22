@@ -68,6 +68,18 @@ and safely escapes source text before embedding it in HTML. The same command wri
 the compact validated frontend asset, keeping both generated artifacts synchronized
 with the canonical payload.
 
+## Run the production frontend
+
+```bash
+cd ../frontend
+npm ci
+npm start
+```
+
+Open `http://localhost:3000`. The public library loads without the backend. For a
+production-shaped check, run `npm run build`, then
+`python3 -m http.server 8765 --directory build` and open `http://localhost:8765`.
+
 ## Add another text
 
 1. Write `loaders/<text>.py` exposing `load() -> list[dict]`. Source genuine
