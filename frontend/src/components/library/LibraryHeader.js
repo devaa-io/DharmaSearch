@@ -3,6 +3,7 @@ import React from 'react';
 const NAV_ITEMS = [
   ['today', 'Today'],
   ['begin', 'Begin'],
+  ['read', 'Read'],
   ['explore', 'Explore'],
   ['meditate', 'Meditate'],
   ['about', 'About'],
