@@ -1,4 +1,5 @@
 export const LANGUAGE_NAMES = {
+  en: 'English',
   dev: 'Devanagari',
   iast: 'IAST',
   roman: 'Transliteration',
@@ -9,8 +10,26 @@ export const LANGUAGE_NAMES = {
   hi: 'Hindi',
 };
 
+// BCP-47 tags for speech synthesis / TTS voice selection, keyed by script code.
+// Sanskrit has no widely available voice, so Devanagari and IAST borrow Hindi,
+// which is the closest commonly installed approximation.
+export const SPEECH_LANGS = {
+  en: 'en-GB',
+  dev: 'hi-IN',
+  iast: 'hi-IN',
+  roman: 'hi-IN',
+  hi: 'hi-IN',
+  ml: 'ml-IN',
+  ta: 'ta-IN',
+  te: 'te-IN',
+  kn: 'kn-IN',
+};
+
+// English leads: it is the entry point for most readers, and the original
+// scripts are one tap away rather than the first thing to decipher.
 export function scriptsFor(verse) {
   const scripts = [];
+  if (verse.en) scripts.push({ code: 'en', text: verse.en });
   if (verse.dev) scripts.push({ code: 'dev', text: verse.dev });
   if (verse.iast) scripts.push({ code: 'iast', text: verse.iast });
   else if (verse.roman) scripts.push({ code: 'roman', text: verse.roman });
