@@ -197,7 +197,7 @@ async def get_sample_verses():
     """Public endpoint - returns curated sample verses for landing page preview"""
     sample_ids = [
         "bg-2-47", "bg-2-20", "bg-4-7", "bg-18-66",
-        "brihad-1", "katha-1", "ys-1-2", "dm-4-2",
+        "brihad-1", "katha-up-3-14", "ys-1-2", "dm-4-2",
         "nar-1-1", "sb-4-1", "sl-1-1", "vc-2-1",
         "ram-6-2", "mb-1-1", "rv-1-2", "ls-2-1"
     ]
@@ -813,11 +813,11 @@ async def seed_reading_plans():
             "description": "Discover the philosophical heart of Hinduism through the key Mahavakyas and teachings of the major Upanishads.",
             "is_prebuilt": True, "created_by": "system", "total_days": 5,
             "days": [
-                {"day": 1, "title": "The Great Prayers", "verse_ids": ["brihad-1", "isha-1"]},
-                {"day": 2, "title": "The Nature of Self", "verse_ids": ["katha-2", "katha-3", "brihad-2"]},
-                {"day": 3, "title": "Arise, Awake!", "verse_ids": ["katha-1", "chando-1"]},
-                {"day": 4, "title": "Om and Brahman", "verse_ids": ["mandukya-1", "chando-2", "mundaka-2"]},
-                {"day": 5, "title": "Bliss and Truth", "verse_ids": ["taitt-2", "taitt-1", "mundaka-1"]}
+                {"day": 1, "title": "The Great Prayers", "verse_ids": ["brihad-1", "isha-up-1"]},
+                {"day": 2, "title": "The Nature of Self", "verse_ids": ["katha-up-3-3", "katha-up-2-18", "brihad-2"]},
+                {"day": 3, "title": "Arise, Awake!", "verse_ids": ["katha-up-3-14", "chando-1"]},
+                {"day": 4, "title": "Om and Brahman", "verse_ids": ["mandukya-up-1", "chando-2", "mundaka-up-5-6"]},
+                {"day": 5, "title": "Bliss and Truth", "verse_ids": ["taitt-2", "taitt-1", "mundaka-up-1-4"]}
             ]
         },
         {

@@ -18,8 +18,10 @@ LEGACY_DUPLICATE_IDS = {
     "katha-1", "katha-2", "katha-3", "katha-4", "katha-5", "katha-6",
     "mundaka-1", "mundaka-2", "mundaka-3", "mundaka-4", "mandukya-1",
 }
-LEGACY_UPANISHAD_CHAPTERS = {
-    "Chandogya Upanishad", "Brihadaranyaka Upanishad", "Taittiriya Upanishad",
+RETAINED_LEGACY_UPANISHAD_IDS = {
+    *(f"chando-{verse_number}" for verse_number in range(1, 5)),
+    *(f"brihad-{verse_number}" for verse_number in range(1, 7)),
+    *(f"taitt-{verse_number}" for verse_number in range(1, 4)),
 }
 CANONICAL_ISHA_IDS = {f"isha-up-{verse_number}" for verse_number in range(1, 19)}
 
@@ -31,13 +33,12 @@ class TestSeedDataDeduplication(unittest.TestCase):
         self.assertTrue(LEGACY_DUPLICATE_IDS.isdisjoint(verse_ids))
 
     def test_non_duplicate_legacy_upanishad_rows_are_retained(self):
-        legacy_rows = [
-            verse for verse in get_all_verses()
+        legacy_ids = {
+            verse["verse_id"] for verse in get_all_verses()
             if verse["text_id"] == "upanishads"
-            and verse["chapter_name"] in LEGACY_UPANISHAD_CHAPTERS
-        ]
+        }
 
-        self.assertEqual(len(legacy_rows), 13)
+        self.assertEqual(legacy_ids, RETAINED_LEGACY_UPANISHAD_IDS)
 
     def test_seed_verse_ids_are_unique(self):
         verse_ids = [verse["verse_id"] for verse in get_all_verses()]
