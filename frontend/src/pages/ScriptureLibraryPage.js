@@ -8,6 +8,7 @@ import { MeditateView } from '../components/library/MeditateView';
 import { ReadView } from '../components/library/ReadView';
 import { TodayView } from '../components/library/TodayView';
 import { useScriptureData } from '../hooks/useScriptureData';
+import { useStaticAudio } from '../hooks/useStaticAudio';
 import { useStoredState } from '../hooks/useStoredState';
 
 const VIEWS = new Set(['today', 'begin', 'read', 'explore', 'meditate', 'about']);
@@ -23,6 +24,7 @@ export function ScriptureLibraryPage() {
   const [saved, setSaved] = useStoredState('ds_saved', []);
   const [readingSize, setReadingSize] = useStoredState('ds_fs', 1);
   const [toast, setToast] = useState('');
+  const { canPlayAudio, onPlayAudio } = useStaticAudio();
   const completeVerses = useMemo(
     () => data?.verses.filter(verse => verse.complete) || [],
     [data],
@@ -92,6 +94,8 @@ export function ScriptureLibraryPage() {
     savedIds,
     onToggleSaved: toggleSaved,
     onCopied: setToast,
+    canPlayAudio,
+    onPlayAudio,
   };
 
   return (

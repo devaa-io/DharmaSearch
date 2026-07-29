@@ -58,7 +58,7 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "craco build",
+    "build": "craco build && node ../tools/version_service_worker.mjs",
     "test": "craco test"
   },
   "browserslist": {

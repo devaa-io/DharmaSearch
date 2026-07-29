@@ -2,7 +2,16 @@ import React, { useMemo } from 'react';
 import { ScriptureVerseCard } from './ScriptureVerseCard';
 import { dailyIndex } from '../../lib/scripture';
 
-export function TodayView({ texts, completeVerses, savedIds, onToggleSaved, onCopied, onNavigate }) {
+export function TodayView({
+  texts,
+  completeVerses,
+  savedIds,
+  onToggleSaved,
+  onCopied,
+  onNavigate,
+  onPlayAudio,
+  canPlayAudio,
+}) {
   const verse = completeVerses[dailyIndex(completeVerses.length)];
   const shortVerses = useMemo(
     () => completeVerses.filter(item => item.en.length > 20 && item.en.length < 150),
@@ -33,6 +42,8 @@ export function TodayView({ texts, completeVerses, savedIds, onToggleSaved, onCo
         saved={savedIds.has(verse.id)}
         onToggleSaved={onToggleSaved}
         onCopied={onCopied}
+        onPlayAudio={onPlayAudio}
+        canPlayAudio={canPlayAudio}
       />
 
       <blockquote className="daily-saying">

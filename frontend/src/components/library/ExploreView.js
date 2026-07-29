@@ -5,7 +5,14 @@ import { ScriptureVerseCard } from './ScriptureVerseCard';
 
 const PAGE_SIZE = 25;
 
-export function ExploreView({ data, savedIds, onToggleSaved, onCopied }) {
+export function ExploreView({
+  data,
+  savedIds,
+  onToggleSaved,
+  onCopied,
+  onPlayAudio,
+  canPlayAudio,
+}) {
   const { texts, verses, chapterMeta = {} } = data;
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query.trim());
@@ -202,6 +209,8 @@ export function ExploreView({ data, savedIds, onToggleSaved, onCopied }) {
               saved={savedIds.has(verse.id)}
               onToggleSaved={onToggleSaved}
               onCopied={onCopied}
+              onPlayAudio={onPlayAudio}
+              canPlayAudio={canPlayAudio}
             />
           )) : (
             <p className="library-empty">No verses match “{deferredQuery}”. Try a broader word or another script.</p>

@@ -2,7 +2,18 @@ import React, { useState } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { ScriptureVerseCard } from './ScriptureVerseCard';
 
-export function BeginView({ begin, versesById, completeCount, completedVerseCount, savedIds, onToggleSaved, onCopied, onNavigate }) {
+export function BeginView({
+  begin,
+  versesById,
+  completeCount,
+  completedVerseCount,
+  savedIds,
+  onToggleSaved,
+  onCopied,
+  onNavigate,
+  onPlayAudio,
+  canPlayAudio,
+}) {
   const [step, setStep] = useState(0);
   const atEnd = step >= begin.length;
   const item = atEnd ? null : begin[step];
@@ -43,6 +54,8 @@ export function BeginView({ begin, versesById, completeCount, completedVerseCoun
               saved={savedIds.has(verse.id)}
               onToggleSaved={onToggleSaved}
               onCopied={onCopied}
+              onPlayAudio={onPlayAudio}
+              canPlayAudio={canPlayAudio}
             />
           )}
         </>

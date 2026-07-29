@@ -1,0 +1,24 @@
+{
+  "name": "DharmaSearch",
+  "short_name": "DharmaSearch",
+  "description": "Read and search the Bhagavad Gita and principal Upanishads in seven scripts.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eee3c9",
+  "theme_color": "#a83220",
+  "icons": [
+    {
+      "src": "/icons/dharmasearch-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/dharmasearch-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
