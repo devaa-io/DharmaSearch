@@ -1,0 +1,37 @@
+name: Backend
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - "render.yaml"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "render.yaml"
+      - ".github/workflows/backend.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip check
+      - run: python -m compileall -q .
+      - run: >-
+          python -m unittest
+          tests.test_ai_provider
+          tests.test_server_runtime
+          tests.test_seed_from_pipeline
+          tests.test_seed_data_deduplication
+          tests.test_static_verse_references

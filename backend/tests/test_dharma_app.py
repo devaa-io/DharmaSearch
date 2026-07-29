@@ -9,11 +9,18 @@ import time
 import requests
 import pytest
 
+if os.environ.get("RUN_MUTATING_BACKEND_INTEGRATION") != "1":
+    pytest.skip(
+        "Mutating backend integration tests are opt-in; use an isolated test database",
+        allow_module_level=True,
+    )
+
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 assert BASE_URL, "REACT_APP_BACKEND_URL must be set"
 
-ADMIN_EMAIL = "admin@example.com"
-ADMIN_PASSWORD = "admin123"
+ADMIN_EMAIL = os.environ.get("TEST_ADMIN_EMAIL", "")
+ADMIN_PASSWORD = os.environ.get("TEST_ADMIN_PASSWORD", "")
+assert ADMIN_EMAIL and ADMIN_PASSWORD, "TEST_ADMIN_EMAIL and TEST_ADMIN_PASSWORD must be set"
 TEST_USER_EMAIL = f"testuser_{int(time.time())}@example.com"
 TEST_USER_PASSWORD = "testpass123"
 
@@ -110,14 +117,14 @@ class TestAuth:
         assert r.status_code == 401
 
 
-# ---- 16 Scriptures (incl. Kerala) ----
+# ---- 22 pipeline scriptures (incl. Kerala) ----
 class TestScriptures:
-    def test_list_16_scriptures(self):
+    def test_list_22_scriptures(self):
         r = requests.get(f"{BASE_URL}/api/scriptures")
         assert r.status_code == 200
         data = r.json()
         assert isinstance(data, list)
-        assert len(data) == 16, f"Expected 16 scriptures, got {len(data)}"
+        assert len(data) == 22, f"Expected 22 scriptures, got {len(data)}"
         text_ids = {s["text_id"] for s in data}
         missing = EXPECTED_SCRIPTURES - text_ids
         assert not missing, f"Missing scriptures: {missing}"
@@ -308,7 +315,7 @@ class TestBookmarks:
         assert r4.status_code == 200
 
 
-# ---- AI (still 503 due to inactive key, per problem statement) ----
+# ---- Direct OpenAI features ----
 class TestAI:
     def test_ai_search_auth_required(self):
         r = requests.post(f"{BASE_URL}/api/ai-search", json={"query": "duty"})
@@ -320,7 +327,7 @@ class TestAI:
         assert r.status_code in (200, 500, 503)
 
     def test_ai_search_returns_verses_iter8(self, admin_session):
-        """Iter-8: EMERGENT_LLM_KEY active, must return real Gita verses."""
+        """A configured direct OpenAI key returns real Gita verses."""
         r = admin_session.post(
             f"{BASE_URL}/api/ai-search",
             json={"query": "What does Krishna say about duty?"},
@@ -344,39 +351,42 @@ class TestAI:
 
 # ---- TTS (Audio Recitation) ----
 class TestTTS:
-    def test_tts_requires_auth(self):
+    def test_tts_allows_anonymous_devanagari(self):
         r = requests.post(f"{BASE_URL}/api/tts",
-                          json={"verse_id": "bg-2-47", "voice": "sage"})
-        assert r.status_code == 401
+                          json={"verse_id": "bg-2-47", "script": "dev", "voice": "sage"},
+                          timeout=180)
+        assert r.status_code in (200, 503)
+        if r.status_code == 200:
+            assert r.json()["script"] == "dev"
 
-    def test_tts_verse_not_found(self, admin_session):
-        r = admin_session.post(f"{BASE_URL}/api/tts",
-                               json={"verse_id": "no-such-verse", "voice": "sage"},
-                               timeout=60)
+    def test_tts_verse_not_found(self):
+        r = requests.post(f"{BASE_URL}/api/tts",
+                          json={"verse_id": "no-such-verse", "script": "dev", "voice": "sage"},
+                          timeout=60)
         assert r.status_code == 404
 
-    def test_tts_generates_or_503(self, admin_session):
-        r = admin_session.post(f"{BASE_URL}/api/tts",
-                               json={"verse_id": "hc-1-2", "voice": "nova"},
-                               timeout=180)
+    def test_tts_generates_or_503(self):
+        r = requests.post(f"{BASE_URL}/api/tts",
+                          json={"verse_id": "hc-1-2", "script": "en", "voice": "nova"},
+                          timeout=180)
         assert r.status_code in (200, 503)
         if r.status_code == 200:
             data = r.json()
             assert "audio_base64" in data and isinstance(data["audio_base64"], str)
             assert len(data["audio_base64"]) > 100
             # second call should hit cache
-            r2 = admin_session.post(f"{BASE_URL}/api/tts",
-                                    json={"verse_id": "hc-1-2", "voice": "nova"},
-                                    timeout=30)
+            r2 = requests.post(f"{BASE_URL}/api/tts",
+                               json={"verse_id": "hc-1-2", "script": "en", "voice": "nova"},
+                               timeout=30)
             assert r2.status_code == 200
             assert r2.json().get("cached") is True
 
-    def test_tts_returns_audio_iter8(self, admin_session):
+    def test_tts_returns_audio_iter8(self):
         """Iter-8: TTS with active key returns non-empty audio_base64.
         Uses short verse hc-1-2 to stay within Cloudflare edge timeout."""
-        r = admin_session.post(f"{BASE_URL}/api/tts",
-                               json={"verse_id": "hc-1-2", "voice": "sage"},
-                               timeout=180)
+        r = requests.post(f"{BASE_URL}/api/tts",
+                          json={"verse_id": "hc-1-2", "script": "en", "voice": "sage"},
+                          timeout=180)
         assert r.status_code == 200, r.text[:200]
         d = r.json()
         assert len(d.get("audio_base64", "")) > 1000
@@ -568,14 +578,14 @@ class TestCorrections:
 
 # ---- Iteration 7: expansion + multi-word search ----
 class TestIter7Expansion:
-    def test_total_verse_count_408(self):
+    def test_total_verse_count_1338(self):
         scs = requests.get(f"{BASE_URL}/api/scriptures").json()
         total = 0
         for s in scs:
             chs = requests.get(
                 f"{BASE_URL}/api/scriptures/{s['text_id']}/chapters").json()
             total += sum(c.get("verse_count", 0) for c in chs)
-        assert total == 408, f"Expected 408 verses, got {total}"
+        assert total == 1338, f"Expected 1338 verses, got {total}"
 
     def test_bhagavad_gita_67_verses(self):
         chs = requests.get(

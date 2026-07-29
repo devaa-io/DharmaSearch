@@ -4,24 +4,43 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-from fastapi import FastAPI, APIRouter, Request, HTTPException, Depends
+from fastapi import FastAPI, APIRouter, Request, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from motor.motor_asyncio import AsyncIOMotorClient
+import asyncio
+import base64
 import os
 import logging
 import bcrypt
 import jwt
-import secrets
+import hashlib
 import uuid
 from datetime import datetime, timezone, timedelta
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from pydantic import BaseModel
+from typing import List, Literal, Optional
 from bson import ObjectId
+from pymongo import ReturnDocument
+from pymongo.errors import DuplicateKeyError
+
+from ai_provider import (
+    MAX_TTS_CHARACTERS,
+    TTS_MIME_TYPE,
+    close_openai_client,
+    complete_chat,
+    select_tts_text,
+    synthesize_tts,
+    tts_cache_id,
+    validated_ai_verse_ids,
+)
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
+client = AsyncIOMotorClient(
+    mongo_url,
+    serverSelectionTimeoutMS=int(os.environ.get("MONGO_TIMEOUT_MS", "5000")),
+    maxPoolSize=int(os.environ.get("MONGO_MAX_POOL_SIZE", "20")),
+)
 db = client[os.environ['DB_NAME']]
 
 app = FastAPI()
@@ -31,6 +50,164 @@ JWT_ALGORITHM = "HS256"
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+
+def env_bool(name: str, default: bool = False) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def configured_origins() -> list[str]:
+    raw = os.environ.get(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000",
+    )
+    origins = list(dict.fromkeys(value.strip().rstrip("/") for value in raw.split(",") if value.strip()))
+    if "*" in origins:
+        raise RuntimeError("CORS_ORIGINS cannot contain '*' when credentials are enabled")
+    return origins
+
+
+ALLOWED_ORIGINS = configured_origins()
+
+
+def cookie_options() -> dict:
+    same_site = os.environ.get("COOKIE_SAMESITE", "lax").strip().lower()
+    if same_site not in {"lax", "strict", "none"}:
+        raise RuntimeError("COOKIE_SAMESITE must be lax, strict, or none")
+    secure = env_bool("COOKIE_SECURE", False)
+    if same_site == "none" and not secure:
+        raise RuntimeError("COOKIE_SAMESITE=none requires COOKIE_SECURE=true")
+    return {"httponly": True, "secure": secure, "samesite": same_site, "path": "/"}
+
+
+COOKIE_OPTIONS = cookie_options()
+
+
+def env_int(name: str, default: int, minimum: int = 1) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except ValueError as error:
+        raise RuntimeError(f"{name} must be an integer") from error
+    if value < minimum:
+        raise RuntimeError(f"{name} must be at least {minimum}")
+    return value
+
+
+def request_client_identity(request: Request) -> str:
+    if env_bool("TRUST_PROXY_HEADERS", False):
+        forwarded = request.headers.get("x-forwarded-for", "")
+        addresses = [value.strip() for value in forwarded.split(",") if value.strip()]
+        if addresses:
+            # Render preserves any incoming values and appends the address it
+            # observed, so the rightmost entry is the non-spoofable boundary.
+            return addresses[-1]
+    return request.client.host if request.client else "unknown"
+
+
+def rate_limit_key(scope: str, identity: str, window: datetime) -> str:
+    salt = os.environ.get("RATE_LIMIT_SALT") or os.environ.get("JWT_SECRET", "")
+    if not salt:
+        raise RuntimeError("RATE_LIMIT_SALT or JWT_SECRET must be configured")
+    private_identity = hashlib.sha256(f"{salt}:{identity}".encode("utf-8")).hexdigest()
+    material = f"{scope}:{private_identity}:{window.isoformat()}"
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
+async def enforce_rate_limit(*, scope: str, identity: str, limit: int) -> None:
+    now = datetime.now(timezone.utc)
+    window = now.replace(second=0, microsecond=0)
+    expires_at = window + timedelta(minutes=2)
+    try:
+        document = await db.rate_limits.find_one_and_update(
+            {"_id": rate_limit_key(scope, identity, window)},
+            {
+                "$inc": {"count": 1},
+                "$setOnInsert": {
+                    "scope": scope,
+                    "window_start": window,
+                    "expires_at": expires_at,
+                },
+            },
+            upsert=True,
+            return_document=ReturnDocument.AFTER,
+        )
+    except Exception as error:  # noqa: BLE001 - fail closed without leaking DB details
+        logger.error("Rate limiter unavailable: %s", error.__class__.__name__)
+        raise HTTPException(
+            status_code=503,
+            detail="Request limiting is temporarily unavailable. Please try again.",
+        ) from error
+
+    if not document or int(document.get("count", 0)) > limit:
+        retry_after = max(1, 60 - now.second)
+        raise HTTPException(
+            status_code=429,
+            detail="Too many requests. Please try again shortly.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+
+def unexpired_cache_query(cache_id: str, now: datetime) -> dict:
+    return {"_id": cache_id, "expires_at": {"$gt": now}}
+
+
+async def acquire_tts_claim(cache_id: str, token: str) -> bool:
+    """Claim one cache key so concurrent misses coalesce to one provider call."""
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(
+        seconds=env_int("TTS_CLAIM_TIMEOUT_SECONDS", 120),
+    )
+    document = {
+        "_id": cache_id,
+        "token": token,
+        "expires_at": expires_at,
+    }
+    try:
+        await db.tts_locks.insert_one(document)
+        return True
+    except DuplicateKeyError:
+        claimed = await db.tts_locks.find_one_and_update(
+            {"_id": cache_id, "expires_at": {"$lte": now}},
+            {"$set": {"token": token, "expires_at": expires_at}},
+            return_document=ReturnDocument.AFTER,
+        )
+        return bool(claimed and claimed.get("token") == token)
+
+
+async def release_tts_claim(cache_id: str, token: str) -> None:
+    try:
+        await db.tts_locks.delete_one({"_id": cache_id, "token": token})
+    except Exception as error:  # noqa: BLE001 - the TTL index is the fallback
+        logger.error("TTS claim release failed: %s", error.__class__.__name__)
+
+
+async def wait_for_cached_tts(cache_id: str) -> Optional[dict]:
+    """Wait briefly for the request that owns this cache key to finish."""
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + env_int("TTS_CLAIM_WAIT_SECONDS", 30)
+    while loop.time() < deadline:
+        now = datetime.now(timezone.utc)
+        cached = await db.tts_cache.find_one(
+            unexpired_cache_query(cache_id, now),
+            {"_id": 0},
+        )
+        if cached:
+            return cached
+        lock = await db.tts_locks.find_one({"_id": cache_id, "expires_at": {"$gt": now}})
+        if not lock:
+            return None
+        await asyncio.sleep(0.25)
+    return None
+
+
+def decoded_audio_size(audio_base64: str) -> int:
+    try:
+        return len(base64.b64decode(audio_base64, validate=True))
+    except (ValueError, TypeError) as error:
+        raise RuntimeError("TTS provider returned invalid base64 audio") from error
 
 # --- Password Hashing ---
 def hash_password(password: str) -> str:
@@ -113,6 +290,17 @@ class CorrectionCreate(BaseModel):
     suggested_value: str
     reason: Optional[str] = ""
 
+
+@api_router.get("/health")
+async def health():
+    try:
+        await db.command("ping")
+    except Exception as error:  # noqa: BLE001 - never expose connection details
+        logger.error("MongoDB health check failed: %s", error.__class__.__name__)
+        raise HTTPException(status_code=503, detail="Database unavailable") from error
+    return {"status": "ok"}
+
+
 # --- Auth Routes ---
 @api_router.post("/auth/register")
 async def register(input: RegisterInput):
@@ -135,8 +323,8 @@ async def register(input: RegisterInput):
     response = JSONResponse(content={
         "id": user_id, "email": email, "name": input.name, "role": "user"
     })
-    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=3600, path="/")
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="lax", max_age=604800, path="/")
+    response.set_cookie(key="access_token", value=access_token, max_age=3600, **COOKIE_OPTIONS)
+    response.set_cookie(key="refresh_token", value=refresh_token, max_age=604800, **COOKIE_OPTIONS)
     return response
 
 @api_router.post("/auth/login")
@@ -153,8 +341,8 @@ async def login(input: LoginInput):
     response = JSONResponse(content={
         "id": user_id, "email": email, "name": user.get("name", ""), "role": user.get("role", "user")
     })
-    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=3600, path="/")
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="lax", max_age=604800, path="/")
+    response.set_cookie(key="access_token", value=access_token, max_age=3600, **COOKIE_OPTIONS)
+    response.set_cookie(key="refresh_token", value=refresh_token, max_age=604800, **COOKIE_OPTIONS)
     return response
 
 @api_router.post("/auth/logout")
@@ -184,7 +372,7 @@ async def refresh_token(request: Request):
         user_id = str(user["_id"])
         new_access = create_access_token(user_id, user["email"])
         response = JSONResponse(content={"message": "Token refreshed"})
-        response.set_cookie(key="access_token", value=new_access, httponly=True, secure=False, samesite="lax", max_age=3600, path="/")
+        response.set_cookie(key="access_token", value=new_access, max_age=3600, **COOKIE_OPTIONS)
         return response
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Refresh token expired")
@@ -285,50 +473,48 @@ async def keyword_search(q: str, text_filter: Optional[str] = None):
 @api_router.post("/ai-search")
 async def ai_search(input: SearchInput, request: Request):
     user = await get_current_user(request)
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
-
-    api_key = os.environ.get("EMERGENT_LLM_KEY")
-    session_id = f"search-{user['_id']}-{uuid.uuid4().hex[:8]}"
+    query_text = input.query.strip()
+    if not query_text:
+        return []
+    if len(query_text) > 400:
+        raise HTTPException(status_code=422, detail="Search query is too long")
+    await enforce_rate_limit(
+        scope="ai-search",
+        identity=f"user:{user['_id']}",
+        limit=env_int("AI_RATE_LIMIT_PER_MINUTE", 10),
+    )
 
     # Get all verses for context
     query_filter = {}
     if input.text_filter:
         query_filter["text_id"] = input.text_filter
 
-    all_verses = await db.verses.find(query_filter, {"_id": 0}).to_list(2000)
+    context_limit = env_int("AI_CONTEXT_VERSES", 1500, minimum=100)
+    all_verses = await db.verses.find(query_filter, {"_id": 0}).to_list(context_limit)
 
     # Build a condensed index of verses for the AI
     verse_index = []
     for v in all_verses:
-        verse_index.append(f"[{v['verse_id']}] {v['text_name']} Ch.{v['chapter']} V.{v['verse_number']}: {v['translation'][:200]}")
+        verse_index.append(
+            f"[{v.get('verse_id', '')}] {v.get('text_name', '')} "
+            f"Ch.{v.get('chapter', '')} V.{v.get('verse_number', '')}: "
+            f"{str(v.get('translation', ''))[:180]}"
+        )
 
     verse_text = "\n".join(verse_index)
+    candidate_ids = [v["verse_id"] for v in all_verses if isinstance(v.get("verse_id"), str)]
 
     try:
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=session_id,
-            system_message=f"""You are a Hindu scripture scholar. Given the user's query, find the most relevant verses from this collection. Return ONLY a JSON array of verse_ids (strings) that match, ordered by relevance. Return at most 10 results. If nothing matches, return an empty array [].
+        response_text = await complete_chat(
+            system_message=f"""You are a Hindu scripture scholar. Given the user's query, find the most relevant verses from this collection. Return one JSON object shaped exactly as {{"verse_ids": ["id"]}}. Include at most 10 IDs from the supplied collection, ordered by relevance. If nothing matches, return {{"verse_ids": []}}.
 
 Available verses:
-{verse_text}"""
+{verse_text}""",
+            user_message=f"Find verses related to: {query_text}",
+            json_object=True,
+            max_tokens=400,
         )
-        chat.with_model("openai", "gpt-5.2")
-
-        user_msg = UserMessage(text=f"Find verses related to: {input.query}")
-        response = await chat.send_message(user_msg)
-
-        # Parse the response to get verse IDs
-        import json
-        try:
-            text = response.strip()
-            if "```" in text:
-                text = text.split("```")[1]
-                if text.startswith("json"):
-                    text = text[4:]
-            verse_ids = json.loads(text.strip())
-        except Exception:
-            verse_ids = []
+        verse_ids = validated_ai_verse_ids(response_text, candidate_ids)
 
         # Fetch the actual verses
         if verse_ids:
@@ -340,104 +526,215 @@ Available verses:
             matched_verses.sort(key=lambda v: id_order.get(v["verse_id"], 999))
             return matched_verses
         return []
-    except Exception as e:
-        logger.error(f"AI search error: {e}")
-        raise HTTPException(status_code=503, detail="AI search is temporarily unavailable. Please try keyword search instead.")
+    except HTTPException:
+        raise
+    except Exception as error:  # noqa: BLE001 - provider details stay server-side
+        logger.error("AI search error: %s", error.__class__.__name__)
+        raise HTTPException(
+            status_code=503,
+            detail="AI search is temporarily unavailable. Please try keyword search instead.",
+        ) from error
 
 # --- AI Explain ---
 @api_router.post("/ai-explain")
 async def ai_explain(input: ExplainInput, request: Request):
     user = await get_current_user(request)
+    await enforce_rate_limit(
+        scope="ai-explain",
+        identity=f"user:{user['_id']}",
+        limit=env_int("AI_RATE_LIMIT_PER_MINUTE", 10),
+    )
     verse = await db.verses.find_one({"verse_id": input.verse_id}, {"_id": 0})
     if not verse:
         raise HTTPException(status_code=404, detail="Verse not found")
 
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
-
-    api_key = os.environ.get("EMERGENT_LLM_KEY")
-    session_id = f"explain-{user['_id']}-{uuid.uuid4().hex[:8]}"
-
     try:
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=session_id,
-            system_message="You are a revered Hindu scripture scholar. Provide a clear, insightful explanation of the given verse. Include its context within the text, philosophical significance, and practical application. Keep it concise but profound (3-4 paragraphs)."
-        )
-        chat.with_model("openai", "gpt-5.2")
-
         verse_context = f"""
-Text: {verse['text_name']}
-Chapter: {verse['chapter']} - {verse.get('chapter_name', '')}
-Verse: {verse['verse_number']}
+Text: {verse.get('text_name', '')}
+Chapter: {verse.get('chapter', '')} - {verse.get('chapter_name', '')}
+Verse: {verse.get('verse_number', '')}
 Sanskrit/Original: {verse.get('text', '')}
-Translation: {verse['translation']}
+Translation: {verse.get('translation', '')}
 """
-        user_msg = UserMessage(text=f"Please explain this verse:\n{verse_context}")
-        explanation = await chat.send_message(user_msg)
+        explanation = await complete_chat(
+            system_message=(
+                "You are a Hindu scripture scholar. Explain the supplied verse clearly. "
+                "Include its textual context, philosophical significance, and practical "
+                "application in three or four concise paragraphs."
+            ),
+            user_message=f"Please explain this verse:\n{verse_context}",
+            max_tokens=900,
+        )
 
         return {"verse": verse, "explanation": explanation}
-    except Exception as e:
-        logger.error(f"AI explain error: {e}")
-        raise HTTPException(status_code=503, detail="AI explanation is temporarily unavailable. Please try again later.")
+    except HTTPException:
+        raise
+    except Exception as error:  # noqa: BLE001 - provider details stay server-side
+        logger.error("AI explain error: %s", error.__class__.__name__)
+        raise HTTPException(
+            status_code=503,
+            detail="AI explanation is temporarily unavailable. Please try again later.",
+        ) from error
 
 # --- Audio Recitation (TTS) ---
 class TTSInput(BaseModel):
     verse_id: str
-    voice: Optional[str] = "sage"
+    script: Literal["en", "dev", "iast", "ml", "ta", "te", "kn"] = "en"
+    voice: Literal[
+        "alloy",
+        "ash",
+        "ballad",
+        "coral",
+        "echo",
+        "fable",
+        "nova",
+        "onyx",
+        "sage",
+        "shimmer",
+        "verse",
+    ] = "sage"
 
 @api_router.post("/tts")
 async def generate_tts(input: TTSInput, request: Request):
-    user = await get_current_user(request)
+    identity = request_client_identity(request)
+    await enforce_rate_limit(
+        scope="tts-request",
+        identity=identity,
+        limit=env_int("TTS_REQUESTS_PER_MINUTE", 30),
+    )
+
     verse = await db.verses.find_one({"verse_id": input.verse_id}, {"_id": 0})
     if not verse:
         raise HTTPException(status_code=404, detail="Verse not found")
 
-    # Check cache first
+    recitation_text = select_tts_text(verse, input.script)
+    if not recitation_text:
+        raise HTTPException(
+            status_code=422,
+            detail=f"This verse has no verified {input.script} representation.",
+        )
+    if len(recitation_text) > MAX_TTS_CHARACTERS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Selected text exceeds the {MAX_TTS_CHARACTERS}-character TTS limit.",
+        )
+
+    model = os.environ.get("OPENAI_TTS_MODEL", "gpt-4o-mini-tts")
+    cache_id = tts_cache_id(
+        verse_id=input.verse_id,
+        script=input.script,
+        voice=input.voice,
+        model=model,
+        source_text=recitation_text,
+    )
     cached = await db.tts_cache.find_one(
-        {"verse_id": input.verse_id, "voice": input.voice}, {"_id": 0}
+        unexpired_cache_query(cache_id, datetime.now(timezone.utc)),
+        {"_id": 0},
     )
     if cached:
-        return {"audio_base64": cached["audio_base64"], "cached": True}
+        return {
+            "audio_base64": cached["audio_base64"],
+            "cached": True,
+            "script": input.script,
+            "voice": input.voice,
+            "mime_type": TTS_MIME_TYPE,
+        }
 
-    # Generate audio
+    claim_token = uuid.uuid4().hex
     try:
-        from emergentintegrations.llm.openai import OpenAITextToSpeech
-        api_key = os.environ.get("EMERGENT_LLM_KEY")
-        tts = OpenAITextToSpeech(api_key=api_key)
+        owns_claim = await acquire_tts_claim(cache_id, claim_token)
+        if not owns_claim:
+            cached = await wait_for_cached_tts(cache_id)
+            if cached:
+                return {
+                    "audio_base64": cached["audio_base64"],
+                    "cached": True,
+                    "script": input.script,
+                    "voice": input.voice,
+                    "mime_type": TTS_MIME_TYPE,
+                }
+            raise HTTPException(
+                status_code=503,
+                detail="Audio generation is temporarily unavailable. Please retry shortly.",
+                headers={"Retry-After": "2"},
+            )
+    except HTTPException:
+        raise
+    except Exception as error:  # noqa: BLE001 - do not expose Mongo internals
+        logger.error("TTS claim unavailable: %s", error.__class__.__name__)
+        raise HTTPException(
+            status_code=503,
+            detail="Audio generation is temporarily unavailable. Please try again later.",
+        ) from error
 
-        # Build recitation text: Sanskrit first, then translation
-        recitation_text = ""
-        if verse.get("text"):
-            recitation_text += verse["text"] + ". "
-        recitation_text += verse["translation"]
+    try:
+        await enforce_rate_limit(
+            scope="tts-generation",
+            identity=identity,
+            limit=env_int("TTS_GENERATIONS_PER_MINUTE", 5),
+        )
+        await enforce_rate_limit(
+            scope="tts-generation-global",
+            identity="all-clients",
+            limit=env_int("TTS_GLOBAL_GENERATIONS_PER_MINUTE", 10),
+        )
 
-        # Keep text short to avoid TTS timeout (Cloudflare 100s edge limit)
-        if len(recitation_text) > 1500:
-            recitation_text = recitation_text[:1500]
+        cache_entries = await db.tts_cache.count_documents(
+            {"expires_at": {"$gt": datetime.now(timezone.utc)}},
+        )
+        if cache_entries >= env_int("TTS_CACHE_MAX_ENTRIES", 350):
+            raise HTTPException(
+                status_code=503,
+                detail="Audio cache is at capacity. Please try again later.",
+                headers={"Retry-After": "60"},
+            )
 
-        audio_base64 = await tts.generate_speech_base64(
+        audio_base64 = await synthesize_tts(
             text=recitation_text,
-            model="tts-1",
+            script=input.script,
             voice=input.voice,
-            speed=0.9
+            model=model,
         )
+        if decoded_audio_size(audio_base64) > env_int("TTS_MAX_AUDIO_BYTES", 500_000):
+            raise RuntimeError("TTS audio exceeds the configured cache object limit")
 
-        # Cache for future use
+        now = datetime.now(timezone.utc)
         await db.tts_cache.update_one(
-            {"verse_id": input.verse_id, "voice": input.voice},
-            {"$set": {
-                "verse_id": input.verse_id,
-                "voice": input.voice,
-                "audio_base64": audio_base64,
-                "created_at": datetime.now(timezone.utc).isoformat()
-            }},
-            upsert=True
+            {"_id": cache_id},
+            {
+                "$set": {
+                    "verse_id": input.verse_id,
+                    "script": input.script,
+                    "voice": input.voice,
+                    "model": model,
+                    "audio_base64": audio_base64,
+                    "mime_type": TTS_MIME_TYPE,
+                    "created_at": now,
+                    "expires_at": now + timedelta(
+                        hours=env_int("TTS_CACHE_TTL_HOURS", 24),
+                    ),
+                }
+            },
+            upsert=True,
         )
 
-        return {"audio_base64": audio_base64, "cached": False}
-    except Exception as e:
-        logger.error(f"TTS error: {e}")
-        raise HTTPException(status_code=503, detail="Audio generation is temporarily unavailable. Please try again later.")
+        return {
+            "audio_base64": audio_base64,
+            "cached": False,
+            "script": input.script,
+            "voice": input.voice,
+            "mime_type": TTS_MIME_TYPE,
+        }
+    except HTTPException:
+        raise
+    except Exception as error:  # noqa: BLE001 - provider details stay server-side
+        logger.error("TTS error: %s", error.__class__.__name__)
+        raise HTTPException(
+            status_code=503,
+            detail="Audio generation is temporarily unavailable. Please try again later.",
+        ) from error
+    finally:
+        await release_tts_claim(cache_id, claim_token)
 
 # --- Daily Verse ---
 @api_router.get("/daily-verse")
@@ -732,8 +1029,16 @@ async def review_correction(correction_id: str, request: Request):
 
 # --- Startup ---
 async def seed_admin():
-    admin_email = os.environ.get("ADMIN_EMAIL", "admin@example.com")
-    admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
+    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+    admin_password = os.environ.get("ADMIN_PASSWORD", "")
+    if not admin_email and not admin_password:
+        logger.info("Admin seed skipped; ADMIN_EMAIL and ADMIN_PASSWORD are not configured")
+        return
+    if not admin_email or not admin_password:
+        raise RuntimeError("ADMIN_EMAIL and ADMIN_PASSWORD must be configured together")
+    if admin_email == "admin@example.com" or admin_password == "admin123":
+        raise RuntimeError("Refusing to seed the legacy default admin credentials")
+
     existing = await db.users.find_one({"email": admin_email})
     if existing is None:
         hashed = hash_password(admin_password)
@@ -744,12 +1049,9 @@ async def seed_admin():
             "role": "admin",
             "created_at": datetime.now(timezone.utc).isoformat()
         })
-        logger.info(f"Admin seeded: {admin_email}")
-    elif not verify_password(admin_password, existing["password_hash"]):
-        await db.users.update_one(
-            {"email": admin_email},
-            {"$set": {"password_hash": hash_password(admin_password)}}
-        )
+        logger.info("Configured admin account created")
+    else:
+        logger.info("Configured admin account already exists; password left unchanged")
 
 async def seed_scriptures():
     count = await db.verses.count_documents({})
@@ -772,7 +1074,28 @@ async def seed_scriptures():
         await db.verses.insert_many(verses)
         logger.info(f"Seeded {len(verses)} verses")
 
-    # Create indexes
+
+async def assert_unique_values(collection, field: str) -> None:
+    duplicates = await collection.aggregate([
+        {"$match": {field: {"$exists": True, "$ne": None}}},
+        {"$group": {"_id": f"${field}", "count": {"$sum": 1}}},
+        {"$match": {"count": {"$gt": 1}}},
+        {"$limit": 1},
+    ]).to_list(1)
+    if duplicates:
+        raise RuntimeError(
+            f"Cannot create unique {field} index while duplicate values exist; "
+            "no records were changed"
+        )
+
+
+async def ensure_indexes():
+    await assert_unique_values(db.verses, "verse_id")
+    await assert_unique_values(db.users, "email")
+    await assert_unique_values(db.reading_plans, "plan_id")
+    await assert_unique_values(db.annotations, "annotation_id")
+    await assert_unique_values(db.corrections, "correction_id")
+
     await db.verses.create_index("text_id")
     await db.verses.create_index("verse_id", unique=True)
     await db.verses.create_index([("translation", "text")])
@@ -785,10 +1108,10 @@ async def seed_scriptures():
     await db.annotation_votes.create_index([("user_id", 1), ("annotation_id", 1)])
     await db.corrections.create_index("correction_id", unique=True)
     await db.corrections.create_index("status")
-    await db.tts_cache.create_index([("verse_id", 1), ("voice", 1)])
-
-    # Seed pre-built reading plans
-    await seed_reading_plans()
+    await db.tts_cache.create_index([("verse_id", 1), ("script", 1), ("voice", 1)])
+    await db.tts_cache.create_index("expires_at", expireAfterSeconds=0)
+    await db.tts_locks.create_index("expires_at", expireAfterSeconds=0)
+    await db.rate_limits.create_index("expires_at", expireAfterSeconds=0)
 
 async def seed_reading_plans():
     plans = [
@@ -908,35 +1231,34 @@ async def seed_reading_plans():
 
 @app.on_event("startup")
 async def startup():
+    await db.command("ping")
     await seed_admin()
     await seed_scriptures()
+    await ensure_indexes()
     await seed_reading_plans()
-    # Write test credentials
-    os.makedirs("/app/memory", exist_ok=True)
-    with open("/app/memory/test_credentials.md", "w") as f:
-        f.write("# Test Credentials\n\n")
-        f.write("## Admin Account\n")
-        f.write("- Email: admin@example.com\n")
-        f.write("- Password: admin123\n")
-        f.write("- Role: admin\n\n")
-        f.write("## Auth Endpoints\n")
-        f.write("- POST /api/auth/register\n")
-        f.write("- POST /api/auth/login\n")
-        f.write("- POST /api/auth/logout\n")
-        f.write("- GET /api/auth/me\n")
-        f.write("- POST /api/auth/refresh\n")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    await close_openai_client()
     client.close()
+
+
+@app.middleware("http")
+async def validate_write_origin(request: Request, call_next):
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        origin = request.headers.get("origin")
+        if origin and origin.rstrip("/") not in ALLOWED_ORIGINS:
+            return JSONResponse(status_code=403, content={"detail": "Origin not allowed"})
+    return await call_next(request)
+
 
 # Include router and middleware
 app.include_router(api_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
