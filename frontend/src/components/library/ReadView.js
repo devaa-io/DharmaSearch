@@ -6,7 +6,14 @@ import { useStoredState } from '../../hooks/useStoredState';
 /** Reading a text end to end, as opposed to Explore's search-and-jump.
  *  Only complete texts are offered: the preview groupings are scattered
  *  samples, so "start to finish" would be misleading for them. */
-export function ReadView({ data, savedIds, onToggleSaved, onCopied }) {
+export function ReadView({
+  data,
+  savedIds,
+  onToggleSaved,
+  onCopied,
+  onPlayAudio,
+  canPlayAudio,
+}) {
   // The saved position is a bookmark, not the screen state. Read always opens
   // on the catalogue so a returning reader can choose whether to resume.
   const [savedPosition, setSavedPosition] = useStoredState('ds_reading', null);
@@ -238,6 +245,8 @@ export function ReadView({ data, savedIds, onToggleSaved, onCopied }) {
             saved={savedIds.has(verse.id)}
             onToggleSaved={onToggleSaved}
             onCopied={onCopied}
+            onPlayAudio={onPlayAudio}
+            canPlayAudio={canPlayAudio}
           />
         ))}
       </div>

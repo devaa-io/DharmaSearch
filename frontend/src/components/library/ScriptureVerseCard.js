@@ -83,7 +83,15 @@ function useVoices() {
 // the playback we own so an unmount never cancels audio started elsewhere.
 let activeBrowserPlayback = null;
 
-export function ScriptureVerseCard({ verse, query = '', saved, onToggleSaved, onCopied, onPlayAudio }) {
+export function ScriptureVerseCard({
+  verse,
+  query = '',
+  saved,
+  onToggleSaved,
+  onCopied,
+  onPlayAudio,
+  canPlayAudio,
+}) {
   const availableScripts = useMemo(() => scriptsFor(verse), [verse]);
   // English leads unless the reader switches away from it.
   const [activeScript, setActiveScript] = useState(availableScripts[0]?.code || 'en');
@@ -116,7 +124,9 @@ export function ScriptureVerseCard({ verse, query = '', saved, onToggleSaved, on
   // Backend audio wins when supplied; otherwise fall back to the browser voice.
   // If neither is available for this script, the control is hidden rather than
   // offered and broken.
-  const canSpeak = Boolean(onPlayAudio) || Boolean(voice);
+  const hasCustomAudio = Boolean(onPlayAudio)
+    && (canPlayAudio ? canPlayAudio(verse, selectedScript?.code) : true);
+  const canSpeak = hasCustomAudio || Boolean(voice);
 
   const finishPlayback = useCallback(playback => {
     if (playbackRef.current !== playback) return;
@@ -160,7 +170,7 @@ export function ScriptureVerseCard({ verse, query = '', saved, onToggleSaved, on
     if (speaking) { stopSpeaking(); return; }
     if (!selectedScript?.text) return;
 
-    if (onPlayAudio) {
+    if (hasCustomAudio) {
       const playback = {
         kind: 'custom',
         controller: new AbortController(),

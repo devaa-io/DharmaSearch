@@ -39,6 +39,8 @@ const scriptureFixture = {
   chapterMeta: {},
 };
 
+const nativeAudio = window.Audio;
+
 function installSpeechSynthesis(voices = []) {
   const listeners = new Set();
   const synth = {
@@ -76,14 +78,22 @@ beforeEach(() => {
   window.scrollTo = jest.fn();
   window.matchMedia = jest.fn().mockReturnValue({ matches: true });
   installSpeechSynthesis();
-  global.fetch = jest.fn().mockResolvedValue({
+  global.fetch = jest.fn().mockImplementation(url => Promise.resolve({
     ok: true,
-    json: async () => scriptureFixture,
-  });
+    json: async () => (
+      url === '/audio-manifest.json'
+        ? { version: 1, clips: [] }
+        : scriptureFixture
+    ),
+  }));
 });
 
 afterEach(() => {
   jest.restoreAllMocks();
+  Object.defineProperty(window, 'Audio', {
+    configurable: true,
+    value: nativeAudio,
+  });
 });
 
 test('loads the public reader and searches scripture from Explore', async () => {
@@ -323,4 +333,60 @@ test('custom audio receives an AbortSignal and Stop aborts only that playback', 
   await waitFor(() => {
     expect(screen.getByRole('button', { name: 'Listen in English' })).toBeVisible();
   });
+});
+
+test('the reader plays a manifest clip and preserves browser-voice hiding for missing clips', async () => {
+  const user = userEvent.setup({ delay: null });
+  const audioInstances = [];
+
+  class MockAudio {
+    constructor(src) {
+      this.src = src;
+      this.currentTime = 12;
+      this.preload = '';
+      this.onended = null;
+      this.onerror = null;
+      this.play = jest.fn().mockResolvedValue();
+      this.pause = jest.fn();
+      audioInstances.push(this);
+    }
+  }
+
+  Object.defineProperty(window, 'Audio', {
+    configurable: true,
+    value: MockAudio,
+  });
+  global.fetch.mockImplementation(url => Promise.resolve({
+    ok: true,
+    json: async () => (
+      url === '/audio-manifest.json'
+        ? {
+          version: 1,
+          clips: [{
+            verse_id: 'gita-2-55',
+            script: 'en',
+            path: '/audio/gita-2-55.en.mp3',
+          }],
+        }
+        : scriptureFixture
+    ),
+  }));
+
+  render(<App />);
+  const card = await screen.findByTestId('verse-gita-2-55');
+  const listen = await within(card).findByRole('button', { name: 'Listen in English' });
+  await user.click(listen);
+
+  expect(audioInstances).toHaveLength(1);
+  expect(audioInstances[0].src).toBe('/audio/gita-2-55.en.mp3');
+  expect(audioInstances[0].preload).toBe('auto');
+  expect(audioInstances[0].play).toHaveBeenCalledTimes(1);
+  expect(within(card).getByRole('button', { name: 'Stop reading aloud' })).toBeVisible();
+
+  await user.click(within(card).getByRole('button', { name: 'Stop reading aloud' }));
+  expect(audioInstances[0].pause).toHaveBeenCalledTimes(1);
+  expect(audioInstances[0].currentTime).toBe(0);
+
+  await user.click(within(card).getByRole('button', { name: 'Malayalam' }));
+  expect(within(card).queryByRole('button', { name: /Listen in Malayalam/ })).not.toBeInTheDocument();
 });

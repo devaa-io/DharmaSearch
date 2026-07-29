@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" role="img" aria-labelledby="title">
+  <title id="title">DharmaSearch lettermark</title>
+  <rect width="512" height="512" fill="#eee3c9"/>
+  <circle cx="256" cy="256" r="168" fill="#fff9eb" stroke="#947023" stroke-width="8"/>
+  <path d="M166 363c58-5 88-40 88-108 0-64-29-98-88-104v-21h122c88 0 142 45 142 124 0 82-57 130-151 130H166zm81-23h31c49 0 78-30 78-84 0-53-29-82-78-82h-31z"
+        fill="#241b15"/>
+  <path d="M173 132c40-20 83-29 128-25-24 13-42 30-55 52-27-10-51-18-73-27z"
+        fill="#a83220"/>
+  <circle cx="374" cy="358" r="13" fill="#a83220"/>
+</svg>
