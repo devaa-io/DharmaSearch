@@ -88,6 +88,7 @@ def additive_verse_update(row: dict) -> dict:
         update["devanagari"] = row["dev"]
     if row.get("iast"):
         update["iast"] = row["iast"]
+        update["transliterations.iast"] = row["iast"]
 
     # Dotted updates preserve existing keys such as the Emergent-era ``hi`` value.
     scripts = row.get("scripts") or {}
