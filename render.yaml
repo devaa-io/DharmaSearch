@@ -1,0 +1,66 @@
+services:
+  - type: web
+    name: dharmasearch-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    branch: agent/backend-production-tts
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips "*"
+    healthCheckPath: /api/health
+    autoDeployTrigger: "off"
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.11
+      - key: MONGO_URL
+        sync: false
+      - key: DB_NAME
+        value: dharmasearch
+      - key: MONGO_TIMEOUT_MS
+        value: "5000"
+      - key: MONGO_MAX_POOL_SIZE
+        value: "20"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_CHAT_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_TTS_MODEL
+        value: gpt-4o-mini-tts
+      - key: OPENAI_TIMEOUT_SECONDS
+        value: "60"
+      - key: OPENAI_MAX_RETRIES
+        value: "1"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: RATE_LIMIT_SALT
+        generateValue: true
+      - key: TTS_REQUESTS_PER_MINUTE
+        value: "30"
+      - key: TTS_GENERATIONS_PER_MINUTE
+        value: "5"
+      - key: TTS_GLOBAL_GENERATIONS_PER_MINUTE
+        value: "10"
+      - key: TTS_CACHE_MAX_ENTRIES
+        value: "350"
+      - key: TTS_CACHE_TTL_HOURS
+        value: "24"
+      - key: TTS_MAX_AUDIO_BYTES
+        value: "500000"
+      - key: TTS_CLAIM_TIMEOUT_SECONDS
+        value: "120"
+      - key: TTS_CLAIM_WAIT_SECONDS
+        value: "30"
+      - key: AI_RATE_LIMIT_PER_MINUTE
+        value: "10"
+      - key: AI_CONTEXT_VERSES
+        value: "1500"
+      - key: CORS_ORIGINS
+        value: https://dharmasearch-demo.netlify.app
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAMESITE
+        value: none
+      - key: TRUST_PROXY_HEADERS
+        value: "true"
