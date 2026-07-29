@@ -20,7 +20,7 @@ export function TodayView({ texts, completeVerses, savedIds, onToggleSaved, onCo
       <p className="library-eyebrow">Today · {date}</p>
       <h1 className="library-title" id="today-title">A verse for today</h1>
       <p className="library-lede">
-        Begin with the original. Move through its scripts. Sit with the English when you are ready.
+        Begin in English. The original text and its other scripts are one tap away.
       </p>
       <div className="trust-strip" aria-label="Library summary">
         <span><strong>{texts.filter(text => text.complete).length}</strong> complete texts</span>

@@ -733,6 +733,13 @@
   font-weight: 600;
 }
 
+.chapter-context h2 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
 .chapter-context span {
   color: var(--ink-soft);
   font-size: 14px;
@@ -1183,4 +1190,207 @@
 
 .font-body {
   font-family: 'Manrope', sans-serif;
+}
+
+/* ------------------------------------------------------------------------- */
+/* UI elevation pass — atmosphere, illumination, motion (CSS-only, additive) */
+/* Preserves every class name, DOM node, data-testid and a11y affordance;    */
+/* only enriches surface, depth, typography and micro-motion.                */
+/* ------------------------------------------------------------------------- */
+
+/* Aged palm-leaf ground: keep the ruled writing lines, layer a warm crown
+   vignette, a grounding shadow at the foot, and a faint fibre grain. */
+.library-app {
+  background-image:
+    radial-gradient(115% 74% at 50% -8%, rgba(255, 250, 236, 0.55), transparent 60%),
+    radial-gradient(150% 130% at 50% 118%, rgba(120, 84, 30, 0.06), transparent 55%),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(148, 112, 35, 0.045) 31px 32px),
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='140'%20height='140'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'%20opacity='0.035'/%3E%3C/svg%3E");
+  background-attachment: fixed, fixed, scroll, fixed;
+}
+
+/* In-brand warm text selection. */
+.library-app ::selection {
+  background: rgba(168, 50, 32, 0.18);
+  color: var(--ink);
+}
+
+/* Illuminated verse leaf: gentle top-light gradient, a lift on hover, and a
+   restrained gold corner flourish contained inside the card. */
+.library-app .scripture-card {
+  background: linear-gradient(180deg, #fffdf4 0%, var(--card) 46%, #fdf6e4 100%);
+  transition: box-shadow 260ms ease, transform 260ms ease, border-left-color 260ms ease;
+}
+
+.library-app .scripture-card:hover {
+  border-left-color: var(--vermilion);
+  box-shadow: 0 18px 44px rgba(66, 45, 23, 0.14);
+  transform: translateY(-2px);
+}
+
+.library-app .scripture-card::after {
+  content: "";
+  position: absolute;
+  right: 11px;
+  bottom: 11px;
+  width: 16px;
+  height: 16px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-bottom-right-radius: 6px;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* Sharper Devanagari rendering: kerning + ligatures, a hair of tracking. */
+.library-app .scripture-card__original[data-script='dev'] {
+  font-feature-settings: "kern" 1, "liga" 1;
+  letter-spacing: 0.004em;
+}
+
+/* Old-style figures and ligatures on the serif display faces. */
+.library-brand,
+.library-title,
+.library-doors strong,
+.text-card strong,
+.daily-saying,
+.scripture-card__original[data-script='iast'],
+.scripture-card__original[data-script='roman'] {
+  font-feature-settings: "liga" 1, "onum" 1;
+}
+
+/* Manuscript diamond breaking the daily-saying's upper rule. */
+.library-app .daily-saying {
+  position: relative;
+}
+
+.library-app .daily-saying::before {
+  content: "\25C7";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  padding: 0 13px;
+  background: var(--leaf);
+  color: var(--gold);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-style: normal;
+  transform: translateX(-50%);
+}
+
+/* Warm gradient + hover wash on the three doorway cards. */
+.library-app .library-doors button {
+  background: linear-gradient(180deg, #fffdf4, var(--card));
+  transition: border-color 200ms, box-shadow 200ms, transform 200ms, background 200ms;
+}
+
+.library-app .library-doors button:hover {
+  background: linear-gradient(180deg, #fffef8, #fdf2dc);
+}
+
+/* Tactile press feedback across the interactive surfaces. */
+.library-app .icon-button:active,
+.library-app .library-button:active:not(:disabled),
+.library-app .text-card:active,
+.library-app .library-doors button:active,
+.library-app .script-picker button:active,
+.library-app .chapter-picker button:active,
+.library-app .meditation-length button:active,
+.library-app .library-filters button:active,
+.library-app .reading-controls button:active {
+  transform: translateY(1px);
+}
+
+/* Softer, warmer focus ring on the search field (still clearly visible). */
+.library-app .library-search input:focus-visible {
+  outline: none;
+  border-color: var(--vermilion);
+  box-shadow: 0 7px 20px rgba(66, 45, 23, 0.05), 0 0 0 3px rgba(168, 50, 32, 0.16);
+}
+
+/* English-first reading -------------------------------------------------- */
+/* English now leads the card, so it is set as prose to be read rather than as
+   a display line to be admired. Cormorant at this size reads like a book page,
+   which suits a translation carrying the weight of the original. */
+.library-app .scripture-card__original[data-script='en'] {
+  font-style: normal;
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+
+/* A third action (listen) joins bookmark and copy, so the meta line needs more
+   clearance before it runs under the buttons. 3 x 44px + 2 x 7px gap + offset. */
+.library-app .scripture-card__meta {
+  padding-right: 158px;
+}
+
+/* The language switcher now sits above the verse, so it reads as "choose how to
+   read this" rather than an afterthought below it. */
+.library-app .script-picker {
+  margin: 4px 0 16px;
+}
+
+@media (max-width: 680px) {
+  .library-app .scripture-card__actions {
+    position: static;
+    justify-content: flex-end;
+    margin-bottom: 14px;
+  }
+
+  .library-app .scripture-card__meta {
+    min-height: 0;
+    padding-right: 0;
+  }
+}
+
+/* Resume reading ---------------------------------------------------------- */
+/* The single most useful thing on the Read screen for a returning reader, so
+   it sits above the library and is styled to be picked out at a glance. */
+.library-app .resume-card {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 22px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--vermilion);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #fffdf4, var(--card));
+  box-shadow: var(--shadow);
+  text-align: left;
+  transition: box-shadow 200ms, transform 200ms;
+}
+
+.library-app .resume-card:hover {
+  box-shadow: 0 18px 44px rgba(66, 45, 23, 0.14);
+  transform: translateY(-2px);
+}
+
+.library-app .resume-card svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  color: var(--vermilion);
+}
+
+.library-app .resume-card strong,
+.library-app .resume-card em {
+  display: block;
+}
+
+.library-app .resume-card strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.library-app .resume-card em {
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }

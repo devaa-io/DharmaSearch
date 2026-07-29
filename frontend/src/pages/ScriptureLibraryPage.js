@@ -5,11 +5,12 @@ import { BeginView } from '../components/library/BeginView';
 import { ExploreView } from '../components/library/ExploreView';
 import { LibraryHeader } from '../components/library/LibraryHeader';
 import { MeditateView } from '../components/library/MeditateView';
+import { ReadView } from '../components/library/ReadView';
 import { TodayView } from '../components/library/TodayView';
 import { useScriptureData } from '../hooks/useScriptureData';
 import { useStoredState } from '../hooks/useStoredState';
 
-const VIEWS = new Set(['today', 'begin', 'explore', 'meditate', 'about']);
+const VIEWS = new Set(['today', 'begin', 'read', 'explore', 'meditate', 'about']);
 
 function viewFromHash() {
   const candidate = window.location.hash.slice(1);
@@ -116,6 +117,7 @@ export function ScriptureLibraryPage() {
             {...sharedVerseProps}
           />
         )}
+        {activeView === 'read' && <ReadView data={data} {...sharedVerseProps} />}
         {activeView === 'explore' && <ExploreView data={data} {...sharedVerseProps} />}
         {activeView === 'meditate' && <MeditateView completeVerses={completeVerses} />}
         {activeView === 'about' && (
