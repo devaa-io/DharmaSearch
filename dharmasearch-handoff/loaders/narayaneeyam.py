@@ -9,19 +9,35 @@
 #     general document collection, not the "For private circulation only"
 #     dedicated project site. Clean chapter-verse numbering (e.g. "..1-1..").
 #
-#   English   : DEFERRED. A CC0-licensed scan of Swami Tapasyananda's Sri
-#     Ramakrishna Math translation exists (archive.org), and reads legibly as
-#     prose - a real, usable source. But its embedded Sanskrit is badly
-#     OCR-corrupted (confirmed: "CANTO 1" renders as "CANTO |", digit-to-pipe
-#     corruption, inconsistent across cantos) and running headers/page
-#     numbers interleave mid-verse throughout the 1033-verse book. Reliably
-#     detecting all 100 canto boundaries from this OCR would need dozens of
-#     special cases, most as yet undiscovered - a materially higher
-#     misalignment risk than any other text sourced today, where even a
-#     single verse landing under the wrong number ships a wrong translation
-#     silently. Same treatment as Hanuman Chalisa and Lalita Sahasranama:
-#     ship the verifiably correct Devanagari now, defer English until it can
-#     be aligned with confidence (owner decision, 2026-07-30).
+#   English   : P. R. Ramachander, hosted at celextel.org's Vedanta Spiritual
+#     Library (same source already trusted for Vishnu Sahasranama, Soundarya
+#     Lahari, Lalita Sahasranama, Hanuman Chalisa), paginated across 6 pages
+#     (dasakams 1-19, 20-38, 39-62, 63-82, 83-97, 98-100). The translator's
+#     own introduction calls it "simple free verse and not a word-for-word
+#     translation" - spot-checked against the Devanagari at verses 1.1, 25.5,
+#     50.1 and 100.11 before committing to the full text (owner-approved,
+#     2026-07-30): all four matched the correct story content at the right
+#     canto/verse number, so the looseness is prose style, not misalignment.
+#
+#   An earlier CC0-licensed OCR scan (Swami Tapasyananda, archive.org) was
+#   rejected for corrupted Sanskrit and interleaved page headers making
+#   canto-boundary detection unreliable - not a concern with celextel, which
+#   is clean HTML with an explicit dasakam.verse numbering scheme.
+#
+#   Coverage: celextel's own markup has three quirks worked around below -
+#   a chapter-transition boundary marked only by a stray `<br>` (not the
+#   double-`<br>` blank line used elsewhere) that swallows each dasakam's
+#   final verse into the next dasakam's heading unless `</p><p>` and
+#   `</font><font>` tag boundaries are also treated as verse separators;
+#   asterisked footnotes appended after a verse's own number; and the
+#   pagination footer HTML at the end of each page, which must be cropped
+#   before parsing or it defeats the end-of-verse marker match entirely.
+#   Two entries (45.11, 45.12) are explicitly flagged by the translator as
+#   not present in "the authorized Vanamala version" (i.e. not canonical),
+#   and one (84.11) has no counterpart in the Devanagari - all three are
+#   dropped by filtering English to only the (chapter, verse) pairs the
+#   Devanagari parse already verified exist.
+import html
 import re
 import requests
 
@@ -37,6 +53,49 @@ VERSE_MARKER = re.compile(r"॥\s*([०-९]+)-([०-९]+)॥")
 
 def _deva_to_int(digits: str) -> int:
     return int("".join(str(DEVA_DIGITS.index(c)) for c in digits))
+
+
+EN_BASE = "https://www.celextel.org/vishnu-stotras/narayaneeyam/"
+EN_HEADERS = {"User-Agent": "DharmaSearch/1.0 (scripture ingest; research use)"}
+EN_VERSE_END = re.compile(r"(\d{1,3})\.(\d{1,2})\s*((?:\*[^*]*)*)$")
+
+
+def _fetch_english_page(page: int) -> dict:
+    url = EN_BASE if page == 1 else f"{EN_BASE}{page}/"
+    response = requests.get(url, headers=EN_HEADERS, timeout=30)
+    response.raise_for_status()
+    text = response.text
+
+    start = text.find("<article")
+    paging = text.find('<div class="paging"')
+    end = text.find("</article>")
+    if paging != -1 and paging < end:
+        end = paging
+    body = text[start:end]
+
+    segments = re.split(r"(?:<br>\s*){2,}|</p>\s*<p[^>]*>|</font>\s*<font[^>]*>", body)
+    out = {}
+    for seg in segments:
+        seg = re.sub(r"^\s*(?:<[^>]+>|\s)*\[[^\]]*\]\s*(?:<br>\s*)+", "", seg)
+        clean = re.sub(r"<[^>]+>", " ", seg)
+        clean = html.unescape(clean)
+        clean = re.sub(r"\s+", " ", clean).strip()
+        m = EN_VERSE_END.search(clean)
+        if not m:
+            continue
+        dasakam, verse = int(m.group(1)), int(m.group(2))
+        verse_text = clean[:m.start()].strip()
+        if not verse_text or "Dasakam" in clean[:30]:
+            continue
+        out[(dasakam, verse)] = verse_text
+    return out
+
+
+def _fetch_english() -> dict:
+    en = {}
+    for page in range(1, 7):
+        en.update(_fetch_english_page(page))
+    return en
 
 
 def load():
@@ -96,4 +155,15 @@ def load():
     if chapters != list(range(1, 101)):
         missing = sorted(set(range(1, 101)) - set(chapters))
         raise RuntimeError(f"Narayaneeyam: missing canto(s) {missing}")
+
+    english = _fetch_english()
+    missing_en = [
+        (r["chapter"], r["verse"]) for r in rows
+        if (r["chapter"], r["verse"]) not in english
+    ]
+    if missing_en:
+        raise RuntimeError(f"Narayaneeyam: missing English for {missing_en}")
+    for r in rows:
+        r["english"] = english[(r["chapter"], r["verse"])]
+
     return rows
