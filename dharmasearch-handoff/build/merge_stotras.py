@@ -54,11 +54,14 @@ SPECS = [
         "name": "Lalita Sahasranama",
         "count": 1000,
         "prefix": "ls",
-        "section_name": "Names of Lalita",
+        "section_name": "Namavali",
         "desc": (
             "The 1000 names of Lalita Tripurasundari, from the Brahmanda Purana "
-            "(Hayagriva-Agastya dialogue). Devanagari from sanskritdocuments.org; "
-            "English by P. R. Ramachander."
+            "(Hayagriva-Agastya dialogue). This is the namavali, the name-by-name "
+            "form used for archana, so each entry is a single name rather than a "
+            "shloka - the stotram arranges the same 1000 names into about 182 "
+            "verses. Devanagari from sanskritdocuments.org; English by "
+            "P. R. Ramachander."
         ),
     },
     {
