@@ -78,7 +78,11 @@ SPECS = [
             "chaupais, numbered canonically. Two pairs of chaupais (14-15 and "
             "33-34) share one combined English translation in this source, "
             "noted inline on those verses. Devanagari from "
-            "sanskritdocuments.org; English by P. R. Ramachander."
+            "sanskritdocuments.org; English by P. R. Ramachander. Note that "
+            "the transliterations are faithful script mappings of the "
+            "Devanagari and so read it by Sanskrit convention; Awadhi drops "
+            "many of those inherent vowels in speech, so recite from the "
+            "Devanagari rather than the romanisation."
         ),
     },
 ]
