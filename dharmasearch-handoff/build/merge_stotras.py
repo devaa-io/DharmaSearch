@@ -61,6 +61,19 @@ SPECS = [
             "English by P. R. Ramachander."
         ),
     },
+    {
+        "tid": "hanuman-chalisa",
+        "name": "Hanuman Chalisa",
+        "count": 40,
+        "prefix": "hc",
+        "section_name": "Hanuman Chalisa",
+        "desc": (
+            "Tulsidas's devotional hymn to Hanuman: 2 opening dohas and 38 "
+            "chaupai units (2 pairs of chaupais share one combined English "
+            "translation in this edition, see loader notes). Devanagari from "
+            "sanskritdocuments.org; English by P. R. Ramachander."
+        ),
+    },
 ]
 
 

@@ -1,0 +1,11 @@
+{
+  "text_id": "hanuman-chalisa",
+  "text_name": "Hanuman Chalisa",
+  "language": "Hindi",
+  "loader": "loaders/hanuman_chalisa.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "english": "english",
+    "verse": "verse"
+  }
+}
