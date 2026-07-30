@@ -474,7 +474,12 @@
   text-align: left;
 }
 
-.library-button {
+/* Prefixed with .library-app: the reset at the top of this file
+   (".library-app button { color: inherit }") has higher specificity than a
+   bare ".library-button" and was silently winning, so every primary button —
+   Read's Next/Previous, "Pick up at chapter", and more — rendered its
+   intended --leaf text as --ink on an --ink background: invisible. */
+.library-app .library-button {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
@@ -514,7 +519,7 @@
   height: 15px;
 }
 
-.library-button--ghost {
+.library-app .library-button--ghost {
   background: transparent;
   color: var(--ink);
 }
@@ -1063,6 +1068,31 @@
 
 @keyframes library-spin {
   to { transform: rotate(360deg); }
+}
+
+/* Landing on a verse from a shared link. A brief wash, not a flash — the
+   reader already knows which verse they came for. */
+.is-jump-target .scripture-card {
+  animation: verse-jump-highlight 2200ms ease-out;
+}
+
+@keyframes verse-jump-highlight {
+  0% { box-shadow: 0 0 0 3px rgba(154, 117, 38, 0.55); }
+  100% { box-shadow: 0 0 0 3px rgba(154, 117, 38, 0); }
+}
+
+.verse-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-jump-target .scripture-card {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(154, 117, 38, 0.55);
+  }
 }
 
 .sr-only {

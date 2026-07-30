@@ -392,3 +392,78 @@ test('the reader plays a manifest clip and preserves browser-voice hiding for mi
   await user.click(within(card).getByRole('button', { name: 'Malayalam' }));
   expect(within(card).queryByRole('button', { name: /Listen in Malayalam/ })).not.toBeInTheDocument();
 });
+
+test('a verse link opens the verse at its own address and can be copied or continued', async () => {
+  const user = userEvent.setup({ delay: null });
+  window.history.replaceState(null, '', '/v/gita-2-55');
+  render(<App />);
+
+  expect(await screen.findByRole('heading', { name: 'Chapter 2, Verse 55' })).toBeVisible();
+  expect(screen.getByText('Steadfast wisdom arises when the mind releases every selfish desire.')).toBeVisible();
+
+  const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+  await user.click(screen.getByTestId('verse-copy-link'));
+  expect(writeText).toHaveBeenCalledWith('http://localhost/v/gita-2-55');
+
+  await user.click(screen.getByTestId('verse-open-chapter'));
+  expect(JSON.parse(window.localStorage.getItem('ds_reading'))).toEqual({ tid: 'gita', ch: 2 });
+  expect(window.sessionStorage.getItem('ds_jump')).toBe('gita-2-55');
+});
+
+test('an unknown verse link shows a gentle not-found state, not an error', async () => {
+  const user = userEvent.setup({ delay: null });
+  window.history.replaceState(null, '', '/v/does-not-exist');
+  render(<App />);
+
+  expect(await screen.findByRole('heading', { name: 'This verse is not here yet.' })).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'The scripture library could not be loaded.' })).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: 'Open the library' }));
+  expect(await screen.findByRole('heading', { name: 'A few minutes is enough' })).toBeVisible();
+});
+
+test('the share button on a verse card copies its own link', async () => {
+  const user = userEvent.setup({ delay: null });
+  render(<App />);
+
+  const card = await screen.findByTestId('verse-gita-2-55');
+  const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+  await user.click(within(card).getByRole('button', { name: 'Share a link to this verse' }));
+
+  expect(writeText).toHaveBeenCalledWith('http://localhost/v/gita-2-55');
+});
+
+test('opening a chapter from a verse link scrolls to and briefly highlights that verse', async () => {
+  const user = userEvent.setup({ delay: null });
+  const readData = {
+    texts: [{ id: 'test-text', name: 'Test Text', complete: true, tv: 2 }],
+    verses: [
+      { ...scriptureFixture.verses[0], id: 'test-text-1-1', tid: 'test-text', tn: 'Test Text', ch: 1, vn: 1, cn: 'First' },
+      { ...scriptureFixture.verses[0], id: 'test-text-2-1', tid: 'test-text', tn: 'Test Text', ch: 2, vn: 1, cn: 'Second' },
+    ],
+    chapterMeta: { 'test-text': { 1: { tr: 'First' }, 2: { tr: 'Second' } } },
+  };
+  window.sessionStorage.setItem('ds_jump', 'test-text-2-1');
+  const scrollIntoView = jest.fn();
+  Element.prototype.scrollIntoView = scrollIntoView;
+
+  render(
+    <ReadView
+      data={readData}
+      savedIds={new Set()}
+      onToggleSaved={jest.fn()}
+      onCopied={jest.fn()}
+    />,
+  );
+
+  // The jump lands directly on chapter 2, skipping the catalogue.
+  expect(await screen.findByRole('heading', { name: 'Chapter 2 of 2 · Second' })).toBeVisible();
+  expect(scrollIntoView).toHaveBeenCalled();
+  expect(window.sessionStorage.getItem('ds_jump')).toBeNull();
+
+  const jumpedCard = screen.getByTestId('read-verses').querySelector('[data-verse-id="test-text-2-1"]');
+  expect(jumpedCard).toHaveClass('is-jump-target');
+
+  await user.click(screen.getByTestId('read-back'));
+  window.history.replaceState(null, '', '/#today');
+});

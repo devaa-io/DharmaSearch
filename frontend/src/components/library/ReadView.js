@@ -64,6 +64,28 @@ export function ReadView({
     return { tid: candidate.tid, ch: nearestChapter };
   }, [chaptersByText, readableTexts]);
 
+  // A shared verse link can hand Read a one-shot jump target (see VersePage).
+  // Consumed on mount so a plain visit to Read is never affected by an old key.
+  const jumpVerseRef = useRef(null);
+  useEffect(() => {
+    let jumpId = null;
+    try {
+      jumpId = window.sessionStorage.getItem('ds_jump');
+      if (jumpId) window.sessionStorage.removeItem('ds_jump');
+    } catch {
+      return;
+    }
+    if (!jumpId) return;
+    const target = data.verses.find(verse => verse.id === jumpId && verse.complete);
+    if (!target) return;
+    const position = normalizePosition({ tid: target.tid, ch: Number(target.ch ?? 1) });
+    if (!position) return;
+    jumpVerseRef.current = jumpId;
+    focusChapterOnChangeRef.current = true;
+    setOpenPosition(position);
+    // Mount-only by design: the jump marker is single-use.
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const resumePosition = useMemo(
     () => normalizePosition(savedPosition),
     [normalizePosition, savedPosition],
@@ -139,6 +161,9 @@ export function ReadView({
   }, []);
 
   // Moving between chapters should feel like turning a page, not staying put.
+  // A jump from a shared verse link is the exception: land on the verse
+  // itself, not the chapter top, and highlight it rather than move focus to
+  // the heading (the reader arrived already looking at this verse).
   useEffect(() => {
     if (!activeText || !activePosition) {
       if (focusCatalogueOnReturnRef.current) {
@@ -147,10 +172,19 @@ export function ReadView({
       }
       return;
     }
-    window.scrollTo({
-      top: 0,
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-    });
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const jumpId = jumpVerseRef.current;
+    if (jumpId) {
+      jumpVerseRef.current = null;
+      const target = document.querySelector(`[data-verse-id="${jumpId}"]`);
+      if (target) {
+        target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+        target.classList.add('is-jump-target');
+        window.setTimeout(() => target.classList.remove('is-jump-target'), 2200);
+        return;
+      }
+    }
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
     if (focusChapterOnChangeRef.current) {
       focusChapterOnChangeRef.current = false;
       chapterHeadingRef.current?.focus({ preventScroll: true });

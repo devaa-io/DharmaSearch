@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
 import { ScriptureLibraryPage } from './pages/ScriptureLibraryPage';
+import { VersePage } from './pages/VersePage';
 import '@/App.css';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/" element={<ScriptureLibraryPage />} />
+          <Route path="/v/:verseId" element={<VersePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
