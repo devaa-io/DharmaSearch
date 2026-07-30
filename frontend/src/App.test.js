@@ -407,7 +407,11 @@ test('a verse link opens the verse at its own address and can be copied or conti
 
   await user.click(screen.getByTestId('verse-open-chapter'));
   expect(JSON.parse(window.localStorage.getItem('ds_reading'))).toEqual({ tid: 'gita', ch: 2 });
-  expect(window.sessionStorage.getItem('ds_jump')).toBe('gita-2-55');
+  // Deliberately not asserting sessionStorage 'ds_jump' here. It is a one-shot
+  // that ReadView consumes on mount, so whether it is still set when this line
+  // runs depends on whether that effect has fired yet - a race that passed
+  // locally and failed on slower CI. What the key actually drives, the scroll
+  // and highlight, has its own test below.
 });
 
 test('an unknown verse link shows a gentle not-found state, not an error', async () => {
