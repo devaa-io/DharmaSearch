@@ -1,6 +1,7 @@
 import React from 'react';
 
 const NAV_ITEMS = [
+  ['feed', 'Read a little'],
   ['today', 'Today'],
   ['begin', 'Begin'],
   ['read', 'Read'],

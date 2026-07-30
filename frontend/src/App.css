@@ -1047,6 +1047,31 @@
   border: 0;
 }
 
+/* Seven nav items no longer fit beside the brand on a tablet, so the nav drops
+   to its own scrollable row here as well as on phones. Without this the page
+   itself scrolls sideways between 681px and 980px. */
+@media (min-width: 681px) and (max-width: 980px) {
+  .library-header__inner {
+    display: grid;
+    gap: 2px;
+    padding: 10px 0 0;
+  }
+
+  .library-nav {
+    margin: 0 -4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .library-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .library-nav__item {
+    flex: 0 0 auto;
+  }
+}
+
 @media (max-width: 680px) {
   .library-header__inner,
   .library-shell,
@@ -1345,6 +1370,204 @@
   .library-app .scripture-card__meta {
     min-height: 0;
     padding-right: 0;
+  }
+}
+
+/* Short-session feed ------------------------------------------------------- */
+/* Momentum, never pressure: a count of what you have read, with nothing that
+   can be lost and no language implying you owe the app anything. */
+.library-app .momentum {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 24px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 249, 235, 0.72);
+  color: var(--ink-soft);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.library-app .momentum svg {
+  width: 15px;
+  height: 15px;
+  color: var(--gold);
+}
+
+.library-app .momentum strong {
+  color: var(--vermilion-dark);
+  font-size: 14px;
+}
+
+.library-app .momentum em {
+  font-style: normal;
+  opacity: 0.75;
+}
+
+.library-app .feed-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 34px;
+}
+
+.library-app .feed-action {
+  display: grid;
+  min-height: 104px;
+  align-content: start;
+  gap: 5px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--gold);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fffdf4, var(--card));
+  box-shadow: 0 8px 24px rgba(66, 45, 23, 0.05);
+  text-align: left;
+  transition: border-color 200ms, box-shadow 200ms, transform 200ms;
+}
+
+.library-app .feed-action:hover {
+  border-top-color: var(--vermilion);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.library-app .feed-action--primary {
+  border-top-color: var(--vermilion);
+  background: linear-gradient(180deg, #fffdf4, var(--leaf-deep));
+}
+
+.library-app .feed-action strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.library-app .feed-action strong svg {
+  width: 17px;
+  height: 17px;
+  color: var(--vermilion);
+}
+
+.library-app .feed-action span {
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.library-app .feed-section {
+  margin: 0 0 14px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 27px;
+  font-weight: 600;
+}
+
+.library-app .collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 12px;
+}
+
+.library-app .collection-card {
+  display: grid;
+  min-height: 118px;
+  align-content: start;
+  gap: 5px;
+  padding: 18px 17px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: 7px;
+  background: var(--card);
+  text-align: left;
+  transition: border-left-color 200ms, box-shadow 200ms, transform 200ms;
+}
+
+.library-app .collection-card:hover {
+  border-left-color: var(--vermilion);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.library-app .collection-card strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.library-app .collection-card span {
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.library-app .collection-card em {
+  width: fit-content;
+  margin-top: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(98, 81, 61, 0.1);
+  color: var(--ink-soft);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.library-app .feed-slide {
+  scroll-margin-top: 80px;
+}
+
+.library-app .feed-counter {
+  margin: 0 0 -6px;
+  color: var(--gold);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.library-app .feed-end {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin-top: 30px;
+  padding: 28px 0 8px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.library-app .feed-end p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.library-app .feed-end svg {
+  width: 15px;
+  height: 15px;
+  color: var(--vermilion);
+}
+
+@media (max-width: 680px) {
+  .library-app .feed-actions,
+  .library-app .collection-grid {
+    grid-template-columns: 1fr;
   }
 }
 

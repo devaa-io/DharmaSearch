@@ -73,7 +73,9 @@ function installSpeechSynthesis(voices = []) {
 }
 
 beforeEach(() => {
-  window.history.replaceState(null, '', '/');
+  // The app now opens on the short-reading feed, so tests that assert on the
+  // daily verse must ask for that view explicitly rather than rely on default.
+  window.history.replaceState(null, '', '/#today');
   window.localStorage.clear();
   window.scrollTo = jest.fn();
   window.matchMedia = jest.fn().mockReturnValue({ matches: true });

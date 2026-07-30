@@ -4,18 +4,20 @@ import { AboutView } from '../components/library/AboutView';
 import { BeginView } from '../components/library/BeginView';
 import { ExploreView } from '../components/library/ExploreView';
 import { LibraryHeader } from '../components/library/LibraryHeader';
+import { FeedView } from '../components/library/FeedView';
 import { MeditateView } from '../components/library/MeditateView';
 import { ReadView } from '../components/library/ReadView';
 import { TodayView } from '../components/library/TodayView';
+import { useProgress } from '../hooks/useProgress';
 import { useScriptureData } from '../hooks/useScriptureData';
 import { useStaticAudio } from '../hooks/useStaticAudio';
 import { useStoredState } from '../hooks/useStoredState';
 
-const VIEWS = new Set(['today', 'begin', 'read', 'explore', 'meditate', 'about']);
+const VIEWS = new Set(['feed', 'today', 'begin', 'read', 'explore', 'meditate', 'about']);
 
 function viewFromHash() {
   const candidate = window.location.hash.slice(1);
-  return VIEWS.has(candidate) ? candidate : 'today';
+  return VIEWS.has(candidate) ? candidate : 'feed';
 }
 
 export function ScriptureLibraryPage() {
@@ -25,6 +27,7 @@ export function ScriptureLibraryPage() {
   const [readingSize, setReadingSize] = useStoredState('ds_fs', 1);
   const [toast, setToast] = useState('');
   const { canPlayAudio, onPlayAudio } = useStaticAudio();
+  const progress = useProgress();
   const completeVerses = useMemo(
     () => data?.verses.filter(verse => verse.complete) || [],
     [data],
@@ -121,7 +124,16 @@ export function ScriptureLibraryPage() {
             {...sharedVerseProps}
           />
         )}
-        {activeView === 'read' && <ReadView data={data} {...sharedVerseProps} />}
+        {activeView === 'feed' && (
+          <FeedView
+            data={data}
+            versesById={versesById}
+            progress={progress}
+            onNavigate={navigate}
+            {...sharedVerseProps}
+          />
+        )}
+        {activeView === 'read' && <ReadView data={data} progress={progress} {...sharedVerseProps} />}
         {activeView === 'explore' && <ExploreView data={data} {...sharedVerseProps} />}
         {activeView === 'meditate' && <MeditateView completeVerses={completeVerses} />}
         {activeView === 'about' && (
