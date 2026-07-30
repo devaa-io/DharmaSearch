@@ -60,7 +60,62 @@ EN_HEADERS = {"User-Agent": "DharmaSearch/1.0 (scripture ingest; research use)"}
 EN_VERSE_END = re.compile(r"(\d{1,3})\.(\d{1,2})\s*((?:\*[^*]*)*)$")
 
 
-def _fetch_english_page(page: int) -> dict:
+CANTO_HEADING = re.compile(r'<h2 itemprop="headline">([^<]*?)\(([०-९\d]+)\)</h2>')
+DEVANAGARI_CHAR = re.compile(r"[ऀ-ॿ]")
+
+
+def canto_titles() -> dict:
+    """{canto: {"dev": Devanagari title, "en": English gloss}} for all 100 cantos.
+
+    These are exactly the headings the verse parser strips out of the verse
+    text. They are real metadata the app has fields for, so they are captured
+    here rather than thrown away. Regenerate the stored copy with:
+
+        python3 build/merge_narayaneeyam.py --refresh-cantos
+
+    Fetched separately from load() on purpose: load()'s request is verified
+    against the shipped dataset and is left untouched.
+    """
+    response = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30)
+    response.raise_for_status()
+    response.encoding = response.apparent_encoding
+    text = html.unescape(response.text)
+
+    headings = list(CANTO_HEADING.finditer(text))
+    titles = {}
+    for i, match in enumerate(headings):
+        raw_number = match.group(2)
+        number = _deva_to_int(raw_number) if DEVANAGARI_CHAR.search(raw_number) else int(raw_number)
+        # The heading block runs: <h2> tag, a Devanagari description line, then
+        # an English gloss that sometimes wraps onto a second line, then the
+        # first verse. Stop at the blank line after the gloss.
+        end = headings[i + 1].start() if i + 1 < len(headings) else match.end() + 1200
+        dev_lines, en_lines = [], []
+        for line in text[match.end():end].split("\n"):
+            stripped = line.strip()
+            if not stripped:
+                if en_lines:
+                    break
+                continue
+            if re.match(r"^[०-९\d]+\s*-?\s*[A-Za-z]", stripped) or (en_lines and re.match(r"^[A-Za-z]", stripped)):
+                en_lines.append(re.sub(r"^[०-९\d]+\s*-?\s*", "", stripped))
+            elif DEVANAGARI_CHAR.search(stripped) and not en_lines:
+                dev_lines.append(stripped)
+            else:
+                break
+        titles[number] = {
+            "dev": " ".join(dev_lines).strip(" ।॥"),
+            "en": " ".join(en_lines).strip(),
+        }
+
+    missing = sorted(set(range(1, 101)) - set(titles))
+    if missing:
+        raise RuntimeError(f"Narayaneeyam: no canto heading found for {missing}")
+    return titles
+
+
+def _fetch_english_page(page: int) -> list:
+    """Return [(dasakam, verse, english)] in the order the page prints them."""
     url = EN_BASE if page == 1 else f"{EN_BASE}{page}/"
     response = requests.get(url, headers=EN_HEADERS, timeout=30)
     response.raise_for_status()
@@ -74,7 +129,7 @@ def _fetch_english_page(page: int) -> dict:
     body = text[start:end]
 
     segments = re.split(r"(?:<br>\s*){2,}|</p>\s*<p[^>]*>|</font>\s*<font[^>]*>", body)
-    out = {}
+    out = []
     for seg in segments:
         seg = re.sub(r"^\s*(?:<[^>]+>|\s)*\[[^\]]*\]\s*(?:<br>\s*)+", "", seg)
         clean = re.sub(r"<[^>]+>", " ", seg)
@@ -87,15 +142,50 @@ def _fetch_english_page(page: int) -> dict:
         verse_text = clean[:m.start()].strip()
         if not verse_text or "Dasakam" in clean[:30]:
             continue
-        out[(dasakam, verse)] = verse_text
+        out.append((dasakam, verse, verse_text))
     return out
 
 
+def _check_labels_match_document_order(ordered: list) -> None:
+    """Fail if the source's printed numbers disagree with its own running order.
+
+    Matching English to Devanagari by (dasakam, verse) is only safe while the
+    source's labels are trustworthy, and on this publisher they are not always:
+    their Hanuman Chalisa page labels one verse 19 and the very next one 18. A
+    transposition like that would attach a translation to the wrong verse while
+    still leaving every expected key present, so a coverage check alone would
+    not notice it. These three invariants would.
+    """
+    backwards = [
+        (ordered[i - 1][:2], ordered[i][:2])
+        for i in range(1, len(ordered))
+        if ordered[i][0] < ordered[i - 1][0]
+    ]
+    if backwards:
+        raise RuntimeError(f"Narayaneeyam: canto numbers go backwards at {backwards[:5]}")
+
+    by_canto = {}
+    for dasakam, verse, _ in ordered:
+        by_canto.setdefault(dasakam, []).append(verse)
+
+    unsorted = {d: v for d, v in by_canto.items() if v != sorted(v)}
+    if unsorted:
+        raise RuntimeError(f"Narayaneeyam: verses out of document order in cantos {unsorted}")
+
+    gappy = {
+        d: v for d, v in by_canto.items()
+        if sorted(v) != list(range(1, len(v) + 1))
+    }
+    if gappy:
+        raise RuntimeError(f"Narayaneeyam: non-contiguous verse numbers in cantos {gappy}")
+
+
 def _fetch_english() -> dict:
-    en = {}
+    ordered = []
     for page in range(1, 7):
-        en.update(_fetch_english_page(page))
-    return en
+        ordered.extend(_fetch_english_page(page))
+    _check_labels_match_document_order(ordered)
+    return {(dasakam, verse): text for dasakam, verse, text in ordered}
 
 
 def load():

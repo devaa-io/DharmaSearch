@@ -32,6 +32,50 @@ DESC = (
 )
 
 
+CANTOS_PATH = BASE / "data" / f"{TID}-cantos.json"
+
+
+def chapter_meta() -> dict:
+    """Real canto titles for the chapter picker, from the stored copy.
+
+    Kept as a committed file rather than fetched here so that merging stays
+    offline and reproducible; refresh it with --refresh-cantos when the
+    source changes.
+    """
+    if not CANTOS_PATH.exists():
+        raise FileNotFoundError(
+            f"{CANTOS_PATH} is missing. Regenerate it with:\n"
+            f"    python3 build/merge_narayaneeyam.py --refresh-cantos"
+        )
+    titles = json.loads(CANTOS_PATH.read_text(encoding="utf-8"))
+    missing = [ch for ch in range(1, CANTOS + 1) if str(ch) not in titles]
+    if missing:
+        raise ValueError(f"{TID}: canto titles missing for {missing}")
+    return {
+        str(ch): {
+            "dev": titles[str(ch)]["dev"],
+            "tr": f"Dasakam {ch}",
+            "mean": titles[str(ch)]["en"],
+        }
+        for ch in range(1, CANTOS + 1)
+    }
+
+
+def refresh_cantos() -> None:
+    """Re-fetch the canto titles from the source and store them."""
+    sys.path.insert(0, str(BASE / "loaders"))
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "narayaneeyam_loader", BASE / "loaders" / "narayaneeyam.py"
+    )
+    loader = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loader)
+    titles = {str(number): value for number, value in sorted(loader.canto_titles().items())}
+    write_text_atomic(CANTOS_PATH, json.dumps(titles, ensure_ascii=False, indent=1))
+    print(f"Wrote {CANTOS_PATH} ({len(titles)} cantos)")
+
+
 def load_dataset() -> list[dict]:
     rows = json.loads((BASE / "data" / f"{TID}.json").read_text(encoding="utf-8"))
     if len(rows) != COUNT:
@@ -71,10 +115,7 @@ def merge(app: dict) -> dict:
         "lang": "Sanskrit", "tv": COUNT, "complete": True,
     })
 
-    app["chapterMeta"][TID] = {
-        str(ch): {"dev": "", "tr": f"Dasakam {ch}", "mean": ""}
-        for ch in range(1, CANTOS + 1)
-    }
+    app["chapterMeta"][TID] = chapter_meta()
 
     app["verses"] = [verse for verse in app["verses"] if verse.get("tid") != TID]
     app["verses"].extend(rows)
@@ -90,7 +131,15 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--app", type=Path, default=BASE / "app_data.json")
     parser.add_argument("--no-backup", action="store_true")
+    parser.add_argument(
+        "--refresh-cantos", action="store_true",
+        help="re-fetch canto titles from the source, then exit",
+    )
     args = parser.parse_args()
+
+    if args.refresh_cantos:
+        refresh_cantos()
+        return
 
     app_path = args.app.resolve()
     app = json.loads(app_path.read_text(encoding="utf-8"))
