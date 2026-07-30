@@ -49,6 +49,18 @@ SPECS = [
             "Devanagari from sanskritdocuments.org; English by P. R. Ramachander."
         ),
     },
+    {
+        "tid": "lalita-sahasranama",
+        "name": "Lalita Sahasranama",
+        "count": 1000,
+        "prefix": "ls",
+        "section_name": "Names of Lalita",
+        "desc": (
+            "The 1000 names of Lalita Tripurasundari, from the Brahmanda Purana "
+            "(Hayagriva-Agastya dialogue). Devanagari from sanskritdocuments.org; "
+            "English by P. R. Ramachander."
+        ),
+    },
 ]
 
 
