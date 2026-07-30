@@ -31,9 +31,28 @@ export function BeginView({
     <section className="library-view" aria-labelledby="begin-title" data-testid="begin-view">
       <p className="library-eyebrow">Begin · a first path</p>
       <h1 className="library-title" id="begin-title">Start from anywhere</h1>
-      <p className="library-lede">
+      <p className="library-lede library-lede--spaced">
         Five verses chosen because they speak to anyone. Read the plain meaning first, then the scripture itself.
       </p>
+
+      {/* Newcomers land on lines like "Arjuna said..." with no idea who is speaking.
+          A few sentences of framing costs nothing and removes that disorientation. */}
+      <aside className="begin-context">
+        <h2>If you are new to this</h2>
+        <p>
+          Most of what follows comes from the <strong>Bhagavad Gita</strong>, a conversation
+          held on a battlefield. <strong>Arjuna</strong> is a warrior who lays down his bow,
+          unable to fight a war against his own family. <strong>Krishna</strong>, his
+          charioteer and friend, answers him — and what begins as advice about one battle
+          becomes a discussion of duty, grief, action and the self.
+        </p>
+        <p>
+          You do not need to know the story to read it. The questions Arjuna asks are
+          ordinary ones: what do I do when I am afraid, what is worth doing, what in me
+          lasts. The <strong>Upanishads</strong> here are older and quieter, less a story
+          than a series of attempts to describe what cannot quite be said.
+        </p>
+      </aside>
 
       {atEnd ? (
         <div className="begin-complete">

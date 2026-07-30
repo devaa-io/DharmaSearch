@@ -499,9 +499,14 @@
   background: var(--vermilion-dark);
 }
 
+/* A disabled control should read as "unavailable", not as an empty bar. At 0.3 the
+   label vanished entirely against the leaf background and the button looked broken. */
 .library-button:disabled {
   cursor: default;
-  opacity: 0.3;
+  border-color: var(--line);
+  background: var(--card-soft);
+  color: var(--ink-soft);
+  opacity: 0.65;
 }
 
 .library-button svg {
@@ -1340,6 +1345,65 @@
   .library-app .scripture-card__meta {
     min-height: 0;
     padding-right: 0;
+  }
+}
+
+/* Newcomer framing on Begin ------------------------------------------------ */
+/* Set apart from the verses themselves: this is the app speaking, not scripture. */
+.library-app .begin-context {
+  margin: 0 0 26px;
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--vermilion);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #fffdf4, var(--card));
+  box-shadow: 0 8px 24px rgba(66, 45, 23, 0.05);
+}
+
+.library-app .begin-context h2 {
+  margin: 0 0 10px;
+  color: var(--vermilion-dark);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.library-app .begin-context p {
+  max-width: 68ch;
+  margin: 0 0 10px;
+  font-size: calc(16px * var(--reading-scale));
+  line-height: 1.7;
+}
+
+.library-app .begin-context p:last-child {
+  margin-bottom: 0;
+}
+
+.library-app .begin-context strong {
+  color: var(--vermilion-dark);
+  font-weight: 600;
+}
+
+/* Mobile nav discoverability ---------------------------------------------- */
+/* The nav scrolls horizontally on small screens but its scrollbar is hidden, so
+   Meditate and About were completely undiscoverable — nothing signalled that more
+   tabs existed off-screen. This fades the right edge to imply "keep going". */
+@media (max-width: 680px) {
+  .library-app .library-header__inner {
+    position: relative;
+  }
+
+  .library-app .library-header__inner::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 7px;
+    width: 34px;
+    height: 44px;
+    background: linear-gradient(90deg, rgba(238, 227, 201, 0), rgba(238, 227, 201, 0.96));
+    pointer-events: none;
   }
 }
 
