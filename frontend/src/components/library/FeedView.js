@@ -127,7 +127,7 @@ export function FeedView({
             data-testid="feed-shuffle"
           >
             <strong><Shuffle aria-hidden="true" /> Surprise me</strong>
-            <span>Eight verses at random from all seven texts.</span>
+            <span>Eight verses at random from all {data.texts.filter(text => text.complete).length} complete texts.</span>
           </button>
         </div>
 

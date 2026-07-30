@@ -242,7 +242,7 @@ footer{border-top:2px solid var(--ink);margin-top:24px;padding:22px 0 46px;font-
 <section class="view" id="explore" aria-label="Explore the library">
   <div class="eyebrow">Explore &middot; the full library</div>
   <h1 class="big">Search the scriptures</h1>
-  <p class="lede" style="margin-bottom:20px">Read seven complete works or search 1,338 passages across every available script.</p>
+  <p class="lede" style="margin-bottom:20px">Read <span id="exploreWorkCount">7</span> complete works or search <span id="explorePassageCount">1,338</span> passages across every available script.</p>
   <div class="searchbar">
     <input id="q" type="search" placeholder="Search in English or any script - dharma, धर्म, ധര്‍മ്മം, fear&hellip;" autocomplete="off" aria-label="Search verses in any language">
   </div>
@@ -397,7 +397,7 @@ function renderBegin(){
   const atEnd=bStep>=begin.length;
   const body=document.getElementById('beginBody');
   if(atEnd){
-    body.innerHTML=`<div class="why"><b>Keep going</b>You've walked the first steps. Seven complete works and 1,017 verified verses are waiting in Explore.</div>
+    body.innerHTML=`<div class="why"><b>Keep going</b>You've walked the first steps. ${texts.filter(t=>t.complete).length} complete works and ${completeVerses.length.toLocaleString()} verified verses are waiting in Explore.</div>
       <div style="text-align:center;margin-top:20px"><button class="btn" data-v="explore">Open the library &rarr;</button></div>`;
   }else{
     const item=begin[bStep], v=byId[item.id];
@@ -556,6 +556,8 @@ window.addEventListener('popstate',()=>show(location.hash.slice(1)||'today',fals
 /* ---- init ---- */
 document.getElementById('completeCount').textContent=texts.filter(t=>t.complete).length;
 document.getElementById('verifiedCount').textContent=completeVerses.length.toLocaleString();
+document.getElementById('exploreWorkCount').textContent=texts.filter(t=>t.complete).length;
+document.getElementById('explorePassageCount').textContent=verses.length.toLocaleString();
 document.getElementById('filterComplete').textContent=texts.filter(t=>t.complete).length;
 document.getElementById('filterPreview').textContent=texts.filter(t=>!t.complete).length;
 document.getElementById('filterAll').textContent=texts.length;

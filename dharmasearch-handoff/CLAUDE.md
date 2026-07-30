@@ -26,12 +26,20 @@ produces wrong sacred text (proven: "kaman" -> कमन् when it must be क�
 lacks Devanagari, find a better source; do not guess.
 
 ## Current state
-- **Seven texts are COMPLETE:** Bhagavad Gita (701 verses) plus Isha, Kena, Katha,
-  Mundaka, Prashna, and Mandukya Upanishads (316 verses). Every completed row has
-  all seven representations and passes the zero-gap gate.
-- **The other 15 text groupings are PREVIEW only** - small seeded samples from the
+- **Twelve texts are COMPLETE (3,300 verses):** Bhagavad Gita (701); Isha, Kena,
+  Katha, Mundaka, Prashna and Mandukya Upanishads (316); and all of Tier 1 -
+  Vishnu Sahasranama (108), Soundarya Lahari (100), Lalita Sahasranama (1000),
+  Hanuman Chalisa (42) and Narayaneeyam (1033). Every completed row has all
+  seven representations and passes the zero-gap gate.
+- **The other 10 text groupings are PREVIEW only** - small seeded samples from the
   original `content-export/`, marked "preview" in the app. Completed Upanishads are
   removed from the legacy mixed `upanishads` preview to avoid duplicate search results.
+- **Verse numbering follows the source tradition, not our parsing convenience.**
+  Hanuman Chalisa keeps its 2 dohas in section 1 and its 40 chaupais numbered
+  1-40 in section 2, so any verse can be cited against a printed edition. Where
+  a translation covers two verses at once, both keep their own number and share
+  the translation with an inline note; never collapse verses to match a source's
+  formatting.
 
 ## Why the rest weren't finished in the chat session
 The chat sandbox could only reach GitHub raw + package mirrors. The authoritative
@@ -93,7 +101,7 @@ translations are safe; some modern ones are not).
   guarantees each batch is whole. Source from the GRETIL critical editions.
 
 ## Tiers (rough effort order)
-- Tier 1 (short, one loader each): Hanuman Chalisa, Vishnu Sahasranama, Lalita
+- Tier 1 (short, one loader each): DONE - Hanuman Chalisa, Vishnu Sahasranama, Lalita
   Sahasranama, Soundarya Lahari, Narayaneeyam, principal Upanishads.
 - Tier 2 (large but bounded): Devi Mahatmyam (~700), Yoga Sutras (~196),
   Vivekachudamani (~580), Purana selections, Adhyatma Ramayanam.

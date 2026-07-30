@@ -5,29 +5,37 @@
 #
 # SOURCES:
 #   Devanagari : sanskritdocuments.org (doc_hanumaana/hanuman40.html) - the
-#     original Awadhi/Hindi text (NOT the separate Sanskrit-translation page
-#     on the same site, doc_hanumaana/hanumAnachAlisAsaMskRRita.html, which
-#     is a different, modern derivative work by Ravindra Kumar Markandeya).
+#     original Awadhi text (NOT the separate Sanskrit-translation page on the
+#     same site, doc_hanumaana/hanumAnachAlisAsaMskRRita.html, which is a
+#     different, modern derivative work by Ravindra Kumar Markandeya).
 #
 #   English : P. R. Ramachander, hosted at celextel.org's Vedanta Spiritual
 #     Library - same source/site already accepted for Vishnu Sahasranama,
 #     Soundarya Lahari and Lalita Sahasranama.
 #
-#   Scope: this edition is shipped as 40 verses (2 opening dohas + 38
-#   chaupai units), not the traditional 43 (or even 42). The
-#   sanskritdocuments.org page also carries a closing doha ("pavana-tanaya
-#   sankata harana...") and a separate Aarti, which celextel does not
-#   translate, so both are excluded. Separately, celextel's own translation
-#   silently combines two pairs of chaupais under one shared English
-#   paragraph each - chaupais 14+15 ("Sanakadhika brahmadhi muneesa... /
-#   Yama, Kubhera dikapala...") and 33+34 ("Thumhare bhajan ram ko pavai... /
-#   Antha kala Raghupati pura jayee...") - confirmed by reading the raw page:
-#   each pair's two romanised couplets run together with no blank line
-#   between them, under one English block that covers both. Rather than
-#   inventing a translation split or duplicating one translation across two
-#   Devanagari couplets, those two Devanagari couplet-pairs are merged into
-#   one verse each here too, so every shipped verse has an honest 1:1
-#   Devanagari-to-English correspondence.
+# NUMBERING (the thing to be careful about here):
+#   Chaupais keep their canonical numbers 1-40, in their own section, so a
+#   reader cross-referencing any other edition lands on the same verse. The
+#   two dohas are section 1; the chaupais are section 2 numbered from 1.
+#
+#   Celextel's translation combines two pairs of chaupais under one shared
+#   English paragraph each (14+15 and 33+34): the pair's two romanised
+#   couplets run together with no blank line, followed by a single English
+#   block covering both. An earlier version of this loader merged the
+#   Devanagari to match, which silently shifted every subsequent verse out of
+#   step with canonical numbering - the exact "user says it is wrong" failure
+#   this project exists to avoid. Instead both members of such a pair keep
+#   their own number and Devanagari, and share the combined translation with
+#   a parenthetical note saying so.
+#
+#   Celextel's own printed verse numbers are NOT trustworthy as indices: the
+#   page labels one chaupai 19 and the following one 18, and prints 19 twice.
+#   So couplets are counted in document order and assigned canonical numbers
+#   positionally; the source's digits are only used to detect how many
+#   couplets a block holds, never to decide which verse it is.
+#
+#   Scope: the source page's closing doha ("pavana-tanaya sankata harana...")
+#   and its Aarti are excluded, as celextel translates neither.
 import html
 import re
 
@@ -41,8 +49,17 @@ DEV_HEADERS = {
 }
 EN_HEADERS = {"User-Agent": "DharmaSearch/1.0 (scripture ingest; research use)"}
 
+DOHA_SECTION = 1
+CHAUPAI_SECTION = 2
 
-def _fetch_devanagari() -> dict:
+# A standalone 1-2 digit token, i.e. a printed verse number rather than a
+# digit embedded in a word. Numbers inside the verses themselves are always
+# spelled out in this text ("sahasra", "sat baar"), never written as digits.
+NUMBER_TOKEN = re.compile(r"(?<![\w.])\d{1,2}(?![\w.])")
+
+
+def _fetch_devanagari():
+    """Return (2 doha couplets, 40 chaupai couplets), each as one string."""
     response = requests.get(DEV_URL, headers=DEV_HEADERS, timeout=30)
     response.raise_for_status()
     response.encoding = response.apparent_encoding
@@ -61,8 +78,8 @@ def _fetch_devanagari() -> dict:
 
     doha_block = pre[doha_start + len("दोहा"):chaupai_start]
     chaupai_block = pre[chaupai_start + len("चौपाई"):aarti_start]
-    closing_doha_idx = chaupai_block.rfind("दोहा")
-    chaupai_block = chaupai_block[:closing_doha_idx]
+    # The closing doha sits between the last chaupai and the Aarti.
+    chaupai_block = chaupai_block[:chaupai_block.rfind("दोहा")]
 
     doha_lines = [l.strip() for l in doha_block.split("\n") if l.strip()]
     chaupai_lines = [l.strip() for l in chaupai_block.split("\n") if l.strip()]
@@ -72,34 +89,13 @@ def _fetch_devanagari() -> dict:
     if len(chaupai_lines) != 80:
         raise RuntimeError(f"Hanuman Chalisa: expected 80 chaupai lines, got {len(chaupai_lines)}")
 
-    chaupai_couplets = [
-        " ".join(chaupai_lines[2 * i:2 * i + 2]) for i in range(40)
-    ]
-    # 0-indexed chaupai numbers 13,14 (=14th,15th) and 32,33 (=33rd,34th)
-    # merge into one verse each - see the module docstring for why.
-    merged = []
-    skip_next = False
-    for i, couplet in enumerate(chaupai_couplets):
-        if skip_next:
-            skip_next = False
-            continue
-        if i in (13, 32):
-            merged.append(couplet + " " + chaupai_couplets[i + 1])
-            skip_next = True
-        else:
-            merged.append(couplet)
-    if len(merged) != 38:
-        raise RuntimeError(f"Hanuman Chalisa: expected 38 chaupai units after merging, got {len(merged)}")
-
-    dev = {}
-    dev[1] = " ".join(doha_lines[0:2])
-    dev[2] = " ".join(doha_lines[2:4])
-    for i, couplet in enumerate(merged):
-        dev[3 + i] = couplet
-    return dev
+    dohas = [" ".join(doha_lines[0:2]), " ".join(doha_lines[2:4])]
+    chaupais = [" ".join(chaupai_lines[2 * i:2 * i + 2]) for i in range(40)]
+    return dohas, chaupais
 
 
-def _fetch_translation() -> dict:
+def _fetch_translation():
+    """Return (2 doha translations, {chaupai_no: english}, shared-number groups)."""
     response = requests.get(EN_URL, headers=EN_HEADERS, timeout=30)
     response.raise_for_status()
     html_text = response.text
@@ -122,41 +118,58 @@ def _fetch_translation() -> dict:
     if current:
         blocks.append(" ".join(current))
 
-    # Blocks normally alternate [roman, english, roman, english, ...], but at
-    # the two merge points (see module docstring) one roman block covers two
-    # chaupais and is followed by a single english block for both - so pair
-    # by classifying each block rather than assuming fixed alternation.
-    # Chaupai roman blocks are the only ones ending in a verse-number digit;
-    # the two opening-doha roman blocks are unnumbered, handled positionally.
-    en = {}
-    en[1] = blocks[1]
-    en[2] = blocks[3]
-    chaupai_num = 0
+    # blocks[0..3] are the two dohas as [roman, english, roman, english];
+    # from index 4 the same alternation continues, except a roman block may
+    # carry two couplets where celextel merged the translation.
+    dohas = [blocks[1], blocks[3]]
+
+    chaupai_en = {}
+    shared_groups = []
+    next_number = 1
     i = 4
     while i < len(blocks):
-        if not re.search(r"\d\.?\s*$", blocks[i]):
-            raise RuntimeError(f"Hanuman Chalisa: expected a numbered verse block at index {i}: {blocks[i]!r}")
-        chaupai_num += 1
-        en[2 + chaupai_num] = blocks[i + 1]
+        roman, english = blocks[i], blocks[i + 1]
+        couplet_count = len(NUMBER_TOKEN.findall(roman))
+        if couplet_count == 0:
+            raise RuntimeError(f"Hanuman Chalisa: no verse number in roman block {i}: {roman[:60]!r}")
+        covered = tuple(range(next_number, next_number + couplet_count))
+        for n in covered:
+            chaupai_en[n] = english
+        if couplet_count > 1:
+            shared_groups.append(covered)
+        next_number += couplet_count
         i += 2
-    if chaupai_num != 38:
-        raise RuntimeError(f"Hanuman Chalisa: expected 38 chaupai translation units, got {chaupai_num}")
-    return en
+
+    total = next_number - 1
+    if total != 40:
+        raise RuntimeError(f"Hanuman Chalisa: expected 40 chaupai translations, got {total}")
+    return dohas, chaupai_en, shared_groups
 
 
 def load():
-    dev = _fetch_devanagari()
-    en = _fetch_translation()
+    dev_dohas, dev_chaupais = _fetch_devanagari()
+    en_dohas, en_chaupais, shared_groups = _fetch_translation()
 
-    missing_en = sorted(set(dev) - set(en))
-    if missing_en:
-        raise RuntimeError(f"Hanuman Chalisa: missing translation for verses {missing_en}")
+    shared_of = {n: group for group in shared_groups for n in group}
 
     rows = []
-    for n in range(1, 41):
+    for i, couplet in enumerate(dev_dohas, start=1):
         rows.append({
-            "devanagari": dev[n],
-            "english": en[n],
-            "verse": n,
+            "devanagari": couplet,
+            "english": en_dohas[i - 1],
+            "chapter": DOHA_SECTION,
+            "verse": i,
+        })
+    for i, couplet in enumerate(dev_chaupais, start=1):
+        english = en_chaupais[i]
+        group = shared_of.get(i)
+        if group:
+            listed = " and ".join(str(n) for n in group)
+            english = f"{english} (This translation covers verses {listed} together.)"
+        rows.append({
+            "devanagari": couplet,
+            "english": english,
+            "chapter": CHAUPAI_SECTION,
+            "verse": i,
         })
     return rows

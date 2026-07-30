@@ -15,6 +15,8 @@ sys.path.insert(0, str(BASE))
 sys.path.insert(0, str(BASE / "build"))
 
 from merge_upanishads import merge as merge_upanishads
+from merge_stotras import merge as merge_stotras
+from merge_narayaneeyam import merge as merge_narayaneeyam
 from pipeline_io import write_text_atomic
 from pipeline_validation import SCRIPT_CODES, validate_app_payload, validate_dataset
 
@@ -49,7 +51,12 @@ def sync_canonical_datasets(app: dict) -> dict:
 
 
 def merge(app: dict) -> dict:
-    return sync_canonical_datasets(merge_upanishads(app))
+    """Rebuild every completed text. Each sub-merger owns one group and is
+    idempotent, so this is the one command that reproduces the whole payload."""
+    app = merge_upanishads(app)
+    app = merge_stotras(app)
+    app = merge_narayaneeyam(app)
+    return sync_canonical_datasets(app)
 
 
 def main() -> None:

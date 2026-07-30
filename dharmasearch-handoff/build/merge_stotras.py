@@ -64,13 +64,17 @@ SPECS = [
     {
         "tid": "hanuman-chalisa",
         "name": "Hanuman Chalisa",
-        "count": 40,
+        "count": 42,
         "prefix": "hc",
-        "section_name": "Hanuman Chalisa",
+        # Two sections so the 40 chaupais keep their canonical numbers 1-40
+        # and can be cited against any other edition.
+        "sections": {1: "Doha", 2: "Chaupai"},
+        "lang": "Awadhi",
         "desc": (
-            "Tulsidas's devotional hymn to Hanuman: 2 opening dohas and 38 "
-            "chaupai units (2 pairs of chaupais share one combined English "
-            "translation in this edition, see loader notes). Devanagari from "
+            "Tulsidas's devotional hymn to Hanuman: 2 opening dohas and the 40 "
+            "chaupais, numbered canonically. Two pairs of chaupais (14-15 and "
+            "33-34) share one combined English translation in this source, "
+            "noted inline on those verses. Devanagari from "
             "sanskritdocuments.org; English by P. R. Ramachander."
         ),
     },
@@ -85,16 +89,33 @@ def load_dataset(spec: dict) -> list[dict]:
     return rows
 
 
+def sections(spec: dict) -> dict:
+    """Section number -> display name. Single-section texts declare one name."""
+    if "sections" in spec:
+        return spec["sections"]
+    return {1: spec["section_name"]}
+
+
 def app_verses(spec: dict, rows: list[dict]) -> list[dict]:
     out = []
+    spec_sections = sections(spec)
+    multi = len(spec_sections) > 1
     for row in rows:
         verse = row["verse"]
+        # The pipeline writes an explicit null (not a missing key) for texts
+        # whose config declares no chapter field.
+        chapter = row.get("chapter")
+        chapter = 1 if chapter is None else chapter
+        if chapter not in spec_sections:
+            raise ValueError(f"{spec['tid']}: unexpected section {chapter}")
+        # Multi-section texts need the section in the id, or verse 1 of each
+        # section would collide.
         item = {
-            "id": f"{spec['prefix']}-{verse}",
+            "id": f"{spec['prefix']}-{chapter}-{verse}" if multi else f"{spec['prefix']}-{verse}",
             "tid": spec["tid"],
             "tn": spec["name"],
-            "ch": 1,
-            "cn": spec["section_name"],
+            "ch": chapter,
+            "cn": spec_sections[chapter],
             "vn": verse,
             "complete": True,
             "roman": row["iast"],
@@ -121,7 +142,7 @@ def merge(app: dict) -> dict:
     new_texts = [
         {
             "id": spec["tid"], "name": spec["name"], "desc": spec["desc"],
-            "lang": "Sanskrit", "tv": spec["count"], "complete": True,
+            "lang": spec.get("lang", "Sanskrit"), "tv": spec["count"], "complete": True,
         }
         for spec in SPECS
     ]
@@ -132,7 +153,8 @@ def merge(app: dict) -> dict:
     ]
     for spec in SPECS:
         app["chapterMeta"][spec["tid"]] = {
-            "1": {"dev": "", "tr": spec["section_name"], "mean": ""}
+            str(number): {"dev": "", "tr": name, "mean": ""}
+            for number, name in sections(spec).items()
         }
         app["verses"].extend(app_verses(spec, load_dataset(spec)))
 
