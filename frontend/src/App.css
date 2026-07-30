@@ -1047,6 +1047,31 @@
   border: 0;
 }
 
+/* Seven nav items no longer fit beside the brand on a tablet, so the nav drops
+   to its own scrollable row here as well as on phones. Without this the page
+   itself scrolls sideways between 681px and 980px. */
+@media (min-width: 681px) and (max-width: 980px) {
+  .library-header__inner {
+    display: grid;
+    gap: 2px;
+    padding: 10px 0 0;
+  }
+
+  .library-nav {
+    margin: 0 -4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .library-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .library-nav__item {
+    flex: 0 0 auto;
+  }
+}
+
 @media (max-width: 680px) {
   .library-header__inner,
   .library-shell,
