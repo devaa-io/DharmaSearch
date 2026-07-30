@@ -178,7 +178,13 @@ export function ReadView({
       jumpVerseRef.current = null;
       const target = document.querySelector(`[data-verse-id="${jumpId}"]`);
       if (target) {
-        target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+        // Guarded because this runs inside an effect: an environment without
+        // scrollIntoView (jsdom, and some older mobile browsers) would throw
+        // here and take the whole view down. Landing on the chapter without
+        // the scroll is a far better failure than not rendering at all.
+        if (typeof target.scrollIntoView === 'function') {
+          target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+        }
         target.classList.add('is-jump-target');
         window.setTimeout(() => target.classList.remove('is-jump-target'), 2200);
         return;
