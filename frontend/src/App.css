@@ -698,6 +698,36 @@
   text-transform: uppercase;
 }
 
+/* Ground covered on a text. A thin gold rule rather than a percentage badge:
+   readable at a glance, and quiet enough not to read as a target. */
+.text-card__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.text-card__progress-bar {
+  display: block;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(148, 112, 35, 0.22);
+}
+
+.text-card__progress-bar::after {
+  content: '';
+  display: block;
+  width: var(--read-pct, 0%);
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gold);
+}
+
+.chapter-context__read {
+  color: var(--ink-soft);
+  font-style: normal;
+}
+
 .text-card em.is-complete {
   background: rgba(168, 50, 32, 0.11);
   color: var(--vermilion-dark);

@@ -52,6 +52,7 @@ import re
 import sys
 from pathlib import Path
 
+from malayalam_chillu import to_chillu
 from pipeline_io import write_text_atomic
 from pipeline_validation import validate_dataset
 
@@ -103,6 +104,11 @@ def to_scripts(devanagari: str) -> dict:
             out[code] = transliterate(devanagari, sanscript.DEVANAGARI, scheme)
         except Exception:
             out[code] = ""   # empty -> caught by the gap gate
+    # The transliterator writes every pure consonant with a chandrakkala, so
+    # Malayalam came out as കര്മ where a reader expects കർമ. Safe here precisely
+    # because this text is transliterated Sanskrit; see malayalam_chillu.
+    if out.get("ml"):
+        out["ml"] = to_chillu(out["ml"])
     return out
 
 
