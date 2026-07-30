@@ -6,6 +6,15 @@
 [build.environment]
   NODE_VERSION = "20.20.0"
 
+# Narration clips are files, not routes. Without this rule a missing clip falls
+# through to the SPA catch-all below and answers 200 with the HTML shell, which
+# the service worker then stores in the audio cache as though it were an mp3.
+# Real files still win: an unforced rule never shadows a static asset.
+[[redirects]]
+  from = "/audio/*"
+  to = "/audio/:splat"
+  status = 404
+
 # BrowserRouter owns application routes; serve the React shell on direct visits.
 [[redirects]]
   from = "/*"
