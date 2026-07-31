@@ -11,7 +11,8 @@
   --gold: #947023;
   --line: #c9b183;
   --night: #18120e;
-  --shadow: 0 12px 34px rgba(66, 45, 23, 0.09);
+  --shadow: 0 14px 30px rgba(66, 45, 23, 0.16), 0 2px 6px rgba(66, 45, 23, 0.08);
+  --shadow-lift: 0 20px 40px rgba(66, 45, 23, 0.2), 0 4px 10px rgba(66, 45, 23, 0.1);
   min-height: 100vh;
   color: var(--ink);
   background-color: var(--leaf);
@@ -148,6 +149,34 @@
   to { opacity: 1; transform: none; }
 }
 
+/* One staggered entrance for card lists, so the page feels considered on
+   load rather than just appearing. Capped at 8 distinct delays so a
+   47-verse chapter doesn't make the last card wait a second to show up. */
+.collection-grid > *,
+.text-grid > *,
+.feed-stack > *,
+[data-testid="read-verses"] > * {
+  animation: library-fade 420ms both;
+}
+
+.collection-grid > *:nth-child(1), .text-grid > *:nth-child(1), .feed-stack > *:nth-child(1), [data-testid="read-verses"] > *:nth-child(1) { animation-delay: 0ms; }
+.collection-grid > *:nth-child(2), .text-grid > *:nth-child(2), .feed-stack > *:nth-child(2), [data-testid="read-verses"] > *:nth-child(2) { animation-delay: 40ms; }
+.collection-grid > *:nth-child(3), .text-grid > *:nth-child(3), .feed-stack > *:nth-child(3), [data-testid="read-verses"] > *:nth-child(3) { animation-delay: 80ms; }
+.collection-grid > *:nth-child(4), .text-grid > *:nth-child(4), .feed-stack > *:nth-child(4), [data-testid="read-verses"] > *:nth-child(4) { animation-delay: 120ms; }
+.collection-grid > *:nth-child(5), .text-grid > *:nth-child(5), .feed-stack > *:nth-child(5), [data-testid="read-verses"] > *:nth-child(5) { animation-delay: 160ms; }
+.collection-grid > *:nth-child(6), .text-grid > *:nth-child(6), .feed-stack > *:nth-child(6), [data-testid="read-verses"] > *:nth-child(6) { animation-delay: 200ms; }
+.collection-grid > *:nth-child(7), .text-grid > *:nth-child(7), .feed-stack > *:nth-child(7), [data-testid="read-verses"] > *:nth-child(7) { animation-delay: 240ms; }
+.collection-grid > *:nth-child(n+8), .text-grid > *:nth-child(n+8), .feed-stack > *:nth-child(n+8), [data-testid="read-verses"] > *:nth-child(n+8) { animation-delay: 280ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .collection-grid > *,
+  .text-grid > *,
+  .feed-stack > *,
+  [data-testid="read-verses"] > * {
+    animation: none;
+  }
+}
+
 .library-eyebrow,
 .library-count,
 .scripture-card__meta,
@@ -217,7 +246,8 @@
   position: relative;
   margin: 22px 0;
   padding: 28px 28px 24px;
-  border: 1px solid var(--line);
+  /* The shadow does the edge definition now; the gold spine is the one
+     border worth keeping, since it's a signature, not chrome. */
   border-left: 4px solid var(--gold);
   border-radius: 6px;
   background: var(--card);
@@ -243,12 +273,14 @@
   border-radius: 5px;
   background: var(--card-soft);
   color: var(--ink-soft);
-  transition: background 200ms, border-color 200ms, color 200ms;
+  transition: background 200ms, border-color 200ms, color 200ms, box-shadow 200ms, transform 200ms;
 }
 
 .icon-button:hover {
   border-color: var(--vermilion);
   color: var(--vermilion);
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-1px);
 }
 
 .icon-button.is-active {
@@ -313,6 +345,16 @@
 
 .script-picker {
   margin: 8px 0 15px;
+}
+
+/* Seven equal-weight boxes per card, repeated down the whole page, reads as
+   heavy. Lightening the resting state keeps every label legible while
+   letting the active selection (still the shared [aria-pressed] treatment
+   below) read as the one thing that matters in the row. */
+.script-picker button {
+  padding: 7px 10px;
+  border-color: transparent;
+  background: rgba(148, 112, 35, 0.08);
 }
 
 .script-picker button,
@@ -474,7 +516,12 @@
   text-align: left;
 }
 
-.library-button {
+/* Prefixed with .library-app: the reset at the top of this file
+   (".library-app button { color: inherit }") has higher specificity than a
+   bare ".library-button" and was silently winning, so every primary button —
+   Read's Next/Previous, "Pick up at chapter", and more — rendered its
+   intended --leaf text as --ink on an --ink background: invisible. */
+.library-app .library-button {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
@@ -514,7 +561,7 @@
   height: 15px;
 }
 
-.library-button--ghost {
+.library-app .library-button--ghost {
   background: transparent;
   color: var(--ink);
 }
@@ -696,6 +743,36 @@
   font-style: normal;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* Ground covered on a text. A thin gold rule rather than a percentage badge:
+   readable at a glance, and quiet enough not to read as a target. */
+.text-card__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.text-card__progress-bar {
+  display: block;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(148, 112, 35, 0.22);
+}
+
+.text-card__progress-bar::after {
+  content: '';
+  display: block;
+  width: var(--read-pct, 0%);
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gold);
+}
+
+.chapter-context__read {
+  color: var(--ink-soft);
+  font-style: normal;
 }
 
 .text-card em.is-complete {
@@ -1035,6 +1112,31 @@
   to { transform: rotate(360deg); }
 }
 
+/* Landing on a verse from a shared link. A brief wash, not a flash — the
+   reader already knows which verse they came for. */
+.is-jump-target .scripture-card {
+  animation: verse-jump-highlight 2200ms ease-out;
+}
+
+@keyframes verse-jump-highlight {
+  0% { box-shadow: 0 0 0 3px rgba(154, 117, 38, 0.55); }
+  100% { box-shadow: 0 0 0 3px rgba(154, 117, 38, 0); }
+}
+
+.verse-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-jump-target .scripture-card {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(154, 117, 38, 0.55);
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1061,6 +1163,9 @@
     margin: 0 -4px;
     overflow-x: auto;
     scrollbar-width: none;
+    /* Without this a scrollable row just looks like it cuts off mid-word. */
+    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent);
   }
 
   .library-nav::-webkit-scrollbar {
@@ -1099,6 +1204,8 @@
     gap: 2px;
     overflow-x: auto;
     scrollbar-width: none;
+    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent);
   }
 
   .library-nav::-webkit-scrollbar {
@@ -1116,6 +1223,26 @@
 
   .library-title {
     font-size: 40px;
+  }
+
+  /* Wrapping to 3 rows of chapter numbers buries the scripture under chrome
+     on a phone. One scrollable row keeps every chapter a tap away without
+     the wall of chips. */
+  .chapter-picker {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+  }
+
+  .chapter-picker::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chapter-picker button {
+    flex: 0 0 auto;
   }
 
   .scripture-card {

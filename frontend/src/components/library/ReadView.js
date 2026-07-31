@@ -1,11 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen } from 'lucide-react';
 import { ScriptureVerseCard } from './ScriptureVerseCard';
+import { useMarkVisibleAsRead } from '../../hooks/useMarkVisibleAsRead';
 import { useStoredState } from '../../hooks/useStoredState';
 
 /** Reading a text end to end, as opposed to Explore's search-and-jump.
  *  Only complete texts are offered: the preview groupings are scattered
- *  samples, so "start to finish" would be misleading for them. */
+ *  samples, so "start to finish" would be misleading for them.
+ *
+ *  Progress is shown as ground covered, never as a target missed: a count of
+ *  what has been read and nothing about what has not. `progress` is optional so
+ *  the view still renders standalone. */
 export function ReadView({
   data,
   savedIds,
@@ -13,6 +18,7 @@ export function ReadView({
   onCopied,
   onPlayAudio,
   canPlayAudio,
+  progress = null,
 }) {
   // The saved position is a bookmark, not the screen state. Read always opens
   // on the catalogue so a returning reader can choose whether to resume.
@@ -58,6 +64,28 @@ export function ReadView({
     return { tid: candidate.tid, ch: nearestChapter };
   }, [chaptersByText, readableTexts]);
 
+  // A shared verse link can hand Read a one-shot jump target (see VersePage).
+  // Consumed on mount so a plain visit to Read is never affected by an old key.
+  const jumpVerseRef = useRef(null);
+  useEffect(() => {
+    let jumpId = null;
+    try {
+      jumpId = window.sessionStorage.getItem('ds_jump');
+      if (jumpId) window.sessionStorage.removeItem('ds_jump');
+    } catch {
+      return;
+    }
+    if (!jumpId) return;
+    const target = data.verses.find(verse => verse.id === jumpId && verse.complete);
+    if (!target) return;
+    const position = normalizePosition({ tid: target.tid, ch: Number(target.ch ?? 1) });
+    if (!position) return;
+    jumpVerseRef.current = jumpId;
+    focusChapterOnChangeRef.current = true;
+    setOpenPosition(position);
+    // Mount-only by design: the jump marker is single-use.
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const resumePosition = useMemo(
     () => normalizePosition(savedPosition),
     [normalizePosition, savedPosition],
@@ -86,6 +114,21 @@ export function ReadView({
   const chapterName = data.chapterMeta?.[activeText?.id]?.[String(activePosition?.ch)]?.tr
     || chapterVerses[0]?.cn
     || '';
+
+  // Reading a chapter is what should count as reading it, so verses record
+  // themselves here on the same terms as the short-session feed.
+  const markRead = useCallback(verseId => progress?.markRead(verseId), [progress]);
+  const attachVerse = useMarkVisibleAsRead(markRead);
+
+  const chapterRead = progress
+    ? chapterVerses.filter(verse => progress.isRead(verse.id)).length
+    : 0;
+
+  // Where to go next once this chapter is behind you.
+  const nextUnread = progress && activeText
+    ? progress.nextUnread(data.verses, activeText.id)
+    : null;
+  const nextUnreadChapter = nextUnread ? Number(nextUnread.ch ?? 1) : null;
 
   const openText = useCallback(textId => {
     const firstPosition = normalizePosition({ tid: textId, ch: (chaptersByText.get(textId) || [1])[0] });
@@ -118,6 +161,9 @@ export function ReadView({
   }, []);
 
   // Moving between chapters should feel like turning a page, not staying put.
+  // A jump from a shared verse link is the exception: land on the verse
+  // itself, not the chapter top, and highlight it rather than move focus to
+  // the heading (the reader arrived already looking at this verse).
   useEffect(() => {
     if (!activeText || !activePosition) {
       if (focusCatalogueOnReturnRef.current) {
@@ -126,10 +172,25 @@ export function ReadView({
       }
       return;
     }
-    window.scrollTo({
-      top: 0,
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-    });
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const jumpId = jumpVerseRef.current;
+    if (jumpId) {
+      jumpVerseRef.current = null;
+      const target = document.querySelector(`[data-verse-id="${jumpId}"]`);
+      if (target) {
+        // Guarded because this runs inside an effect: an environment without
+        // scrollIntoView (jsdom, and some older mobile browsers) would throw
+        // here and take the whole view down. Landing on the chapter without
+        // the scroll is a far better failure than not rendering at all.
+        if (typeof target.scrollIntoView === 'function') {
+          target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+        }
+        target.classList.add('is-jump-target');
+        window.setTimeout(() => target.classList.remove('is-jump-target'), 2200);
+        return;
+      }
+    }
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
     if (focusChapterOnChangeRef.current) {
       focusChapterOnChangeRef.current = false;
       chapterHeadingRef.current?.focus({ preventScroll: true });
@@ -175,6 +236,7 @@ export function ReadView({
         <div className="text-grid">
           {readableTexts.map(text => {
             const count = (chaptersByText.get(text.id) || []).length;
+            const stats = progress ? progress.progressFor(data.verses, text.id) : null;
             return (
               <button
                 key={text.id}
@@ -185,6 +247,21 @@ export function ReadView({
               >
                 <strong>{text.name}</strong>
                 <span>{text.tv} verses · {count} {count === 1 ? 'section' : 'sections'}</span>
+                {stats && stats.done > 0 && (
+                  <span
+                    className="text-card__progress"
+                    data-testid={`read-progress-${text.id}`}
+                  >
+                    <span
+                      className="text-card__progress-bar"
+                      style={{ '--read-pct': `${Math.round(stats.pct * 100)}%` }}
+                      aria-hidden="true"
+                    />
+                    {stats.done === stats.total
+                      ? 'all read'
+                      : `${stats.done} of ${stats.total} read`}
+                  </span>
+                )}
                 <em className="is-complete">complete</em>
               </button>
             );
@@ -219,7 +296,16 @@ export function ReadView({
           {chapters.length > 1 ? `Chapter ${activePosition.ch} of ${chapters.length}` : 'Complete text'}
           {chapterName ? ` · ${chapterName}` : ''}
         </h2>
-        <span>{chapterVerses.length} {chapterVerses.length === 1 ? 'verse' : 'verses'}</span>
+        <span>
+          {chapterVerses.length} {chapterVerses.length === 1 ? 'verse' : 'verses'}
+          {progress && chapterRead > 0 && (
+            <em className="chapter-context__read" data-testid="read-chapter-progress">
+              {chapterRead === chapterVerses.length
+                ? ' · all read'
+                : ` · ${chapterRead} of ${chapterVerses.length} read`}
+            </em>
+          )}
+        </span>
       </div>
 
       {chapters.length > 1 && (
@@ -239,15 +325,16 @@ export function ReadView({
 
       <div data-testid="read-verses">
         {chapterVerses.map(verse => (
-          <ScriptureVerseCard
-            key={verse.id}
-            verse={verse}
-            saved={savedIds.has(verse.id)}
-            onToggleSaved={onToggleSaved}
-            onCopied={onCopied}
-            onPlayAudio={onPlayAudio}
-            canPlayAudio={canPlayAudio}
-          />
+          <div key={verse.id} data-verse-id={verse.id} ref={attachVerse}>
+            <ScriptureVerseCard
+              verse={verse}
+              saved={savedIds.has(verse.id)}
+              onToggleSaved={onToggleSaved}
+              onCopied={onCopied}
+              onPlayAudio={onPlayAudio}
+              canPlayAudio={canPlayAudio}
+            />
+          </div>
         ))}
       </div>
 
@@ -271,6 +358,22 @@ export function ReadView({
           Next <ArrowRight aria-hidden="true" />
         </button>
       </div>
+
+      {/* Offered, not insisted on: only once this chapter is behind you, and only
+          when the next unread verse is somewhere other than here. */}
+      {chapterVerses.length > 0
+        && chapterRead === chapterVerses.length
+        && nextUnreadChapter !== null
+        && nextUnreadChapter !== activePosition.ch && (
+        <button
+          className="library-button"
+          type="button"
+          onClick={() => goToChapter(nextUnreadChapter)}
+          data-testid="read-next-unread"
+        >
+          Pick up at chapter {nextUnreadChapter}
+        </button>
+      )}
 
       {nextChapter === null && (
         <p className="begin-note">

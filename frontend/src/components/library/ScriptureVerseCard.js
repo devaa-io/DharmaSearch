@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, Check, Copy, Square, Volume2 } from 'lucide-react';
+import { Bookmark, Check, Copy, Share2, Square, Volume2 } from 'lucide-react';
 import { LANGUAGE_NAMES, SPEECH_LANGS, scriptsFor } from '../../lib/scripture';
 
 const CONTENT_LANGS = {
@@ -246,6 +246,27 @@ export function ScriptureVerseCard({
     }
   };
 
+  // Every verse has an address (/v/:id). Share hands that link on, through the
+  // native sheet where one exists and the clipboard where it does not.
+  const shareVerse = async () => {
+    const url = `${window.location.origin}/v/${verse.id}`;
+    const title = `${verse.tn} — Verse ${verse.vn}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+      } catch {
+        // Cancelling the share sheet is a choice, not an error worth a toast.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      onCopied?.('Link copied');
+    } catch {
+      onCopied?.('Copy unavailable');
+    }
+  };
+
   const languageName = LANGUAGE_NAMES[selectedScript?.code] || 'this verse';
 
   return (
@@ -284,6 +305,16 @@ export function ScriptureVerseCard({
           data-testid={`copy-${verse.id}`}
         >
           {copying ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+        </button>
+        <button
+          className="icon-button"
+          type="button"
+          onClick={shareVerse}
+          aria-label="Share a link to this verse"
+          title="Share link"
+          data-testid={`share-${verse.id}`}
+        >
+          <Share2 aria-hidden="true" />
         </button>
       </div>
 

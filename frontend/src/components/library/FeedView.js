@@ -3,6 +3,7 @@ import { ArrowLeft, Check, Shuffle, Sparkles } from 'lucide-react';
 import { ScriptureVerseCard } from './ScriptureVerseCard';
 import { COLLECTIONS, versesForCollection } from '../../lib/collections';
 import { dailyIndex } from '../../lib/scripture';
+import { useMarkVisibleAsRead } from '../../hooks/useMarkVisibleAsRead';
 
 /** Short-session reading: a scrollable card feed, themed collections, a daily
  *  set and a shuffle. Built for someone with two minutes and no plan, which is
@@ -12,32 +13,6 @@ import { dailyIndex } from '../../lib/scripture';
  *  requiring a tap to record something you have plainly just read is friction
  *  for exactly the reader this view exists for.
  */
-
-function useMarkVisibleAsRead(onSeen) {
-  const observerRef = useRef(null);
-  const seenRef = useRef(new Set());
-
-  const attach = useCallback(node => {
-    if (!node || typeof IntersectionObserver === 'undefined') return;
-    if (!observerRef.current) {
-      observerRef.current = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          const id = entry.target.dataset.verseId;
-          if (!id || seenRef.current.has(id)) return;
-          // Half the card on screen counts as a read, not a glance.
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            seenRef.current.add(id);
-            onSeen(id);
-          }
-        });
-      }, { threshold: [0.5] });
-    }
-    observerRef.current.observe(node);
-  }, [onSeen]);
-
-  useEffect(() => () => observerRef.current?.disconnect(), []);
-  return attach;
-}
 
 export function FeedView({
   data, versesById, savedIds, onToggleSaved, onCopied, onPlayAudio, canPlayAudio,
@@ -146,7 +121,11 @@ export function FeedView({
               >
                 <strong>{entry.title}</strong>
                 <span>{entry.need}</span>
-                <em>{done === total ? 'read' : `${total} verses`}</em>
+                <em>
+                  {done === 0 && `${total} verses`}
+                  {done > 0 && done < total && `${done} of ${total} read`}
+                  {done === total && 'read'}
+                </em>
               </button>
             );
           })}
