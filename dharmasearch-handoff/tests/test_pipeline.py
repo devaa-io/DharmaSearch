@@ -256,9 +256,21 @@ class LoaderResolutionTests(unittest.TestCase):
 
 class RepositoryIntegrationTests(unittest.TestCase):
     def test_committed_payload_and_generated_app_are_consistent(self):
+        # verify() already raises if any dataset disagrees with the committed
+        # payload. What is checked here is the other direction: that the row
+        # counts summed from data/*.json match the totals the payload declares
+        # in texts[].tv, which verify() never looks at.
+        #
+        # Deliberately not hardcoding the totals. They were pinned at 7 and
+        # 1017 and went stale the moment texts were added, failing the build
+        # for a reason that had nothing to do with correctness.
         datasets, rows = verify_pipeline.verify(live=False)
-        self.assertEqual(datasets, 7)
-        self.assertEqual(rows, 1017)
+        payload = Path(__file__).resolve().parents[1] / "app_data.json"
+        app = json.loads(payload.read_text(encoding="utf-8"))
+        complete = [text for text in app["texts"] if text.get("complete")]
+        self.assertGreater(len(complete), 0)
+        self.assertEqual(datasets, len(complete))
+        self.assertEqual(rows, sum(text["tv"] for text in complete))
 
 
 if __name__ == "__main__":

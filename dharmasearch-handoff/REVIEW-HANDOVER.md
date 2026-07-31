@@ -52,7 +52,7 @@ done
 (All loaders fetch live from sanskritdocuments.org + Wikisource, so this needs network.
 `sanskritdocuments.org` 406s the default requests UA — loaders send a browser UA.)
 
-`build/merge_completed.py` reproducibly synchronizes all seven completed texts from
+`build/merge_completed.py` reproducibly synchronizes all twelve completed texts from
 their canonical datasets; its Upanishad step removes duplicate rows from the legacy
 mixed preview.
 `build_app.py` inlines `app_data.json` into `app_tpl.html` → `app.html` and only writes

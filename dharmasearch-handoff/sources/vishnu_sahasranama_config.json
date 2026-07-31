@@ -1,0 +1,12 @@
+{
+  "text_id": "vishnu-sahasranama",
+  "text_name": "Vishnu Sahasranama",
+  "language": "Sanskrit",
+  "loader": "loaders/vishnu_sahasranama.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "iast": "iast",
+    "english": "translation",
+    "verse": "verse"
+  }
+}
