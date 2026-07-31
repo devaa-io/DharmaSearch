@@ -26,6 +26,40 @@ export function AboutView({ texts, verses, readingSize, onReadingSize }) {
         {completeCount} of {texts.length} texts are complete. Remaining works stay clearly marked as previews until they pass the same zero-gap checks.
       </p>
 
+      <div className="sources">
+        <h2>Where these texts come from</h2>
+        <p>
+          DharmaSearch is free. Nothing here is sold and there are no adverts. The scriptures
+          are not ours; they are carried here so they can be read.
+        </p>
+        <dl>
+          <dt>Original Devanagari</dt>
+          <dd>
+            <a href="https://sanskritdocuments.org/" target="_blank" rel="noopener noreferrer">sanskritdocuments.org</a>,
+            prepared over many years by volunteers and offered for personal study and research.
+          </dd>
+
+          <dt>Bhagavad Gita</dt>
+          <dd>Verse text and translation from the openly licensed <a href="https://github.com/gita/gita" target="_blank" rel="noopener noreferrer">gita/gita</a> dataset.</dd>
+
+          <dt>Upanishads, in English</dt>
+          <dd>Max M&uuml;ller, <em>Sacred Books of the East</em> (1879 and 1884), and Robert Ernest Hume (1921). Both long in the public domain.</dd>
+
+          <dt>Vishnu Sahasranama</dt>
+          <dd>Devanagari, transliteration and name meanings by Swami Krishnananda, <a href="https://www.swami-krishnananda.org/" target="_blank" rel="noopener noreferrer">The Divine Life Society</a>.</dd>
+
+          <dt>Soundarya Lahari, Lalita Sahasranama, Hanuman Chalisa, Narayaneeyam</dt>
+          <dd>English translations by P. R. Ramachander, hosted at <a href="https://www.celextel.org/" target="_blank" rel="noopener noreferrer">Celextel&rsquo;s Vedanta Spiritual Library</a>.</dd>
+
+          <dt>Malayalam, Tamil, Telugu and Kannada</dt>
+          <dd>Generated here by script-to-script transliteration from the Devanagari, never from romanised text, so vowel length and retroflexes survive intact.</dd>
+        </dl>
+        <p className="sources__thanks">
+          Our thanks to everyone above. If you maintain one of these sources and would like
+          something changed or removed, please get in touch and we will act on it.
+        </p>
+      </div>
+
       <div className="reading-controls">
         <span>Reading size</span>
         <button
