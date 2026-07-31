@@ -23,7 +23,7 @@ from pipeline_validation import validate_app_payload
 
 REQUIRED_SCRIPTS = ("ml", "ta", "te", "kn")
 
-SPECS = [
+ALL_SPECS = [
     {
         "tid": "vishnu-sahasranama",
         "name": "Vishnu Sahasranama",
@@ -86,6 +86,24 @@ SPECS = [
         ),
     },
 ]
+
+# Held back from the app pending a licensing decision. Their Devanagari comes
+# from sanskritdocuments.org, whose per-file terms read: "not to be copied or
+# reposted for promotion of any website or individuals or for commercial
+# purpose without permission." Vishnu Sahasranama is absent from this list
+# because it never used that source - it is Swami Krishnananda / The Divine
+# Life Society throughout.
+#
+# The loaders and configs stay in the tree so any of these can be rebuilt with
+# a single ingest_pipeline.py run once the question is settled; only the
+# generated datasets were removed, so no encumbered text sits in the repo.
+HELD_BACK_PENDING_LICENSING = {
+    "soundarya-lahari",
+    "lalita-sahasranama",
+    "hanuman-chalisa",
+}
+
+SPECS = [spec for spec in ALL_SPECS if spec["tid"] not in HELD_BACK_PENDING_LICENSING]
 
 
 def load_dataset(spec: dict) -> list[dict]:

@@ -26,14 +26,36 @@ produces wrong sacred text (proven: "kaman" -> कमन् when it must be क�
 lacks Devanagari, find a better source; do not guess.
 
 ## Current state
-- **Twelve texts are COMPLETE (3,300 verses):** Bhagavad Gita (701); Isha, Kena,
-  Katha, Mundaka, Prashna and Mandukya Upanishads (316); and all of Tier 1 -
-  Vishnu Sahasranama (108), Soundarya Lahari (100), Lalita Sahasranama (1000),
-  Hanuman Chalisa (42) and Narayaneeyam (1033). Every completed row has all
-  seven representations and passes the zero-gap gate.
-- **The other 10 text groupings are PREVIEW only** - small seeded samples from the
+- **Eight texts are COMPLETE (1,125 verses):** Bhagavad Gita (701); Isha, Kena,
+  Katha, Mundaka, Prashna and Mandukya Upanishads (316); and Vishnu Sahasranama
+  (108). Every completed row has all seven representations and passes the
+  zero-gap gate.
+- **The other 14 text groupings are PREVIEW only** - small seeded samples from the
   original `content-export/`, marked "preview" in the app. Completed Upanishads are
   removed from the legacy mixed `upanishads` preview to avoid duplicate search results.
+
+## Four finished texts are HELD BACK over licensing (read before "finishing" them)
+Soundarya Lahari (100), Lalita Sahasranama (1000), Hanuman Chalisa (42) and
+Narayaneeyam (1033) are built, verified and zero-gap, but are **not shipped**.
+Their Devanagari came from sanskritdocuments.org, whose per-file terms say:
+"not to be copied or reposted for promotion of any website or individuals or
+for commercial purpose without permission." This app is meant to be
+monetisable, so that clause is a live problem, not a formality.
+
+- Loaders stay in `loaders/`, configs in `sources/held-back/`. The generated
+  datasets were deleted, so no encumbered text sits in the repo. Any of them
+  rebuilds with one `ingest_pipeline.py` run once the question is settled.
+- Vishnu Sahasranama is unaffected: it is Swami Krishnananda / The Divine Life
+  Society end to end and never touched sanskritdocuments.
+- **Sanskrit Wikisource is not a drop-in replacement.** It was checked
+  properly: its Narayaneeyam has 1,028 verses to our 1,033, six cantos differ
+  in length, and even among equal-length cantos 566 of 971 verses differ in
+  wording. It is a different recension. Its Lalita has no verse numbers at all
+  and is the stotram rather than the namavali; its Soundarya Lahari is a
+  scanned-PDF transclusion; Hanuman Chalisa is absent entirely.
+- Resolving this means one of: written permission from sanskritdocuments, a
+  genuinely public-domain edition of each text, or a decision that the ancient
+  text itself is public domain and their claim covers only their own file.
 - **Verse numbering follows the source tradition, not our parsing convenience.**
   Hanuman Chalisa keeps its 2 dohas in section 1 and its 40 chaupais numbered
   1-40 in section 2, so any verse can be cited against a printed edition. Where
