@@ -87,23 +87,21 @@ ALL_SPECS = [
     },
 ]
 
-# Held back from the app pending a licensing decision. Their Devanagari comes
-# from sanskritdocuments.org, whose per-file terms read: "not to be copied or
+# These were briefly held back while the app was intended to be monetisable,
+# because the sanskritdocuments.org files they draw Devanagari from carry:
+# "to be used for personal study and research. The file is not to be copied or
 # reposted for promotion of any website or individuals or for commercial
-# purpose without permission." Vishnu Sahasranama is absent from this list
-# because it never used that source - it is Swami Krishnananda / The Divine
-# Life Society throughout.
+# purpose without permission."
 #
-# The loaders and configs stay in the tree so any of these can be rebuilt with
-# a single ingest_pipeline.py run once the question is settled; only the
-# generated datasets were removed, so no encumbered text sits in the repo.
-HELD_BACK_PENDING_LICENSING = {
-    "soundarya-lahari",
-    "lalita-sahasranama",
-    "hanuman-chalisa",
-}
-
-SPECS = [spec for spec in ALL_SPECS if spec["tid"] not in HELD_BACK_PENDING_LICENSING]
+# The owner has since settled that DharmaSearch is a free app: no paid tier,
+# no ads, nothing sold. That is neither commercial use nor promotion of a
+# website, and it is squarely the "personal study and research" the source
+# permits. So they ship, with the sources credited in the app's About view.
+#
+# If that ever changes - a paid tier, or ads, which are commercial - these
+# have to come out again, or be re-sourced, or be used with written
+# permission. See CLAUDE.md.
+SPECS = ALL_SPECS
 
 
 def load_dataset(spec: dict) -> list[dict]:

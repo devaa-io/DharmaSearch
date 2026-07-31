@@ -1,0 +1,11 @@
+{
+  "text_id": "lalita-sahasranama",
+  "text_name": "Lalita Sahasranama",
+  "language": "Sanskrit",
+  "loader": "loaders/lalita_sahasranama.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "english": "english",
+    "verse": "verse"
+  }
+}

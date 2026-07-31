@@ -1,0 +1,12 @@
+{
+  "text_id": "soundarya-lahari",
+  "text_name": "Soundarya Lahari",
+  "language": "Sanskrit",
+  "loader": "loaders/soundarya_lahari.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "iast": "iast",
+    "english": "translation",
+    "verse": "verse"
+  }
+}
