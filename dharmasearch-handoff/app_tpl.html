@@ -144,6 +144,19 @@ mark{background:rgba(182,50,31,.22);color:inherit;padding:0 1px}
 .med-done.on{display:flex}
 .med-done .big{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:34px;margin-bottom:8px}
 
+/* ---- credits ----
+   The texts here are other people's transcription and translation work.
+   Set as a colophon, not fine print. */
+.sources{margin-top:28px;padding:24px;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:6px;background:var(--card)}
+.sources h2{font-family:'Cormorant Garamond',serif;font-size:23px;margin:0 0 10px}
+.sources>p{color:var(--ink-soft);margin:0 0 18px;max-width:62ch}
+.sources dl{margin:0;display:grid;gap:14px 20px}
+.sources dt{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold)}
+.sources dd{margin:4px 0 0;max-width:62ch}
+.sources a{color:var(--vermilion);text-decoration:underline;text-underline-offset:2px}
+.sources .thanks{max-width:none;margin:20px 0 0;padding-top:16px;border-top:1px solid var(--line);font-style:italic;color:var(--ink-soft)}
+@media(min-width:720px){.sources dl{grid-template-columns:minmax(180px,22%) 1fr;align-items:baseline}.sources dt{grid-column:1}.sources dd{grid-column:2;margin-top:0}}
+
 /* ---- roadmap / about ---- */
 .road{display:grid;gap:8px;margin-top:8px}
 .road-row{display:flex;justify-content:space-between;gap:12px;background:var(--card);border:1px solid var(--line);padding:11px 14px;border-radius:2px;font-size:15px;align-items:center}
@@ -282,9 +295,35 @@ footer{border-top:2px solid var(--ink);margin-top:24px;padding:22px 0 46px;font-
 <section class="view" id="about" aria-label="About and roadmap">
   <div class="eyebrow">About &middot; what's here and what's coming</div>
   <h1 class="big">An honest map</h1>
-  <p class="lede">Every text is being brought to the same standard: the original in Devanagari, faithful transliteration into Malayalam, Tamil, Telugu and Kannada, and an English translation - with a build that refuses to ship a text that has any gap. The Bhagavad Gita and six principal Upanishads are complete; the rest are on their way.</p>
+  <p class="lede">Every text is being brought to the same standard: the original in Devanagari, faithful transliteration into Malayalam, Tamil, Telugu and Kannada, and an English translation - with a build that refuses to ship a text that has any gap. The completed works are listed below; the rest are on their way.</p>
   <div class="road" id="road"></div>
   <p class="note" id="aboutNote"></p>
+
+  <div class="sources">
+    <h2>Where these texts come from</h2>
+    <p>DharmaSearch is free. Nothing here is sold and there are no adverts. The scriptures are not ours; they are carried here so they can be read.</p>
+    <dl>
+      <dt>Original Devanagari</dt>
+      <dd><a href="https://sanskritdocuments.org/" target="_blank" rel="noopener noreferrer">sanskritdocuments.org</a>, prepared over many years by volunteers and offered for personal study and research.</dd>
+
+      <dt>Bhagavad Gita</dt>
+      <dd>Verse text and translation from the openly licensed <a href="https://github.com/gita/gita" target="_blank" rel="noopener noreferrer">gita/gita</a> dataset.</dd>
+
+      <dt>Upanishads, in English</dt>
+      <dd>Max M&uuml;ller, <em>Sacred Books of the East</em> (1879 and 1884), and Robert Ernest Hume (1921). Both long in the public domain.</dd>
+
+      <dt>Vishnu Sahasranama</dt>
+      <dd>Devanagari, transliteration and name meanings by Swami Krishnananda, <a href="https://www.swami-krishnananda.org/" target="_blank" rel="noopener noreferrer">The Divine Life Society</a>.</dd>
+
+      <dt>Soundarya Lahari, Lalita Sahasranama, Hanuman Chalisa, Narayaneeyam</dt>
+      <dd>English translations by P. R. Ramachander, hosted at <a href="https://www.celextel.org/" target="_blank" rel="noopener noreferrer">Celextel&rsquo;s Vedanta Spiritual Library</a>.</dd>
+
+      <dt>Malayalam, Tamil, Telugu and Kannada</dt>
+      <dd>Generated here by script-to-script transliteration from the Devanagari, never from romanised text, so vowel length and retroflexes survive intact.</dd>
+    </dl>
+    <p class="thanks">Our thanks to everyone above. If you maintain one of these sources and would like something changed or removed, please get in touch and we will act on it.</p>
+  </div>
+
   <div style="margin-top:22px">
     <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--ink-soft)">READING SIZE</span>
     <span class="rsize"><button id="fsDown" aria-label="Smaller text">A-</button><button id="fsUp" aria-label="Larger text">A+</button></span>
@@ -292,7 +331,7 @@ footer{border-top:2px solid var(--ink);margin-top:24px;padding:22px 0 46px;font-
 </section>
 
 <footer>
-  DharmaSearch &mdash; original text, transliteration &amp; translation. Seven complete texts, with more being built through a zero-gap pipeline.<br>
+  DharmaSearch &mdash; original text, transliteration &amp; translation. Free to read, always. <span id="footCount">Seven</span> complete texts, with more being built through a zero-gap pipeline.<br>
   <span id="footNote"></span><br>
   Source: <a href="https://github.com/devaa-io/DharmaSearch">github.com/devaa-io/DharmaSearch</a> &middot; <a href="https://devaa.io">devaa.io</a>
 </footer>
@@ -557,6 +596,7 @@ window.addEventListener('popstate',()=>show(location.hash.slice(1)||'today',fals
 document.getElementById('completeCount').textContent=texts.filter(t=>t.complete).length;
 document.getElementById('verifiedCount').textContent=completeVerses.length.toLocaleString();
 document.getElementById('exploreWorkCount').textContent=texts.filter(t=>t.complete).length;
+document.getElementById('footCount').textContent=texts.filter(t=>t.complete).length;
 document.getElementById('explorePassageCount').textContent=verses.length.toLocaleString();
 document.getElementById('filterComplete').textContent=texts.filter(t=>t.complete).length;
 document.getElementById('filterPreview').textContent=texts.filter(t=>!t.complete).length;
