@@ -51,6 +51,9 @@ export function AboutView({ texts, verses, readingSize, onReadingSize }) {
           <dt>Soundarya Lahari, Lalita Sahasranama, Hanuman Chalisa, Narayaneeyam</dt>
           <dd>English translations by P. R. Ramachander, hosted at <a href="https://www.celextel.org/" target="_blank" rel="noopener noreferrer">Celextel&rsquo;s Vedanta Spiritual Library</a>.</dd>
 
+          <dt>Yoga Sutras, in English</dt>
+          <dd>Charles Johnston&rsquo;s 1912 interpretation, preserved by <a href="https://www.gutenberg.org/ebooks/2526" target="_blank" rel="noopener noreferrer">Project Gutenberg</a>.</dd>
+
           <dt>Malayalam, Tamil, Telugu and Kannada</dt>
           <dd>Generated here by script-to-script transliteration from the Devanagari, never from romanised text, so vowel length and retroflexes survive intact.</dd>
         </dl>

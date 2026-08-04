@@ -1,0 +1,12 @@
+{
+  "text_id": "yoga-sutras",
+  "text_name": "Yoga Sutras of Patanjali",
+  "language": "Sanskrit",
+  "loader": "loaders/yoga_sutras.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "english": "translation",
+    "chapter": "chapter",
+    "verse": "verse"
+  }
+}

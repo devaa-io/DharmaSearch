@@ -27,12 +27,12 @@ produces wrong sacred text (proven: "kaman" -> कमन् when it must be क�
 lacks Devanagari, find a better source; do not guess.
 
 ## Current state
-- **Twelve texts are COMPLETE (3,300 verses):** Bhagavad Gita (701); Isha, Kena,
+- **Thirteen texts are COMPLETE (3,495 verses):** Bhagavad Gita (701); Isha, Kena,
   Katha, Mundaka, Prashna and Mandukya Upanishads (316); Vishnu Sahasranama
   (108), Soundarya Lahari (100), Lalita Sahasranama (1000), Hanuman Chalisa
-  (42) and Narayaneeyam (1033). Every completed row has all seven
+  (42), Narayaneeyam (1033), and Patanjali's Yoga Sutras (195). Every completed row has all seven
   representations and passes the zero-gap gate.
-- **The other 10 text groupings are PREVIEW only** - small seeded samples from the
+- **The other 9 text groupings are PREVIEW only** - small seeded samples from the
   original `content-export/`, marked "preview" in the app. Completed Upanishads are
   removed from the legacy mixed `upanishads` preview to avoid duplicate search results.
 
@@ -131,8 +131,8 @@ translations are safe; some modern ones are not).
 ## Tiers (rough effort order)
 - Tier 1 (short, one loader each): DONE - Hanuman Chalisa, Vishnu Sahasranama, Lalita
   Sahasranama, Soundarya Lahari, Narayaneeyam, principal Upanishads.
-- Tier 2 (large but bounded): Devi Mahatmyam (~700), Yoga Sutras (~196),
-  Vivekachudamani (~580), Purana selections, Adhyatma Ramayanam.
+- Tier 2 (large but bounded): DONE - Yoga Sutras (195). Remaining: Devi
+  Mahatmyam (~700), Vivekachudamani (~580), Purana selections, Adhyatma Ramayanam.
 - Tier 3 (every verse, batched): Ramayana (~24,000), Mahabharata (~100,000).
 
 ## App features already built (don't rebuild)

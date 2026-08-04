@@ -5,11 +5,12 @@ validated public JSON asset ready for frontend consumers.
 
 ## Current payload
 
-`app.html` contains seven complete texts: the Bhagavad Gita (701 verses) and six
-principal Upanishads—Isha, Kena, Katha, Mundaka, Prashna, and Mandukya (316
-verses). Each completed verse contains Devanagari, generated IAST, Malayalam,
-Tamil, Telugu, Kannada, and a license-cleared English translation. The remaining
-text groupings are clearly marked as previews.
+`app.html` contains thirteen complete texts (3,495 rows): the Bhagavad Gita; six
+principal Upanishads—Isha, Kena, Katha, Mundaka, Prashna, and Mandukya; Vishnu
+and Lalita Sahasranama; Soundarya Lahari; Hanuman Chalisa; Narayaneeyam; and
+Patanjali's Yoga Sutras. Each completed row contains Devanagari, generated IAST,
+Malayalam, Tamil, Telugu, Kannada, and a license-cleared English translation.
+The remaining nine text groupings are clearly marked as previews.
 
 ## Requirements
 
