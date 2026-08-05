@@ -43,7 +43,11 @@ export function AboutView({ texts, verses, readingSize, onReadingSize }) {
           <dd>Verse text and translation from the openly licensed <a href="https://github.com/gita/gita" target="_blank" rel="noopener noreferrer">gita/gita</a> dataset.</dd>
 
           <dt>Upanishads, in English</dt>
-          <dd>Max M&uuml;ller, <em>Sacred Books of the East</em> (1879 and 1884), and Robert Ernest Hume (1921). Both long in the public domain.</dd>
+          <dd>
+            Max M&uuml;ller, <em>Sacred Books of the East</em> (1879 and 1884), and Robert Ernest
+            Hume (1921). Both long in the public domain. The Chandogya text was taken from the
+            volunteer transcription at <a href="https://en.wikisource.org/wiki/Sacred_Books_of_the_East/Volume_1" target="_blank" rel="noopener noreferrer">Wikisource</a>.
+          </dd>
 
           <dt>Vishnu Sahasranama</dt>
           <dd>Devanagari, transliteration and name meanings by Swami Krishnananda, <a href="https://www.swami-krishnananda.org/" target="_blank" rel="noopener noreferrer">The Divine Life Society</a>.</dd>
