@@ -3,6 +3,7 @@ import { AlertCircle, LoaderCircle } from 'lucide-react';
 import { AboutView } from '../components/library/AboutView';
 import { BeginView } from '../components/library/BeginView';
 import { ExploreView } from '../components/library/ExploreView';
+import { InstallBanner } from '../components/library/InstallBanner';
 import { LibraryHeader } from '../components/library/LibraryHeader';
 import { FeedView } from '../components/library/FeedView';
 import { MeditateView } from '../components/library/MeditateView';
@@ -12,6 +13,7 @@ import { useProgress } from '../hooks/useProgress';
 import { useScriptureData } from '../hooks/useScriptureData';
 import { useStaticAudio } from '../hooks/useStaticAudio';
 import { useStoredState } from '../hooks/useStoredState';
+import { useTheme } from '../hooks/useTheme';
 
 const VIEWS = new Set(['feed', 'today', 'begin', 'read', 'explore', 'meditate', 'about']);
 
@@ -27,6 +29,7 @@ export function ScriptureLibraryPage() {
   const [readingSize, setReadingSize] = useStoredState('ds_fs', 1);
   const [toast, setToast] = useState('');
   const { canPlayAudio, onPlayAudio } = useStaticAudio();
+  const { resolvedTheme } = useTheme();
   const progress = useProgress();
   const completeVerses = useMemo(
     () => data?.verses.filter(verse => verse.complete) || [],
@@ -102,7 +105,7 @@ export function ScriptureLibraryPage() {
   };
 
   return (
-    <div className="library-app" style={{ '--reading-scale': readingSize }}>
+    <div className="library-app" data-theme={resolvedTheme} style={{ '--reading-scale': readingSize }}>
       <a className="skip-link" href="#library-main">Skip to content</a>
       <LibraryHeader activeView={activeView} onNavigate={navigate} />
       <main className="library-shell" id="library-main">
@@ -145,6 +148,7 @@ export function ScriptureLibraryPage() {
           />
         )}
       </main>
+      <InstallBanner />
       <footer className="library-footer">
         <div>
           DharmaSearch — original text, transliteration and translation. {data.texts.filter(text => text.complete).length} complete texts, with more built through a zero-gap pipeline.<br />

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ThemeToggle } from './ThemeToggle';
 
 const NAV_ITEMS = [
   ['feed', 'Read a little'],
@@ -37,6 +38,7 @@ export function LibraryHeader({ activeView, onNavigate }) {
             </button>
           ))}
         </nav>
+        <ThemeToggle />
       </div>
     </header>
   );

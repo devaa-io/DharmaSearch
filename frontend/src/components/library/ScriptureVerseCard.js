@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, Check, Copy, Share2, Square, Volume2 } from 'lucide-react';
+import { Bookmark, Check, Copy, ImageDown, Share2, Square, Volume2 } from 'lucide-react';
 import { LANGUAGE_NAMES, SPEECH_LANGS, scriptsFor } from '../../lib/scripture';
+import { shareVerseAsImage } from '../../lib/quoteCard';
 
 const CONTENT_LANGS = {
   en: 'en',
@@ -97,6 +98,7 @@ export function ScriptureVerseCard({
   const [activeScript, setActiveScript] = useState(availableScripts[0]?.code || 'en');
   const [copying, setCopying] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [renderingCard, setRenderingCard] = useState(false);
   const playbackRef = useRef(null);
   const mountedRef = useRef(false);
 
@@ -267,6 +269,20 @@ export function ScriptureVerseCard({
     }
   };
 
+  const shareAsImage = async () => {
+    if (renderingCard) return;
+    setRenderingCard(true);
+    try {
+      const result = await shareVerseAsImage(verse, selectedScript);
+      if (result === 'downloaded') onCopied?.('Image saved');
+      else if (result === 'shared') onCopied?.('Shared');
+    } catch {
+      onCopied?.('Image unavailable');
+    } finally {
+      setRenderingCard(false);
+    }
+  };
+
   const languageName = LANGUAGE_NAMES[selectedScript?.code] || 'this verse';
 
   return (
@@ -315,6 +331,17 @@ export function ScriptureVerseCard({
           data-testid={`share-${verse.id}`}
         >
           <Share2 aria-hidden="true" />
+        </button>
+        <button
+          className={renderingCard ? 'icon-button is-active' : 'icon-button'}
+          type="button"
+          onClick={shareAsImage}
+          aria-label="Save this verse as a shareable image"
+          title="Quote card"
+          disabled={renderingCard}
+          data-testid={`quote-card-${verse.id}`}
+        >
+          <ImageDown aria-hidden="true" />
         </button>
       </div>
 

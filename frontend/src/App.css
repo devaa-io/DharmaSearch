@@ -1876,3 +1876,141 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+/* Wind-Down dark theme ------------------------------------------------------
+   Warm dark grays rather than pure black: kinder on the eyes and on OLED
+   smearing when this is the last thing read before sleep. Overriding the
+   variable block is enough for the ~170 rules built on var(--...), the
+   remainder below are the handful of surfaces with hardcoded light-palette
+   colors baked directly into the declaration. */
+.library-app[data-theme='dark'] {
+  --leaf: #1a1a1a;
+  --leaf-deep: #141414;
+  --card: #232320;
+  --card-soft: #29281f;
+  --ink: #e0dcd3;
+  --ink-soft: #b0a996;
+  --vermilion: #d1573f;
+  --vermilion-dark: #a8402a;
+  --gold: #cda94a;
+  --line: #3a3830;
+  --night: #0d0a08;
+  --shadow: 0 14px 30px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.25);
+  --shadow-lift: 0 20px 40px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.3);
+  background-image: repeating-linear-gradient(0deg, transparent 0 31px, rgba(205, 169, 74, 0.035) 31px 32px);
+}
+
+.library-app[data-theme='dark'] .library-header {
+  background: rgba(20, 20, 20, 0.94);
+}
+
+.library-app[data-theme='dark'] .library-nav__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.library-app[data-theme='dark'] .trust-strip span,
+.library-app[data-theme='dark'] .momentum {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.library-app[data-theme='dark'] .script-picker button {
+  background: rgba(205, 169, 74, 0.1);
+}
+
+.library-app[data-theme='dark'] .library-doors button {
+  background: linear-gradient(180deg, #262620, var(--card));
+}
+
+.library-app[data-theme='dark'] .library-doors button:hover {
+  background: linear-gradient(180deg, #2c2b24, #302f26);
+}
+
+.library-app[data-theme='dark'] .library-header__inner::after {
+  background: linear-gradient(90deg, rgba(20, 20, 20, 0), rgba(20, 20, 20, 0.96));
+}
+
+/* The loading/error state renders before the themed .library-app wrapper
+   exists, so it has no data-theme attribute to key off. It follows the OS
+   preference only — a reasonable default for a screen shown for a moment. */
+@media (prefers-color-scheme: dark) {
+  .library-state {
+    background: #1a1a1a;
+    color: #e0dcd3;
+  }
+
+  .library-state svg {
+    color: #d1573f;
+  }
+}
+
+/* Theme toggle -------------------------------------------------------------- */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  transition: background 200ms, color 200ms, border-color 200ms;
+}
+
+.theme-toggle:hover {
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* The verse-page header has no nav to push it right with margin-left: auto. */
+.verse-page .library-header__inner .theme-toggle {
+  margin-left: auto;
+}
+
+/* Install banner -------------------------------------------------------------- */
+.install-banner {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px min(5.5%, 28px);
+  border-top: 1px solid var(--line);
+  background: var(--leaf-deep);
+  box-shadow: var(--shadow-lift);
+}
+
+.install-banner p {
+  margin: 0;
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.install-banner p strong {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+}
+
+.install-banner .library-button {
+  flex-shrink: 0;
+}
+
+.install-banner__dismiss {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 8px;
+  min-height: 44px;
+  min-width: 44px;
+}

@@ -2,11 +2,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AlertCircle, BookOpen, LoaderCircle, Link as LinkIcon } from 'lucide-react';
 import { ScriptureVerseCard } from '../components/library/ScriptureVerseCard';
+import { ThemeToggle } from '../components/library/ThemeToggle';
 import { useMarkVisibleAsRead } from '../hooks/useMarkVisibleAsRead';
 import { useProgress } from '../hooks/useProgress';
 import { useScriptureData } from '../hooks/useScriptureData';
 import { useStaticAudio } from '../hooks/useStaticAudio';
 import { useStoredState } from '../hooks/useStoredState';
+import { useTheme } from '../hooks/useTheme';
 
 /** A verse at its own address: /v/:verseId.
  *
@@ -23,6 +25,7 @@ export function VersePage() {
   const [saved, setSaved] = useStoredState('ds_saved', []);
   const [toast, setToast] = useState('');
   const { canPlayAudio, onPlayAudio } = useStaticAudio();
+  const { resolvedTheme } = useTheme();
   const progress = useProgress();
   const attachCard = useMarkVisibleAsRead(progress.markRead);
 
@@ -114,12 +117,13 @@ export function VersePage() {
   }
 
   return (
-    <div className="library-app verse-page">
+    <div className="library-app verse-page" data-theme={resolvedTheme}>
       <header className="library-header">
         <div className="library-header__inner">
           <button className="library-brand" type="button" onClick={() => navigate('/')}>
             Dharma<span>Search</span>
           </button>
+          <ThemeToggle />
         </div>
       </header>
 
