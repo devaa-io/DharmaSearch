@@ -1,0 +1,12 @@
+{
+  "text_id": "chandogya-upanishad",
+  "text_name": "Chandogya Upanishad",
+  "language": "Sanskrit",
+  "loader": "loaders/chandogya.py",
+  "fields": {
+    "devanagari": "devanagari",
+    "english": "translation",
+    "chapter": "chapter",
+    "verse": "verse"
+  }
+}
