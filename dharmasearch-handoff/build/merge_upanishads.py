@@ -117,6 +117,27 @@ SPECS = [
             "Max Muller (SBE Vol. 15, 1884, public domain)."
         ),
     },
+    {
+        "tid": "chandogya-upanishad",
+        "name": "Chandogya Upanishad",
+        "count": 627,
+        "prefix": "chandogya-up",
+        "sections": {
+            p * 100 + k: f"Prapathaka {p}, Khanda {k}"
+            for p, sizes in {
+                1: 13, 2: 24, 3: 19, 4: 17, 5: 24, 6: 16, 7: 26, 8: 15
+            }.items()
+            for k in range(1, sizes + 1)
+            if not (p == 5 and k == 17)
+        },
+        "desc": (
+            "627 marked passages in 8 prapathakas from the Sama Veda, including the "
+            "teachings of Uddalaka and Shvetaketu and the great saying 'Tat tvam asi'. "
+            "English by F. Max Muller, Sacred Books of the East Vol. 1 (1879), via "
+            "English Wikisource under CC BY-SA 4.0 (commercial reuse permitted with "
+            "attribution and share-alike). Devanagari from sanskritdocuments.org."
+        ),
+    },
 ]
 
 
