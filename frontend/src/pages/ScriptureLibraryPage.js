@@ -2,12 +2,15 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, LoaderCircle } from 'lucide-react';
 import { AboutView } from '../components/library/AboutView';
 import { BeginView } from '../components/library/BeginView';
+import { CanonView } from '../components/library/CanonView';
+import { ConceptsView } from '../components/library/ConceptsView';
 import { ExploreView } from '../components/library/ExploreView';
 import { InstallBanner } from '../components/library/InstallBanner';
 import { LibraryHeader } from '../components/library/LibraryHeader';
 import { FeedView } from '../components/library/FeedView';
 import { MeditateView } from '../components/library/MeditateView';
 import { ReadView } from '../components/library/ReadView';
+import { SavedView } from '../components/library/SavedView';
 import { TodayView } from '../components/library/TodayView';
 import { useProgress } from '../hooks/useProgress';
 import { useScriptureData } from '../hooks/useScriptureData';
@@ -15,7 +18,7 @@ import { useStaticAudio } from '../hooks/useStaticAudio';
 import { useStoredState } from '../hooks/useStoredState';
 import { useTheme } from '../hooks/useTheme';
 
-const VIEWS = new Set(['feed', 'today', 'begin', 'read', 'explore', 'meditate', 'about']);
+const VIEWS = new Set(['feed', 'today', 'begin', 'read', 'explore', 'meditate', 'canon', 'concepts', 'saved', 'about']);
 
 function viewFromHash() {
   const candidate = window.location.hash.slice(1);
@@ -107,7 +110,7 @@ export function ScriptureLibraryPage() {
   return (
     <div className="library-app" data-theme={resolvedTheme} style={{ '--reading-scale': readingSize }}>
       <a className="skip-link" href="#library-main">Skip to content</a>
-      <LibraryHeader activeView={activeView} onNavigate={navigate} />
+      <LibraryHeader activeView={activeView} onNavigate={navigate} savedCount={savedIds.size} />
       <main className="library-shell" id="library-main">
         {activeView === 'today' && (
           <TodayView
@@ -139,6 +142,15 @@ export function ScriptureLibraryPage() {
         {activeView === 'read' && <ReadView data={data} progress={progress} {...sharedVerseProps} />}
         {activeView === 'explore' && <ExploreView data={data} {...sharedVerseProps} />}
         {activeView === 'meditate' && <MeditateView completeVerses={completeVerses} />}
+        {activeView === 'canon' && <CanonView texts={data.texts} />}
+        {activeView === 'concepts' && <ConceptsView versesById={versesById} />}
+        {activeView === 'saved' && (
+          <SavedView
+            versesById={versesById}
+            onNavigate={navigate}
+            {...sharedVerseProps}
+          />
+        )}
         {activeView === 'about' && (
           <AboutView
             texts={data.texts}

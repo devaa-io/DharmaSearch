@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 
+// The Gita is a dialogue held on a battlefield — a random fragment from the
+// full corpus can land on "kill the enemy" mid-sit, which undercuts the one
+// feature explicitly built to be calming. Excluded rather than risked.
+const MARTIAL_WORDS = /\b(kill|slay|slain|slaughter|weapon|arrow|sword|battle|warrior|war|enem(?:y|ies)|blood|wound(?:ed)?|corpse|army|attack)\b/i;
+
 export function MeditateView({ completeVerses }) {
   const [minutes, setMinutes] = useState(10);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
@@ -11,6 +16,7 @@ export function MeditateView({ completeVerses }) {
   const fragments = useMemo(() => {
     const items = [];
     completeVerses.forEach(verse => {
+      if (MARTIAL_WORDS.test(verse.en)) return;
       if (verse.en.length < 90) items.push(verse.en);
       const romanWords = (verse.roman || '').trim().split(/\s+/);
       if (romanWords.length >= 3 && romanWords.length <= 8) items.push(verse.roman);

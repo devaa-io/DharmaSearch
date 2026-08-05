@@ -19,8 +19,18 @@ export function useTheme() {
     const media = window.matchMedia?.('(prefers-color-scheme: dark)');
     if (!media) return undefined;
     const onChange = event => setSystemDark(event.matches);
-    media.addEventListener('change', onChange);
-    return () => media.removeEventListener('change', onChange);
+    // Real browsers support addEventListener; older WebKit supports only the
+    // deprecated addListener; this project's jsdom test environment supports
+    // neither, so system-preference changes just aren't observed there.
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', onChange);
+      return () => media.removeEventListener('change', onChange);
+    }
+    if (typeof media.addListener === 'function') {
+      media.addListener(onChange);
+      return () => media.removeListener(onChange);
+    }
+    return undefined;
   }, []);
 
   const resolvedTheme = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;

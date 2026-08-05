@@ -2014,3 +2014,134 @@
   min-height: 44px;
   min-width: 44px;
 }
+
+/* The Canon ------------------------------------------------------------- */
+.canon-tree {
+  display: grid;
+  gap: 32px;
+  margin-top: 28px;
+}
+
+.canon-division__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.canon-division__label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.canon-division__note {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.canon-group {
+  margin: 0 0 20px;
+}
+
+.canon-group__head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 8px 4px;
+}
+
+.canon-group__label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--vermilion-dark);
+}
+
+.canon-group__note {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.canon-footer {
+  margin-top: 24px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* Concepts ---------------------------------------------------------------- */
+.concept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.concept-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.concept-term {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.concept-term h2 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.concept-sanskrit {
+  color: var(--gold);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.concept-body {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.concept-cites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.cite-pill {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: var(--card-soft);
+  color: var(--vermilion);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.cite-pill:hover {
+  border-color: var(--vermilion);
+}

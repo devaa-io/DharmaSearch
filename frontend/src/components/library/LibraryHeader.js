@@ -1,4 +1,5 @@
 import React from 'react';
+import { Bookmark } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 
 const NAV_ITEMS = [
@@ -8,10 +9,12 @@ const NAV_ITEMS = [
   ['read', 'Read'],
   ['explore', 'Explore'],
   ['meditate', 'Meditate'],
+  ['canon', 'Lineage'],
+  ['concepts', 'Concepts'],
   ['about', 'About'],
 ];
 
-export function LibraryHeader({ activeView, onNavigate }) {
+export function LibraryHeader({ activeView, onNavigate, savedCount = 0 }) {
   return (
     <header className="library-header">
       <div className="library-header__inner">
@@ -38,6 +41,16 @@ export function LibraryHeader({ activeView, onNavigate }) {
             </button>
           ))}
         </nav>
+        <button
+          className="theme-toggle"
+          type="button"
+          onClick={() => onNavigate('saved')}
+          aria-label={savedCount > 0 ? `Saved verses (${savedCount})` : 'Saved verses'}
+          aria-current={activeView === 'saved' ? 'page' : undefined}
+          data-testid="library-saved-link"
+        >
+          <Bookmark aria-hidden="true" fill={activeView === 'saved' ? 'currentColor' : 'none'} />
+        </button>
         <ThemeToggle />
       </div>
     </header>
